@@ -1,0 +1,368 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_IV3_G120_RD" Id="{0134bd49-e686-4df0-ad50-aa120eddb5ab}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_IV3_G120_RD
+VAR_IN_OUT
+bEStop : BOOL; //
+bShield : BOOL; //
+bManualMode : BOOL; //
+bAlarmReset : BOOL; //
+bTriggerHmi : BOOL; //
+bTriggerAuto : BOOL; //
+iProgramNo : UINT; //
+bChangeProgramHmi : BOOL; //
+bChangeProgramAuto : BOOL; //
+bOnline : BOOL; //
+bReady : BOOL; //
+bBusy : BOOL; //
+bDone : BOOL; //
+bError : BOOL; //
+bTimeout : BOOL; //
+bOutTrigger : BOOL; //
+iCurrentProgranNo : UINT; //
+nResult : UINT; //
+DataLinkInput : ARRAY[0..393] OF BYTE; //
+DataLinkOutput : ARRAY[0..11] OF BYTE; //
+
+END_VAR
+VAR
+nIndex1 : UINT; //
+nIndex2 : UINT; //
+nChangeProgramStep : UINT; //
+nTriggerStep : UINT; //
+ftTriggerHmi : F_TRIG; //
+ftChangeProgramHmi : F_TRIG; //
+rtChangeProgramAuto : R_TRIG; //
+rtTriggerAuto : R_TRIG; //
+ftTriggerHmi_Q : BOOL; //
+ftChangeProgramHmi_Q : BOOL; //
+rtTriggerAuto_Q : BOOL; //
+rtChangeProgramAuto_Q : BOOL; //
+bChangeProgramBusy : BOOL; //
+bTriggetBusy : BOOL; //
+tonTimeout : TON; //
+tTimeout : TIME; //
+tonTimeout_Q : BOOL; //
+bTriggerManual : BOOL; //
+bChangProgramManual : BOOL; //
+tonReady : TON; //
+tReady : TIME; //
+tonReady_Q : BOOL; //
+InputData : ARRAY[0..29] OF BYTE; //
+OutputData : ARRAY[0..5] OF BYTE; //
+Data_TriggerReady : BOOL; //
+Data_TriggerAck : BOOL; //
+Data_Online : BOOL; //
+Data_Busy : BOOL; //
+Data_InspectionComplete : BOOL; //
+Data_ResultValid : BOOL; //
+Data_CommandFailed : BOOL; //
+Data_Error : BOOL; //
+Data_ProgramChangeAck : BOOL; //
+Data_ResultOK : BOOL; //
+Data_ResultNG : BOOL; //
+Data_SoftEventAck : BOOL; //
+Data_ErrorCode : INT; //
+Data_CurrentProgramNo : INT; //
+Data_ResultData : ARRAY[0..13] OF BYTE; //
+Data_Trigger : BOOL; //
+Data_ProgramChange : BOOL; //
+Data_ResultAck : BOOL; //
+Data_ClearError : BOOL; //
+Data_ProgramNo : INT; //
+bTriggerProcessDone : BOOL; //
+bChangeProgramDone : BOOL; //
+tonProgramNo : TON; //
+bErrorChangeProgram : BOOL; //
+bErrorTrigger : BOOL; //
+ResultTemp : BOOL; //
+fbUnpackWord   : MEM.UnpackWord;
+fbUnpackDWord  : MEM.UnpackDWord;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Link();
+Trigger();
+Alarm();
+Timeout();
+Output();
+TriggerProcess();
+ChangeProgram();]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{ac1a3fc1-c1a9-4e6d-bf41-66cb63f5e427}">
+      <Implementation>
+        <ST><![CDATA[//***********************Alarm***********************
+tTimeout:=T#5S;
+tonTimeout(
+	IN:=bBusy,
+	PT:=tTimeout,
+	Q=>tonTimeout_Q);
+
+bError:=Data_Error OR bTimeout 
+			OR bErrorChangeProgram OR bErrorTrigger;
+
+IF bAlarmReset THEN
+	bTimeout:=FALSE;
+	bErrorChangeProgram:=FALSE;
+	bErrorTrigger:=0;
+END_IF;
+
+Data_ClearError :=bError AND bAlarmReset;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ChangeProgram" Id="{ce6cb968-225c-4aa8-8487-3fe59801b915}">
+      <Implementation>
+        <ST><![CDATA[//***********************Change Program***********************
+tonProgramNo(In:=nChangeProgramStep=20, PT:=T#0.1S);
+
+CASE nChangeProgramStep OF
+
+//start to change Program
+0:	
+IF bChangProgramManual		
+	OR rtChangeProgramAuto_Q
+THEN
+	nChangeProgramStep :=nChangeProgramStep + 10;
+END_IF;
+
+//set busy
+10:
+	bChangeProgramDone:=FALSE;
+	bChangeProgramBusy:=TRUE;
+	nChangeProgramStep :=nChangeProgramStep + 10;
+
+//set program No.
+20:
+	Data_ProgramNo :=iProgramNo;
+IF tonProgramNo.Q THEN
+	nChangeProgramStep :=nChangeProgramStep + 10;
+END_IF;
+
+//execute command
+30:
+	Data_ProgramChange	:=TRUE;												//execute command
+IF Data_ProgramChangeAck 		//Ack 
+THEN
+	nChangeProgramStep :=nChangeProgramStep + 10;
+END_IF;
+
+//result
+40:
+	Data_ProgramChange	:=FALSE;		//execute command
+IF NOT Data_ProgramChangeAck AND NOT Data_CommandFailed	//complete and not failed
+THEN
+	nChangeProgramStep :=nChangeProgramStep + 10;
+END_IF;
+
+IF Data_CommandFailed				//failed
+THEN
+	bErrorChangeProgram:=TRUE;
+	nChangeProgramStep :=nChangeProgramStep + 10;
+END_IF;
+
+//
+50:
+	nChangeProgramStep :=nChangeProgramStep + 10;
+
+//done
+60:
+	bChangeProgramDone:=TRUE;
+	nChangeProgramStep :=nChangeProgramStep + 10;	
+
+//end
+70:
+	IF NOT bChangeProgramHmi AND NOT bChangeProgramAuto
+	THEN
+		bChangeProgramDone:=FALSE;
+		bChangeProgramBusy:=FALSE;
+		nChangeProgramStep :=0;	
+	END_IF;
+	
+END_CASE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Link" Id="{fae04d70-7ae9-433b-9f65-a762bc314156}">
+      <Implementation>
+        <ST><![CDATA[//***********************Link***********************
+FOR nIndex1:=0 TO 29  BY 1 DO
+	InputData[nIndex1]:=DataLinkInput[nIndex1];
+END_FOR;
+FOR nIndex2:=0 TO 5  BY 1 DO
+	DataLinkOutput[nIndex2]:=OutputData[nIndex2];
+END_FOR;
+//Input
+	Data_TriggerAck:=InputData[0].0;						//触发响应
+	Data_ProgramChangeAck:=InputData[0].0;		//程序切换响应
+	Data_CommandFailed:=InputData[1].2;			//程序切换失败
+	Data_ResultValid:=InputData[2].0;					//可获取结果
+	Data_InspectionComplete:=InputData[2].1;		//结果更新完成，反转	
+	Data_Busy:=InputData[2].2;								//Busy
+	Data_Online:=InputData[2].4;							//运行
+	Data_TriggerReady:=InputData[2].6;					//Ready
+	Data_Error:=InputData[3].7;								//Error
+	Data_ResultOK:=InputData[4].0;						//OK
+	Data_ResultNG:=InputData[4].4;						//NG	
+	Data_ErrorCode := WORD_TO_INT( MEM.PackBytesToWord(byHighByte:= InputData[9], byLowByte:=InputData[8] ));//报警代码
+	Data_CurrentProgramNo := WORD_TO_INT( MEM.PackBytesToWord(byHighByte:= InputData[17], byLowByte:=InputData[16] ));//当前程序号
+
+//Output	
+	OutputData[0].0:=Data_Trigger;					//触发检测
+	OutputData[0].2:=Data_ProgramChange;		//切换程序
+	OutputData[0].3:=Data_ClearError;				//报警复位	
+	OutputData[2].0:=Data_ResultAck;				//结果确认
+	fbUnpackWord(
+	wValue:= INT_TO_WORD(Data_ProgramNo), 
+	byLowByte=> DataLinkOutput[4], 
+	byHighByte=> DataLinkOutput[5], );          //程序号]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Output" Id="{946a45d0-85b2-483e-92eb-67ddc8a97de0}">
+      <Implementation>
+        <ST><![CDATA[//***********************Output***********************
+bOutTrigger:=Data_Trigger;
+iCurrentProgranNo:=Data_CurrentProgramNo;
+
+tonReady(
+	IN:=NOT bBusy,
+	PT:=tReady,
+	Q=>tonReady_Q);
+
+bBusy:=bChangeProgramBusy OR bTriggetBusy OR Data_Busy;
+bDone:=(bTriggerProcessDone AND bTriggerAuto)
+								OR (bChangeProgramDone AND bChangeProgramAuto);
+
+bOnline:=Data_Online;
+bReady:=Data_TriggerReady;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Timeout" Id="{0c78a61f-e42f-46d3-9ec3-e1ca0109fa00}">
+      <Implementation>
+        <ST><![CDATA[//***********************Timeout***********************
+IF tonTimeout_Q THEN
+	;//bTimeout:=TRUE;
+END_IF;
+
+IF bTimeout THEN
+	bBusy:=FALSE;
+	Data_Trigger:=FALSE;
+	Data_ProgramChange:=FALSE;
+	bTriggetBusy:=FALSE;
+	bChangeProgramBusy:=FALSE;
+	nTriggerStep:=0;
+	nChangeProgramStep:=0;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Trigger" Id="{5da5148e-9172-487f-bbcd-44a6a4f4b86e}">
+      <Implementation>
+        <ST><![CDATA[//***********************Trigger ***********************
+ftChangeProgramHmi(CLK:=bChangeProgramHmi AND tonReady_Q, Q=>ftChangeProgramHmi_Q );
+rtChangeProgramAuto(CLK:=bChangeProgramAuto AND tonReady_Q, Q=>rtChangeProgramAuto_Q );
+
+ftTriggerHmi(CLK:=bTriggerHmi, Q=>ftTriggerHmi_Q );
+rtTriggerAuto(CLK:=bTriggerAuto AND tonReady_Q, Q=>rtTriggerAuto_Q );
+
+bChangProgramManual:=ftChangeProgramHmi_Q
+	AND bEStop
+	AND bManualMode;
+	
+bTriggerManual:=ftTriggerHmi_Q
+	AND bEStop
+	AND bManualMode;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="TriggerProcess" Id="{deb9d7fa-e583-4a40-b841-7c353b87aa91}">
+      <Implementation>
+        <ST><![CDATA[//***********************Trigger process***********************
+
+CASE nTriggerStep OF
+	
+//start to trigger process
+0:	
+IF bTriggerManual		
+	OR rtTriggerAuto_Q
+THEN
+	nTriggerStep :=nTriggerStep + 10;
+END_IF;
+
+//result ack
+10:
+	bTriggerProcessDone:=FALSE;
+	nResult:=0;
+	bTriggetBusy:=TRUE;
+	ResultTemp:=Data_InspectionComplete;
+	nTriggerStep :=nTriggerStep + 10;
+
+//trigger
+ 20:
+	Data_Trigger:=TRUE;
+IF ResultTemp<>Data_InspectionComplete OR bShield
+THEN
+	nTriggerStep :=nTriggerStep + 10;
+ END_IF;
+ 
+ //reset trigger
+30:
+ 	Data_Trigger:=FALSE;
+	IF Data_ResultOK AND NOT  Data_ResultNG		//Result output,1:OK,2:=NG
+	THEN
+		nResult:=1;
+	ELSE
+		nResult:=2;
+	END_IF;	
+	nTriggerStep :=nTriggerStep + 10;
+
+//done
+40:
+	bTriggerProcessDone:=TRUE;
+	nTriggerStep :=nTriggerStep + 10;
+	
+//end
+50:
+	IF NOT bTriggerHmi AND NOT bTriggerAuto
+	THEN
+		bTriggerProcessDone:=FALSE;
+		bTriggetBusy:=FALSE;
+		nTriggerStep :=0;	
+	END_IF;
+
+END_CASE;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_IV3_G120_RD">
+      <LineId Id="9" Count="0" />
+      <LineId Id="83" Count="5" />
+    </LineIds>
+    <LineIds Name="FB_IV3_G120_RD.Alarm">
+      <LineId Id="2" Count="15" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IV3_G120_RD.ChangeProgram">
+      <LineId Id="2" Count="65" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IV3_G120_RD.Link">
+      <LineId Id="2" Count="18" />
+      <LineId Id="39" Count="1" />
+      <LineId Id="23" Count="5" />
+      <LineId Id="36" Count="2" />
+      <LineId Id="34" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IV3_G120_RD.Output">
+      <LineId Id="2" Count="13" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IV3_G120_RD.Timeout">
+      <LineId Id="2" Count="12" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IV3_G120_RD.Trigger">
+      <LineId Id="2" Count="12" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_IV3_G120_RD.TriggerProcess">
+      <LineId Id="2" Count="52" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

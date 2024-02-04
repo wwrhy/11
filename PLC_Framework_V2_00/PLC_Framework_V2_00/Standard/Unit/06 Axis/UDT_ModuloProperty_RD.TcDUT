@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_ModuloProperty_RD" Id="{cb893f7a-b679-4cde-9196-d3a8b8f708ab}">
+    <Declaration><![CDATA[TYPE UDT_ModuloProperty_RD :
+STRUCT
+enable : BOOL; //启用模长
+inCalibratePos : Bool; //在标定位置
+inClosestPos : Bool; //在分割点位置
+inAutoPos : Bool; //在自动分割点位置
+inAutoNextPos : Bool; //在自动下一个分割点位置
+calibrateOffset : Real; //标定位置与分割点偏移值
+tolerance : Real; //公差范围
+factor : Real; //模长
+mode : Int; //模式，0:分度盘模式 1:棘轮模式
+divisor : Int; //分割数
+stepPoint : Int; //单次进给/后退量  MAX<Divisor
+actPoint : Int; //当前分割点
+closestPoint : Int; //当前最近分割点
+previousPoint : Int; //当前上一分割点
+nextPoint : Int; //当前下一分割点
+autoNextPoint : Int; //自动下一分割点
+autoPoint : Int; //自动应该在割点
+closestPos : Real; //当前最近分割点坐标
+previousPos : Real; //当前上一分割点坐标
+nextPos : Real; //当前下一分割点坐标
+autoPos : Real; //自动应该在分割点坐标
+autoNextPos : Real; //自动下一分割点坐标
+moveMode : ARRAY[0..6] OF INT; //定位模式
+
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_AxisMessage_RD" Id="{1de5c22d-07cf-4e18-a4eb-d8b3984cb55b}">
+    <Declaration><![CDATA[TYPE UDT_AxisMessage_RD :
+STRUCT
+  
+notPowerOnAutoTip : BOOL; // 伺服未On自动提示
+error : Bool; // 伺服错误中
+notPowerOnManualTip : Bool; // 未使能不能操作
+unableBrakeManualTip : Bool; // 已使能不能操作刹车
+unablePowerOnManualTip : Bool; // 刹车已打开不能操作使能
+notMovePermitManualTip : Int; // 定位条件不满足手动提示
+notInPosAutoTip : Int; // 伺服不在位自动提示
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

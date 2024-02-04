@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_KeyenceScanData_RD" Id="{1454e2c3-45b2-4259-9a15-86376d541576}">
+    <Declaration><![CDATA[TYPE UDT_KeyenceScanData_RD :
+STRUCT
+evaluationGrade     : UINT; // 评价等级下限 4:A  3:B  2:C  1:D  0:F
+evaluationMode      : UINT; // 评价等级方式 0:不评估  1:ISO/IEC15415  2:ISO/IEC TR 29158
+timeout             : TIME; // 超时设置
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_StationMessage_RD" Id="{220e9367-b21a-439c-9c94-91f3d215b5e0}">
+    <Declaration><![CDATA[TYPE UDT_StationMessage_RD :
+STRUCT
+presetAlarms : ARRAY[0..15] OF BOOL; // 预置报警
+presetManualTips : Array[0..15] of Bool; // 预置手动提示
+presetAutoTips : Array[0..15] of Bool; // 预置自动提示
+userAlarms : Array[0..63] of Bool; // 用户报警
+userManualTips : Array[0..63] of Bool; // 用户手动提示
+userAutoTips : Array[0..63] of Bool; // 用户自动提示
+userTips : ARRAY[0..63] OF BOOL; // 用户一般提示
+
+presetAlarms16 : WORD;
+presetManualTips16 : WORD;
+presetAutoTips16: WORD;
+userAlarms64 : LWORD;
+userManualTips64 : LWORD;
+userAutoTips64 : LWORD;
+userTips64 : LWORD;
+
+popupTrigger: WORD;
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

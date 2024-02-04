@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Imm_BraidFlaring_RD" Id="{8570496d-2ee2-4f7c-ae7e-65ab15b6de8e}">
+    <Declaration><![CDATA[TYPE UDT_Imm_BraidFlaring_RD :
+STRUCT
+  
+//公共接口
+ Machine_eStop : BOOL;
+ Machine_safety : BOOL;
+ Machine_airOn : BOOL;
+ Machine_allDoorClosed : BOOL;
+ Machine_manualMode : BOOL; 
+ Machine_autoMode : BOOL;
+ Machine_reset :BOOL;
+ Machine_stopping :BOOL;
+ Machine_paused: BOOL;
+ Machine_running :BOOL;
+
+ 
+ //模组参数输入
+ 
+ carrierNum		: UINT;	//载座编号（INPUT）
+ carrierInPos : BOOL; //载座到位（INPUT）
+ carrierPos :UINT; //载座位置（左1/右2）（INPUT）
+ carrierState:UINT;//载座状态    //1227
+ stationCanRun :BOOL;//模组动作条件（INPUT）
+ 
+ //模组参数输出
+ stationDone :BOOL;//模组完成（OUTPUT）
+ carrierFree :BOOL;//载座不干涉（OUTPUT）
+ carrierLeftProductState :INT; //左载座产品状态（OUTPUT）
+ carrierRightProductState :INT;//右载座产品状态（OUTPUT）
+ allObjectInitPos:BOOL;//所有部件在初始位置（OUTPUT）
+
+ 
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

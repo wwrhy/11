@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Parameters_Crimping_RD" Id="{0edb88eb-0d11-4ad1-85f1-b10b421ddd90}">
+    <Declaration><![CDATA[TYPE UDT_Parameters_Crimping_RD :
+STRUCT
+	override :INT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

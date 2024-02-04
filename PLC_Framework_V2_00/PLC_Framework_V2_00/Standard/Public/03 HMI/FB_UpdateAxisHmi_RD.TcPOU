@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_UpdateAxisHmi_RD" Id="{72d19b9b-0196-4e4c-8e41-0e3829f8e56d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_UpdateAxisHmi_RD
+VAR_IN_OUT
+hmi : UDT_AxisHmi_RD; //
+vari : ARRAY[*] OF UDT_AxisVar_RD; //
+data : ARRAY[*] OF UDT_AxisData_RD; //
+number : INT; //编号
+END_VAR
+VAR
+selectPageValueCache : INT; //
+index : INT; //
+turnPages : FB_TurnPages_RD; //
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF number >0 THEN	
+	hmi.display				:= TRUE ;
+	IF hmi.number <> number 
+		OR selectPageValueCache  <> hmi.selectPageValue[0]
+	THEN
+		IF hmi.number <> number  THEN
+			hmi.selectDisplay:=FALSE;
+			hmi.turnPages.value:=0;
+		END_IF;
+		hmi.number	:= number;
+		selectPageValueCache  := hmi.selectPageValue[0];		
+		
+		hmi.autoVelo			:=	data[number].autoVelo	;
+		hmi.manualVelo		:=	data[number].manualVelo	;
+		hmi.jogVelo				:=	data[number].jogVelo	;
+		hmi.acceleration		:=	data[number].acceleration	;
+		hmi.deceleration		:=	data[number].deceleration	;
+		hmi.homeDisplay		:=	data[number].homeDisplay	;
+		hmi.movehmiNo		:=	vari[number].movehmiNo	;
+		FOR index:=1  TO 8 DO			
+			IF hmi.selectPageValue[0] + index <= vari[number].movePosNum THEN
+				hmi.selectPageValue[index]:=hmi.selectPageValue[0]+index;
+				hmi.movePos[index]:= data[number].movePos[ hmi.selectPageValue[0] + index];
+			ELSE
+				hmi.selectPageValue[index]:=0;
+			END_IF;
+		END_FOR;	
+		hmi.textListNo:=number +1000;
+		
+	ELSE
+		
+		data[number].autoVelo			:=	hmi.autoVelo	;
+		data[number].manualVelo		:=	hmi.manualVelo	;
+		data[number].jogVelo				:=	hmi.jogVelo	;
+		data[number].acceleration		:=	hmi.acceleration	;
+		data[number].deceleration		:=	hmi.deceleration	;
+		data[number].homeDisplay		:=	hmi.homeDisplay	;
+		vari[number].powerhmi			:=	hmi.powerhmi	;
+		vari[number].halthmi				:=	hmi.halthmi	;
+		vari[number].jogForwardhmi	:=	hmi.jogForwardhmi	;
+		vari[number].jogBackwardshmi	:=	hmi.jogBackwardshmi	;
+		vari[number].homehmi			:=	hmi.homehmi	;
+		vari[number].brakehmi			:=	hmi.brakehmi	;
+		vari[number].movehmi			:=	hmi.movehmi	;
+		hmi.movehmiNo	:= MIN(hmi.movehmiNo	,vari[number].movePosNum);
+		vari[number].movehmiNo		:=	hmi.movehmiNo	;
+				
+		hmi.powerForbidIcon			:=	vari[number].powerForbidIcon	;
+		hmi.isPowerOn					:=	vari[number].isPowerOn	;	
+		hmi.jogForwardForbidIcon	:=	vari[number].jogForwardForbidIcon	;		
+		hmi.jogBackwardsForbidIcon	:=	vari[number].jogBackwardsForbidIcon	;		
+		hmi.homeForbidIcon			:=	vari[number].homeForbidIcon	;
+		hmi.homeDisplay					:=	vari[number].homeDisplay	;
+		hmi.homeDone					:=	vari[number].homeDone	;	
+		hmi.brakeForbidIcon			:=	vari[number].brakeForbidIcon	;
+		hmi.brake								:=	vari[number].brake	;		
+		hmi.moveForbidIcon			:=	vari[number].moveForbidIcon	;
+		hmi.brakeState						:=	vari[number].brakeState	;
+		hmi.actPos							:=	vari[number].actPos	;
+		hmi.actVelo							:=	vari[number].actVelo	;
+		hmi.actTorque						:=	vari[number].actTorque	;
+		hmi.errorID							:=	vari[number].errorID	;
+		hmi.warnID							:=	vari[number].warnID	;		
+		hmi.status							:=	vari[number].status	;
+		hmi.posUnit							:=	vari[number].posUnit	;
+		hmi.veloUnit						:=	vari[number].veloUnit	;
+		hmi.accDecUnit					:=	vari[number].accDecUnit	;
+		hmi.movePosNum				:=	vari[number].movePosNum	;
+		
+		FOR index:=0 TO SIZEOF(vari[number].inPos)-1 DO
+			hmi.inPosNo := 0;
+		    IF 	vari[number].inPos[index] THEN
+				hmi.inPosNo := index;
+				EXIT;
+			END_IF;
+		END_FOR;	
+		
+		FOR index:=1  TO 8 DO
+			IF hmi.selectPageValue[0] + index <= vari[number].movePosNum THEN
+				data[number].movePos[ hmi.selectPageValue[0] + index] :=hmi.movePos[index];
+			END_IF;
+		END_FOR;	
+		hmi.turnPages.minValue := 0;
+     	hmi.turnPages.maxValue := SEL(vari[number].modulo.enable, // 启用模长定位时定位参数显示数量 - 5，定位参数2-6不显示
+					                                         vari[number].movePosNum,
+					                                         DINT_TO_INT(vari[number].movePosNum - 5));
+      	hmi.turnPages.increment := 8;		
+		IF hmi.turnPages.prevClick 
+			OR hmi.turnPages.nextClick 
+			OR  turnPages.value <>  hmi.turnPages.value 
+		THEN
+			hmi.selectPageValue[0]:= hmi.turnPages.value;
+		END_IF;
+		turnPages(IN:=hmi.turnPages);
+	END_IF;
+ELSE
+	hmi.display				:= FALSE ;
+END_IF;
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_UpdateAxisHmi_RD">
+      <LineId Id="20" Count="97" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

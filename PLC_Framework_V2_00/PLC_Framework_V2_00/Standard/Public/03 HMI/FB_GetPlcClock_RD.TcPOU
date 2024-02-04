@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_GetPlcClock_RD" Id="{d23f8911-6798-45ef-8f8b-d50360c2cfd7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_GetPlcClock_RD
+VAR_IN_OUT
+clock         : UDT_Clock_RD;
+END_VAR
+VAR
+c1msCache : BOOL; //
+c10msCache : BOOL; //
+c20msCache : BOOL; //
+c100msCache : BOOL; //
+c1sCache : BOOL; //
+c1minCache : BOOL; //
+count : DINT; //
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[PlcClock();]]></ST>
+    </Implementation>
+    <Method Name="Blinker" Id="{ab9ecd38-9f75-4535-8d7e-6c9f4fe72aee}">
+      <Declaration><![CDATA[METHOD Blinker : BOOL
+VAR_INPUT
+	ltimeActive                 : BOOL;                 //激活微秒计时
+	tOn							: TIME;					//On时长
+	tOff						: TIME;					//Off时长
+	ltOn						: LTIME;					//On时长
+	ltOff						: LTIME;					//Off时长
+END_VAR
+
+VAR_OUTPUT
+	bP							: BOOL;					//脉冲
+	bR							: BOOL;					//脉冲上升沿
+	bF							: BOOL;					//脉冲下降沿
+END_VAR
+
+VAR
+	{attribute 'hide'}
+	tonOff						: TON;					//Off计时器
+	{attribute 'hide'}
+	tonOn						: TON;					//On计时器
+	{attribute 'hide'}
+	ltonOff						: LTON;					//Off计时器
+	{attribute 'hide'}
+	ltonOn						: LTON;					//On计时器
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF NOT ltimeActive
+THEN
+	tonOff(IN:=NOT bP, PT:=tOff, Q=>bR );
+
+    tonOn(IN:=bP, PT:=tOn, Q=>bF );
+    
+    IF bR OR bF THEN
+    	bP:=NOT bP;
+    END_IF
+ELSE
+	ltonOff(IN:=NOT bP, PT:=ltOff, Q=>bR );
+
+    ltonOn(IN:=bP, PT:=ltOn, Q=>bF );
+    
+    IF bR OR bF THEN
+    	bP:=NOT bP;
+    END_IF
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="PlcClock" Id="{9065d1cf-63ad-4c9b-bed2-aa24d2589369}">
+      <Implementation>
+        <ST><![CDATA[Blinker(ltimeActive:=TRUE,tOn:=T#0MS,tOff:=T#0MS,ltOn:=LTIME#500US,ltOff:=LTIME#500US,bP=>clock.c1ms);
+Blinker(ltimeActive:=FALSE,tOn:=T#5MS,tOff:=T#5MS,ltOn:=LTIME#0US,ltOff:=LTIME#0US,bP=>clock.c10ms);
+Blinker(ltimeActive:=FALSE,tOn:=T#10MS,tOff:=T#10MS,ltOn:=LTIME#0US,ltOff:=LTIME#0US,bP=>clock.c20ms);
+Blinker(ltimeActive:=FALSE,tOn:=T#50MS,tOff:=T#50MS,ltOn:=LTIME#0US,ltOff:=LTIME#0US,bP=>clock.c100ms);
+Blinker(ltimeActive:=FALSE,tOn:=T#500MS,tOff:=T#500MS,ltOn:=LTIME#0US,ltOff:=LTIME#0US,bP=>clock.c1s);
+Blinker(ltimeActive:=FALSE,tOn:=T#30S,tOff:=T#30S,ltOn:=LTIME#0US,ltOff:=LTIME#0US,bP=>clock.c1min);
+
+clock.p1ms		:=NOT c1msCache AND clock.c1ms;
+clock.p10ms		:=NOT c10msCache AND clock.c10ms;
+clock.p20ms		:=NOT c20msCache	 AND clock.c20ms;
+clock.p100ms	:=NOT c100msCache AND clock.c100ms;
+clock.p1s			:=NOT c1sCache AND clock.c1s;
+clock.p1min		:=NOT c1minCache AND clock.c1min;
+
+IF clock.p1min THEN
+  count := count +1;
+  count := count MOD 60;
+END_IF;
+clock.p1hour	:=clock.p1min AND count = 0;
+
+c1msCache	:=clock.c1ms;
+c10msCache	:=clock.c10ms;
+c20msCache	:=clock.c20ms;
+c100msCache	:=clock.c100ms;
+c1sCache			:=clock.c1s;
+c1minCache		:=clock.c1min;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_GetPlcClock_RD">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GetPlcClock_RD.Blinker">
+      <LineId Id="53" Count="1" />
+      <LineId Id="57" Count="5" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="65" Count="5" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GetPlcClock_RD.PlcClock">
+      <LineId Id="28" Count="0" />
+      <LineId Id="3" Count="1" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="6" Count="1" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="9" Count="11" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="23" Count="3" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

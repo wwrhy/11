@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_CylinderHmi_RD" Id="{f4942443-fd39-4fb8-8fe6-e65a720b7a36}">
+    <Declaration><![CDATA[TYPE UDT_CylinderHmi_RD :
+STRUCT 
+  
+homehmi : BOOL; // 原点hmi
+homeForbidIcon : BOOL; // 原点禁止图标
+homeValve : BOOL; // 原点阀
+homeManual : BOOL; // 原点Manual
+workhmi : BOOL; // 动点hmi
+workManual : Bool; // 动点Manual
+workForbidIcon : Bool; // 动点禁止图标
+workValve : BOOL; // 动点阀
+homeSensor : ARRAY[0..3] OF BOOL; // 原点传感器
+workSensor : Array[0..3] of Bool; // 动点传感器
+homeSensorLabel : ARRAY[0..3] OF STRING[10]; // 原点传感器标签
+workSensorLabel : Array[0..3] of STRING[10]; // 动点传感器标签
+toHomeActionTime : UDINT; // 到原点所用时间
+toWorkActionTime : UDINT; // 到动点所用时间
+
+//homeTime : UDINT; // 原点到位延时
+//workTime : UDINT; // 动点到位延时
+
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

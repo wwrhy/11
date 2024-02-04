@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_OeeVar_RD" Id="{30674660-32c1-4586-a67d-ce85b9dfa9df}">
+    <Declaration><![CDATA[TYPE UDT_OeeVar_RD :
+STRUCT
+start                 : BOOL; // 开始
+end                   : BOOL; // 结束
+keep                  : BOOL; // 保持
+clear                 : BOOL; // 清零
+scheduledDown         : BOOL; // 计划停止
+running               : BOOL; // 运行中
+alarming              : BOOL; // 报警中
+goodValue             : DINT; // 良品数量
+badValue              : DINT; // 不良数量
+idealCycleTime        : TIME; // 理想周期时间
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

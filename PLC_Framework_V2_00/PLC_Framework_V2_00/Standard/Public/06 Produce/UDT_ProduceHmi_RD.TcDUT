@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_ProduceHmi_RD" Id="{336e94a0-6f8b-471b-a8ea-679840df246b}">
+    <Declaration><![CDATA[TYPE UDT_ProduceHmi_RD :
+STRUCT
+setUp : BOOL; // 设置中
+allClearHmi : Bool; // 全部清零Hmi
+percentMode : Int; // 百分比模式  0:  N/总产量, 1:  N/总不良
+sortMode : Int; // 排序模式 0:  分类序号, 1:  大->小, 2:  小->大
+goodValue : DInt; // 良品数量
+badValue : DInt; // 不良品数量
+totalValue : DInt; // 总产品数量
+cumulativeValue : DInt; // 累计生产数量
+badMax : DInt; // 分类不良单项最大数
+yieldRatio : Real; // 良品率
+badRatio : Real; // 不良率
+badMin : DInt; // 分类不良单项最小数
+pieChart : ARRAY[0..1] OF Real; // 饼图值
+badShow : ARRAY[0..5] OF UDT_BadHmi_RD; // 分类不良显示
+turnPages : UDT_TurnPages_RD; // 滚动条
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_HmiButton_RD" Id="{780c1ff4-86df-4702-93f4-410e4a5647dc}">
+    <Declaration><![CDATA[TYPE UDT_HmiButton_RD :
+STRUCT
+start : BOOL; // 启动按钮
+stop : Bool; // 停止按钮
+reset : Bool; // 复位按钮
+pause : Bool; // 暂停按钮
+init : Bool; // 初始化按钮
+manualSwitch : Bool; // 手动模式开关
+autoSwitch : Bool; // 自动模式开关
+startLight : Bool; // 启动按钮指示灯
+stopLight : Bool; // 停止按钮指示灯
+resetLight : Bool; // 复位按钮指示灯
+pauseLight : Bool; // 暂停按钮指示灯
+initLight : Bool; // 初始化按钮指示灯
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

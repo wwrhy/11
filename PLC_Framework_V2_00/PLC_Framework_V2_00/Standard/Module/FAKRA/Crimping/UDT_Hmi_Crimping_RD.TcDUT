@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Hmi_Crimping_RD" Id="{007ea8ba-b315-4383-a1e6-3832eb16c639}">
+    <Declaration><![CDATA[TYPE UDT_Hmi_Crimping_RD :
+STRUCT
+
+gripCyl:UDT_CylinderHmi_RD;
+jack1Cyl:UDT_CylinderHmi_RD;
+jack2Cyl:UDT_CylinderHmi_RD;
+cutCyl:UDT_CylinderHmi_RD;
+feedCyl:UDT_CylinderHmi_RD;
+changeCyl:UDT_CylinderHmi_RD;
+fixCyl:UDT_CylinderHmi_RD;
+stepFixCyl:UDT_CylinderHmi_RD;
+carrierHold1Cyl:UDT_CylinderHmi_RD;
+carrierHold2Cyl:UDT_CylinderHmi_RD;  
+jack3Cyl:UDT_CylinderHmi_RD;
+blow:UDT_CylinderHmi_RD; 
+
+transferAxis : UDT_AxisHmi_RD; 
+crimpAxis : UDT_AxisHmi_RD;
+
+rackFeeder:UDT_RackFeederHmi_RD;
+
+bad:UDT_BadHmi_RD;
+produce:UDT_ProduceHmi_RD;
+
+station : UDT_StationHmi_RD;
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

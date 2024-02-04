@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Data_Crimping_RD" Id="{4b747bac-57d5-44be-a18c-fed703e06ad4}">
+    <Declaration><![CDATA[TYPE UDT_Data_Crimping_RD :
+STRUCT
+  
+  gripCyl:UDT_CylinderData_RD;
+  jack1Cyl:UDT_CylinderData_RD;
+  jack2Cyl:UDT_CylinderData_RD;
+  cutCyl:UDT_CylinderData_RD;
+  feedCyl:UDT_CylinderData_RD;
+  changeCyl:UDT_CylinderData_RD;
+  fixCyl:UDT_CylinderData_RD;
+  stepFixCyl:UDT_CylinderData_RD;
+  carrierHold1Cyl:UDT_CylinderData_RD;
+  carrierHold2Cyl:UDT_CylinderData_RD;
+  jack3Cyl:UDT_CylinderData_RD;
+  blow:UDT_CylinderData_RD;
+  
+  transferAxis : UDT_AxisData_RD; 
+  crimpAxis : UDT_AxisData_RD;  
+  
+  rackFeeder:UDT_RackFeederData_RD;
+  
+  produceData:UDT_ProduceData_RD;
+  badData: ARRAY[0..ENUM_NgReason.CrimpNg] OF UDT_BadData_RD;
+  lastProduce:UDT_ProduceDataRecord_RD;
+  
+  CPP : UDT_Parameters_Crimping_RD;
+  
+  wearPart1 : UDT_WearPartData_RD;
+  wearPart2 : UDT_WearPartData_RD;
+ 
+  cableCheckSensorDisabled            : BOOL;
+  terminalCheckSensorDisabled         : BOOL;
+  terminalReiveCheckSensorDisabled    : BOOL;
+  crimpHomeCheckSensorDisabled        : BOOL;
+  oesDisabled                         : BOOL;  
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

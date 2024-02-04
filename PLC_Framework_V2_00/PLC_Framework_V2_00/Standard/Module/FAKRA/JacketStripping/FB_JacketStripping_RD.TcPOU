@@ -1,0 +1,1523 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_JacketStripping_RD" Id="{9c5a4241-6a04-40e3-af2d-e1ccd92ac998}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_JacketStripping_RD
+
+VAR_IN_OUT
+  JacketStripping : UDT_JacketStripping_RD;
+  JacketStrippingData : UDT_Data_JacketStripping_RD;  
+END_VAR
+
+VAR_INPUT
+   //JacketStripping 模组接口
+ homeValve_blow : BOOL;
+ workValve_blow : BOOL;
+ 
+ homeSensor_gripCyl : BOOL;
+ workSensor_gripCyl : BOOL;
+ homeValve_gripCyl : BOOL;
+ workValve_gripCyl : BOOL;
+ homeLabel_gripCyl : STRING[10];
+ workLabel_gripCyl : STRING[10];
+  
+ homeSensor_jackCyl : BOOL;
+ workSensor_jackCyl : BOOL;
+ homeValve_jackCyl : BOOL;
+ workValve_jackCyl : BOOL;
+ homeLabel_jackCyl : STRING[10];
+ workLabel_jackCyl : STRING[10];
+   
+ //GS 传送线接口
+ homeSensor_fixCyl : BOOL;
+ workSensor_fixCyl : BOOL;
+ homeValve_fixCyl : BOOL;
+ workValve_fixCyl : BOOL;
+ homeLabel_fixCyl : STRING[10];
+ workLabel_fixCyl : STRING[10];
+ 
+ homeSensor_stepFixCyl : BOOL;
+ workSensor_stepFixCyl : BOOL;
+ homeValve_stepFixCyl : BOOL;
+ workValve_stepFixCyl : BOOL;
+ homeLabel_stepFixCyl : STRING[10];
+ workLabel_stepFixCyl : STRING[10];
+ 
+END_VAR
+
+VAR  
+  machine   : UDT_Machine_RD;
+  station   : UDT_Station_RD;
+  gripCyl   : UDT_CylinderVar_RD;  
+  jackCyl   : UDT_CylinderVar_RD;
+  fixCyl    : UDT_CylinderVar_RD;
+  stepFixCyl: UDT_CylinderVar_RD;                           
+  blow      : UDT_CylinderVar_RD;
+  
+  rotateAxis    : UDT_AxisVar_RD; 
+  cutAxis       : UDT_AxisVar_RD; 
+  transferAxis  : UDT_AxisVar_RD; 
+  
+  badVar :  ARRAY[1..1] OF UDT_BadVar_RD; 
+  badData :  ARRAY[1..1] OF UDT_BadData_RD;
+  lastProduce : UDT_ProduceDataRecord_RD; 
+  produceVari : UDT_ProduceVar_RD; 
+  produceData : UDT_ProduceData_RD; 
+
+ 
+  fB_JacketStripping	: FB_Station_RD;
+	fB_gripCyl					: FB_Cylinder_RD;
+	fB_jackCyl					: FB_Cylinder_RD;
+	fB_fixCyl						: FB_Cylinder_RD;
+	fB_stepFixCyl				: FB_Cylinder_RD;
+	fB_blow             : FB_Cylinder_RD;
+	fb_rotateAxis			  : FB_Axis_RD;
+	fb_cutAxis					: FB_Axis_RD;
+	fb_transferAxis		  : FB_Axis_RD;
+  fb_produce          : FB_Produce_RD;
+  
+  firstCutTimer :TON;
+  firstOpenTimer :TON;
+  SecondCutTimer :TON;
+  secondOpenTimer :TON;
+  blowTimer :TON;
+  CommandTimer :TON;
+  CommandTime :TIME := T#1S;
+  CommandStep : UINT;
+  R_Command : R_TRIG;
+  
+  index : INT; 
+  index1 : INT;
+  index3 : INT;
+  activated : BOOL; 
+  tonOn : TON;
+  tonOff :TON;
+  onePlus : BOOL;
+  mcWriteParameterPersistent	: MC_WriteParameterPersistent;	//修改NC参数功能块
+  
+END_VAR
+
+VAR CONSTANT
+  INIT :INT := 0;
+  AUTO :INT := 1;
+  AUTO2 :INT :=2;
+  
+  //TransferAxis
+  HOME_TRANS        : UINT:=1;
+  FIRST_CUT_TRANS		: UINT:=2;
+	FIRST_BACK_TRANS	: UINT:=3;
+	SECOND_CUT_TRANS	: UINT:=4;
+	SECOND_BACK_TRANS	: UINT:=5;
+  THIRD_CUT_TRANS	  : UINT:=6;
+	THIRD_BACK_TRANS	: UINT:=7;
+  FOURTH_CUT_TRANS	: UINT:=8;
+	FOURTH_BACK_TRANS	: UINT:=9;
+  FIFTH_CUT_TRANS	  : UINT:=10;
+	FIFTH_BACK_TRANS	: UINT:=11;
+
+  
+  //CutAxis
+  HOME_CUT            : UINT:=1;
+	FIRST_PRECUT_CUT		: UINT:=2;
+	FIRST_CUT_CUT		    : UINT:=3;
+	FIRST_BACK_CUT			: UINT:=4;
+	SECOND_PRECUT_CUT		: UINT:=5;
+	SECOND_CUT_CUT			: UINT:=6;
+	SECOND_BACK_CUT			: UINT:=7;
+  THIRD_PRECUT_CUT		: UINT:=8;
+	THIRD_CUT_CUT		  	: UINT:=9;
+	THIRD_BACK_CUT			: UINT:=10;
+  FOURTH_PRECUT_CUT		: UINT:=11;
+	FOURTH_CUT_CUT		  : UINT:=12;
+	FOURTH_BACK_CUT			: UINT:=13;
+  FIFTH_PRECUT_CUT		: UINT:=14;
+	FIFTH_CUT_CUT	  	  : UINT:=15;
+	FIFTH_BACK_CUT			: UINT:=16;  
+
+  //rotateAxis
+  HOME_ROTATE   : UINT:=1;
+
+END_VAR
+
+VAR
+  
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SetUp();
+Command();
+General();
+Permit();
+StepInit();
+StepAuto();
+Alarm();
+AutoTip();
+ManualTip();
+Tip();
+Hmi();
+]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{8364b44a-7127-4339-b7c0-57a0b5478782}">
+      <Implementation>
+        <ST><![CDATA[JacketStripping.Message.userAlarms[0] := gripCyl.homeSensorOffAlarm[0];
+JacketStripping.Message.userAlarms[1] := gripCyl.homeSensorOnAlarm[0];
+JacketStripping.Message.userAlarms[2] := gripCyl.workSensorOffAlarm[0];
+JacketStripping.Message.userAlarms[3] := gripCyl.workSensorOnAlarm[0];
+
+JacketStripping.Message.userAlarms[4] := jackCyl.homeSensorOffAlarm[0];
+JacketStripping.Message.userAlarms[5] := jackCyl.homeSensorOnAlarm[0];
+JacketStripping.Message.userAlarms[6] := jackCyl.workSensorOffAlarm[0];
+JacketStripping.Message.userAlarms[7] := jackCyl.workSensorOnAlarm[0];
+
+JacketStripping.Message.userAlarms[8] := fixCyl.homeSensorOffAlarm[0];
+JacketStripping.Message.userAlarms[9] := fixCyl.homeSensorOnAlarm[0];
+JacketStripping.Message.userAlarms[10] := fixCyl.workSensorOffAlarm[0];
+JacketStripping.Message.userAlarms[11] := fixCyl.workSensorOnAlarm[0];
+
+JacketStripping.Message.userAlarms[12] := stepFixCyl.homeSensorOffAlarm[0];
+JacketStripping.Message.userAlarms[13] := stepFixCyl.homeSensorOnAlarm[0];
+JacketStripping.Message.userAlarms[14] := stepFixCyl.workSensorOffAlarm[0];
+JacketStripping.Message.userAlarms[15] := stepFixCyl.workSensorOnAlarm[0];
+
+
+JacketStripping.Message.userAlarms[16] := rotateAxis.alarming;
+JacketStripping.Message.userAlarms[17] := cutAxis.alarming;
+JacketStripping.Message.userAlarms[18] := transferAxis.alarming;
+
+
+JacketStripping.Message.presetAlarms[0] :=station.presetAlarms[0];//工站初始化超时报警
+
+JacketStripping.Message.presetAlarms16 := FUN_AryToWord_RD(JacketStripping.Message.presetAlarms);
+JacketStripping.Message.userAlarms64 := FUN_AryToLword_RD(JacketStripping.Message.userAlarms);
+
+(*CASE index OF
+    
+  0: 
+  index1 := 20;
+  index := index+10;;
+  
+  10:
+  index1 := index1 +1;
+  index := index+10;
+  
+  20:
+  CommandTimer(IN:= FALSE, PT:=CommandTime , Q=> , ET=> );
+  JacketStripping.Message.userAlarms[index1] := TRUE;
+  index := index+10;
+
+  
+  30:
+  JacketStripping.Message.userAlarms[index1-1] := FALSE;
+  CommandTimer(IN:= TRUE, PT:=CommandTime , Q=> , ET=> );
+  IF CommandTimer.Q THEN
+    index := index+10;
+	END_IF
+  
+  40:
+  IF index1 >=60 THEN
+    index := 0;
+    ELSIF index1<60 THEN
+    index := 10;            
+	END_IF
+  
+	END_CASE*)
+  
+  ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="AutoTip" Id="{884a347f-27a6-409c-8d87-ff0b81b9427f}">
+      <Implementation>
+        <ST><![CDATA[JacketStripping.Message.userAutoTips[0] := gripCyl.autoTip ;
+JacketStripping.Message.userAutoTips[1] := jackCyl.autoTip ;
+JacketStripping.Message.userAutoTips[2] := fixCyl.autoTip ;
+JacketStripping.Message.userAutoTips[3] := stepFixCyl.autoTip ;
+
+JacketStripping.Message.userAutoTips[4] := rotateAxis.notPowerOnAutoTip;
+JacketStripping.Message.userAutoTips[5] := rotateAxis.notHomeAutoTip;
+JacketStripping.Message.userAutoTips[6] := rotateAxis.notInPosAutoTip =HOME_ROTATE;
+
+JacketStripping.Message.userAutoTips[7] := transferAxis.notPowerOnAutoTip;
+JacketStripping.Message.userAutoTips[8] := transferAxis.notHomeAutoTip;
+JacketStripping.Message.userAutoTips[9] := transferAxis.notInPosAutoTip =HOME_TRANS;
+JacketStripping.Message.userAutoTips[10] := transferAxis.notInPosAutoTip =FIRST_CUT_TRANS;
+JacketStripping.Message.userAutoTips[11] := transferAxis.notInPosAutoTip =FIRST_BACK_TRANS;
+JacketStripping.Message.userAutoTips[12] := transferAxis.notInPosAutoTip =SECOND_CUT_TRANS;
+JacketStripping.Message.userAutoTips[13] := transferAxis.notInPosAutoTip =SECOND_BACK_TRANS;
+JacketStripping.Message.userAutoTips[14] := transferAxis.notInPosAutoTip =THIRD_CUT_TRANS;
+JacketStripping.Message.userAutoTips[15] := transferAxis.notInPosAutoTip =THIRD_BACK_TRANS;
+JacketStripping.Message.userAutoTips[16] := transferAxis.notInPosAutoTip =FOURTH_CUT_TRANS;
+JacketStripping.Message.userAutoTips[17] := transferAxis.notInPosAutoTip =FOURTH_BACK_TRANS;
+JacketStripping.Message.userAutoTips[18] := transferAxis.notInPosAutoTip =FIFTH_CUT_TRANS;
+JacketStripping.Message.userAutoTips[19] := transferAxis.notInPosAutoTip =FIFTH_BACK_TRANS;
+
+JacketStripping.Message.userAutoTips[20] := cutAxis.notPowerOnAutoTip;
+JacketStripping.Message.userAutoTips[21] := cutAxis.notHomeAutoTip;
+JacketStripping.Message.userAutoTips[22] := cutAxis.notInPosAutoTip = HOME_CUT;
+JacketStripping.Message.userAutoTips[23] := cutAxis.notInPosAutoTip = FIRST_PRECUT_CUT;
+JacketStripping.Message.userAutoTips[24] := cutAxis.notInPosAutoTip = FIRST_CUT_CUT;
+JacketStripping.Message.userAutoTips[25] := cutAxis.notInPosAutoTip = FIRST_BACK_CUT;
+JacketStripping.Message.userAutoTips[26] := cutAxis.notInPosAutoTip = SECOND_PRECUT_CUT;
+JacketStripping.Message.userAutoTips[27] := cutAxis.notInPosAutoTip = SECOND_CUT_CUT;
+JacketStripping.Message.userAutoTips[28] := cutAxis.notInPosAutoTip = SECOND_BACK_CUT;
+JacketStripping.Message.userAutoTips[29] := cutAxis.notInPosAutoTip = THIRD_PRECUT_CUT;
+JacketStripping.Message.userAutoTips[30] := cutAxis.notInPosAutoTip = THIRD_CUT_CUT;
+JacketStripping.Message.userAutoTips[31] := cutAxis.notInPosAutoTip = THIRD_BACK_CUT;
+JacketStripping.Message.userAutoTips[32] := cutAxis.notInPosAutoTip = FOURTH_PRECUT_CUT;
+JacketStripping.Message.userAutoTips[33] := cutAxis.notInPosAutoTip = FOURTH_CUT_CUT;
+JacketStripping.Message.userAutoTips[34] := cutAxis.notInPosAutoTip = FOURTH_BACK_CUT	;
+JacketStripping.Message.userAutoTips[35] := cutAxis.notInPosAutoTip = FIFTH_PRECUT_CUT;
+JacketStripping.Message.userAutoTips[36] := cutAxis.notInPosAutoTip = FIFTH_CUT_CUT;
+JacketStripping.Message.userAutoTips[37] := cutAxis.notInPosAutoTip = FIFTH_BACK_CUT;
+
+
+JacketStripping.Message.presetAutoTips[0] :=   station.presetAutoTips[0]; //工站未初始化
+JacketStripping.Message.presetAutoTips[1] :=   station.presetAutoTips[1];   //工站单循环中
+JacketStripping.Message.presetAutoTips[2] :=   station.presetAutoTips[2];   //工站运行条件不足
+
+JacketStripping.Message.presetAutoTips16 := FUN_AryToWord_RD(JacketStripping.Message.presetAutoTips);
+JacketStripping.Message.userAutoTips64 := FUN_AryToLword_RD(JacketStripping.Message.userAutoTips);
+
+
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Command" Id="{53833410-788c-45f4-a197-fa82c4bf056e}">
+      <Implementation>
+        <ST><![CDATA[IF activated THEN 
+  JacketStripping.UnitState :=ENUM_UnitState.OPERATIONAL;
+  ELSE
+  JacketStripping.UnitState :=ENUM_UnitState.DISABLED;  
+END_IF
+
+
+IF  station.initDone AND  station.flow[0].actStep = 0  
+  AND gripCyl.inHome AND jackCyl.inHome AND blow.inHome AND fixCyl.inHome AND stepFixCyl.inHome 
+  AND cutAxis.inPos[HOME_CUT] AND rotateAxis.inPos[HOME_ROTATE] AND transferAxis.inPos[HOME_TRANS] 
+ THEN
+  JacketStripping.Imm.allObjectInitPos :=TRUE;
+  ELSE
+   JacketStripping.Imm.allObjectInitPos :=FALSE; 
+END_IF
+
+
+
+(*R_Command(CLK:= JacketStripping.Command <> 0 AND JacketStripping.CommandState = ENUM_ExecState.READY, Q=>);
+
+CASE CommandStep OF
+
+0: IF JacketStripping.Command =ENUM_StationCommand.INIT AND R_Command.Q THEN CommandStep := 100;
+   ELSIF JacketStripping.Command =ENUM_StationCommand.START AND R_Command.Q THEN  CommandStep := 200;
+   ELSIF JacketStripping.Command =ENUM_StationCommand.STOP AND R_Command.Q THEN  CommandStep := 300;  
+   END_IF
+
+END_CASE*)]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{936642ec-2b45-4f2a-b93e-e28553fbc19d}">
+      <Implementation>
+        <ST><![CDATA[IF machine.reset THEN 
+  machine.tipReset := TRUE ;
+  MEMSET(destAddr:=ADR(machine.presetManualTips) , fillByte:= 0, n:=SIZEOF(machine.presetManualTips));
+ ELSE
+  machine.tipReset := FALSE ;
+END_IF
+
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Hmi" Id="{7b3b246a-7128-4a47-991c-1f20a439afdd}">
+      <Implementation>
+        <ST><![CDATA[// 触摸屏弹窗
+
+JacketStripping.Message.popupTrigger.1 := 
+  JacketStripping.Message.presetManualTips16 <> 0 OR 
+  JacketStripping.Message.userManualTips64<> 0;
+  
+JacketStripping.Message.popupTrigger.2 :=
+(JacketStripping.Message.presetAutoTips16 <> 0 OR 
+JacketStripping.Message.userAutoTips64 <> 0) AND 
+(station.autoTipTrigger OR machine.autoMode) ;
+
+IF machine.reset THEN
+  machine.popup:= 0;
+END_IF
+
+//.0 alarmTrigger 
+//.1 manualTipTrigger
+//.2 autoTipTrigger
+//.3 tipTrigger
+
+gripCyl.homehmi:=JacketStripping.Hmi.gripCyl.homehmi;// 原点hmi
+JacketStripping.Hmi.gripCyl.homeForbidIcon:=gripCyl.homeForbidIcon;// 原点禁止图标
+JacketStripping.Hmi.gripCyl.homeValve:=gripCyl.homeValve;// 原点阀
+JacketStripping.Hmi.gripCyl.homeManual:=gripCyl.homeManual;// 原点Manual
+gripCyl.workhmi:=JacketStripping.Hmi.gripCyl.workhmi;// 动点hmi
+JacketStripping.Hmi.gripCyl.workForbidIcon:=gripCyl.workForbidIcon;// 动点禁止图标
+JacketStripping.Hmi.gripCyl.workValve:=gripCyl.workValve;// 动点阀
+JacketStripping.Hmi.gripCyl.workManual:=gripCyl.workManual;// 动点Manual
+JacketStripping.Hmi.gripCyl.homeSensor[0]:=gripCyl.homeSensor[0];// 原点传感器
+JacketStripping.Hmi.gripCyl.workSensor[0]:=gripCyl.workSensor[0];// 动点传感器
+JacketStripping.Hmi.gripCyl.homeSensorLabel[0]:=gripCyl.homeSensorLabel[0];// 原点传感器标签
+JacketStripping.Hmi.gripCyl.workSensorLabel[0]:=gripCyl.workSensorLabel[0];// 动点传感器标签
+JacketStripping.Hmi.gripCyl.toHomeActionTime:=gripCyl.toHomeActionTime;// 到原点所用时间
+JacketStripping.Hmi.gripCyl.toWorkActionTime:=gripCyl.toWorkActionTime;// 到动点所用时间
+
+
+jackCyl.homehmi:=JacketStripping.Hmi.jackCyl.homehmi;// 原点hmi
+JacketStripping.Hmi.jackCyl.homeForbidIcon:=jackCyl.homeForbidIcon;// 原点禁止图标
+JacketStripping.Hmi.jackCyl.homeValve:=jackCyl.homeValve;// 原点阀
+JacketStripping.Hmi.jackCyl.homeManual:=jackCyl.homeManual;// 原点Manual
+jackCyl.workhmi:=JacketStripping.Hmi.jackCyl.workhmi;// 动点hmi
+JacketStripping.Hmi.jackCyl.workForbidIcon:=jackCyl.workForbidIcon;// 动点禁止图标
+JacketStripping.Hmi.jackCyl.workValve:=jackCyl.workValve;// 动点阀
+JacketStripping.Hmi.jackCyl.workManual:=jackCyl.workManual;// 动点Manual
+JacketStripping.Hmi.jackCyl.homeSensor[0]:=jackCyl.homeSensor[0];// 原点传感器
+JacketStripping.Hmi.jackCyl.workSensor[0]:=jackCyl.workSensor[0];// 动点传感器
+JacketStripping.Hmi.jackCyl.homeSensorLabel[0]:=jackCyl.homeSensorLabel[0];// 原点传感器标签
+JacketStripping.Hmi.jackCyl.workSensorLabel[0]:=jackCyl.workSensorLabel[0];// 动点传感器标签
+JacketStripping.Hmi.jackCyl.toHomeActionTime:=jackCyl.toHomeActionTime;// 到原点所用时间
+JacketStripping.Hmi.jackCyl.toWorkActionTime:=jackCyl.toWorkActionTime;// 到动点所用时间
+
+
+fixCyl.homehmi:=JacketStripping.Hmi.fixCyl.homehmi;// 原点hmi
+JacketStripping.Hmi.fixCyl.homeForbidIcon:=fixCyl.homeForbidIcon;// 原点禁止图标
+JacketStripping.Hmi.fixCyl.homeValve:=fixCyl.homeValve;// 原点阀
+JacketStripping.Hmi.fixCyl.homeManual:=fixCyl.homeManual;// 原点Manual
+fixCyl.workhmi:=JacketStripping.Hmi.fixCyl.workhmi;// 动点hmi
+JacketStripping.Hmi.fixCyl.workForbidIcon:=fixCyl.workForbidIcon;// 动点禁止图标
+JacketStripping.Hmi.fixCyl.workValve:=fixCyl.workValve;// 动点阀
+JacketStripping.Hmi.fixCyl.workManual:=fixCyl.workManual;// 动点Manual
+JacketStripping.Hmi.fixCyl.homeSensor[0]:=fixCyl.homeSensor[0];// 原点传感器
+JacketStripping.Hmi.fixCyl.workSensor[0]:=fixCyl.workSensor[0];// 动点传感器
+JacketStripping.Hmi.fixCyl.homeSensorLabel[0]:=fixCyl.homeSensorLabel[0];// 原点传感器标签
+JacketStripping.Hmi.fixCyl.workSensorLabel[0]:=fixCyl.workSensorLabel[0];// 动点传感器标签
+JacketStripping.Hmi.fixCyl.toHomeActionTime:=fixCyl.toHomeActionTime;// 到原点所用时间
+JacketStripping.Hmi.fixCyl.toWorkActionTime:=fixCyl.toWorkActionTime;// 到动点所用时间
+
+
+stepFixCyl.homehmi:=JacketStripping.Hmi.stepFixCyl.homehmi;// 原点hmi
+JacketStripping.Hmi.stepFixCyl.homeForbidIcon:=stepFixCyl.homeForbidIcon;// 原点禁止图标
+JacketStripping.Hmi.stepFixCyl.homeValve:=stepFixCyl.homeValve;// 原点阀
+JacketStripping.Hmi.stepFixCyl.homeManual:=stepFixCyl.homeManual;// 原点Manual
+stepFixCyl.workhmi:=JacketStripping.Hmi.stepFixCyl.workhmi;// 动点hmi
+JacketStripping.Hmi.stepFixCyl.workForbidIcon:=stepFixCyl.workForbidIcon;// 动点禁止图标
+JacketStripping.Hmi.stepFixCyl.workValve:=stepFixCyl.workValve;// 动点阀
+JacketStripping.Hmi.stepFixCyl.workManual:=stepFixCyl.workManual;// 动点Manual
+JacketStripping.Hmi.stepFixCyl.homeSensor[0]:=stepFixCyl.homeSensor[0];// 原点传感器
+JacketStripping.Hmi.stepFixCyl.workSensor[0]:=stepFixCyl.workSensor[0];// 动点传感器
+JacketStripping.Hmi.stepFixCyl.homeSensorLabel[0]:=stepFixCyl.homeSensorLabel[0];// 原点传感器标签
+JacketStripping.Hmi.stepFixCyl.workSensorLabel[0]:=stepFixCyl.workSensorLabel[0];// 动点传感器标签
+JacketStripping.Hmi.stepFixCyl.toHomeActionTime:=stepFixCyl.toHomeActionTime;// 到原点所用时间
+JacketStripping.Hmi.stepFixCyl.toWorkActionTime:=stepFixCyl.toWorkActionTime;// 到动点所用时间
+
+
+blow.homehmi:=JacketStripping.Hmi.blow.homehmi;// 原点hmi
+JacketStripping.Hmi.blow.homeForbidIcon:=blow.homeForbidIcon;// 原点禁止图标
+JacketStripping.Hmi.blow.homeValve:=blow.homeValve;// 原点阀
+JacketStripping.Hmi.blow.homeManual:=blow.homeManual;// 原点Manual
+blow.workhmi:=JacketStripping.Hmi.blow.workhmi;// 动点hmi
+JacketStripping.Hmi.blow.workForbidIcon:=blow.workForbidIcon;// 动点禁止图标
+JacketStripping.Hmi.blow.workValve:=blow.workValve;// 动点阀
+JacketStripping.Hmi.blow.workManual:=blow.workManual;// 动点Manual
+JacketStripping.Hmi.blow.homeSensor[0]:=blow.homeSensor[0];// 原点传感器
+JacketStripping.Hmi.blow.workSensor[0]:=blow.workSensor[0];// 动点传感器
+JacketStripping.Hmi.blow.homeSensorLabel[0]:=blow.homeSensorLabel[0];// 原点传感器标签
+JacketStripping.Hmi.blow.workSensorLabel[0]:=blow.workSensorLabel[0];// 动点传感器标签
+JacketStripping.Hmi.blow.toHomeActionTime:=blow.toHomeActionTime;// 到原点所用时间
+JacketStripping.Hmi.blow.toWorkActionTime:=blow.toWorkActionTime;// 到动点所用时间
+
+
+rotateAxis.powerhmi:=JacketStripping.Hmi.rotateAxis.powerhmi;// 伺服Onhmi
+JacketStripping.Hmi.rotateAxis.powerForbidIcon:=rotateAxis.powerForbidIcon;// 伺服On禁止图标
+JacketStripping.Hmi.rotateAxis.isPowerOn:=rotateAxis.isPowerOn;// 伺服On状态
+rotateAxis.halthmi:=JacketStripping.Hmi.rotateAxis.halthmi;// 伺服暂停hmi
+rotateAxis.resethmi:=JacketStripping.Hmi.rotateAxis.resethmi;// 伺服复位hmi
+rotateAxis.jogForwardhmi:=JacketStripping.Hmi.rotateAxis.jogForwardhmi;// 伺服JOG+_hmi
+JacketStripping.Hmi.rotateAxis.jogForwardForbidIcon:=rotateAxis.jogForwardForbidIcon;// 伺服JOG+禁止图标
+rotateAxis.jogBackwardshmi:=JacketStripping.Hmi.rotateAxis.jogBackwardshmi;// 伺服JOG-hmi
+JacketStripping.Hmi.rotateAxis.jogBackwardsForbidIcon:=rotateAxis.jogBackwardsForbidIcon;// 伺服JOG-禁止图标
+rotateAxis.homehmi:=JacketStripping.Hmi.rotateAxis.homehmi;// 伺服回原点hmi
+JacketStripping.Hmi.rotateAxis.homeForbidIcon:=rotateAxis.homeForbidIcon;// 伺服回原点禁止图标
+JacketStripping.Hmi.rotateAxis.homeDone:=rotateAxis.homeDone;// 伺服回原点完成
+rotateAxis.brakehmi:=JacketStripping.Hmi.rotateAxis.brakehmi;// 伺服刹车hmi
+JacketStripping.Hmi.rotateAxis.brakeForbidIcon:=rotateAxis.brakeForbidIcon;// 伺服刹车禁止图标
+JacketStripping.Hmi.rotateAxis.brake:=rotateAxis.brake;// 伺服刹车输出
+rotateAxis.movehmi:=JacketStripping.Hmi.rotateAxis.movehmi;// 定位启动hmi
+JacketStripping.Hmi.rotateAxis.moveForbidIcon:=rotateAxis.moveForbidIcon;// 定位启动禁止图标
+rotateAxis.posTeach:=JacketStripping.Hmi.rotateAxis.posTeach;// 当前位置示教
+rotateAxis.movehmiNo:=JacketStripping.Hmi.rotateAxis.movehmiNo;// 手动定位编号
+JacketStripping.Hmi.rotateAxis.inPosNo:=rotateAxis.inPosNo;// 伺服到位编号
+JacketStripping.Hmi.rotateAxis.status:=rotateAxis.status;// 伺服状态
+JacketStripping.Hmi.rotateAxis.ncErrID:=rotateAxis.ncErrID;// 伺服NC错误代码
+JacketStripping.Hmi.rotateAxis.warnID :=rotateAxis.warnID ;// 伺服警告代码
+JacketStripping.Hmi.rotateAxis.driverErrID:=rotateAxis.driverErrID;// 伺服驱动器代码
+JacketStripping.Hmi.rotateAxis.posUnit:=rotateAxis.posUnit;// 位置单位
+JacketStripping.Hmi.rotateAxis.veloUnit:=rotateAxis.veloUnit;// 速度单位
+JacketStripping.Hmi.rotateAxis.accDecUnit:=rotateAxis.accDecUnit;// 加/减速度单位
+JacketStripping.Hmi.rotateAxis.actPos:=rotateAxis.actPos;// 当前坐标
+JacketStripping.Hmi.rotateAxis.actVelo:=rotateAxis.actVelo;// 当前速度
+JacketStripping.Hmi.rotateAxis.actTorque:=rotateAxis.actTorque;// 当前转矩
+JacketStripping.Hmi.rotateAxis.lsp:=rotateAxis.lsp;// 伺服正极限
+JacketStripping.Hmi.rotateAxis.lsn:=rotateAxis.lsn;// 伺服负极限
+JacketStripping.Hmi.rotateAxis.dog:=rotateAxis.dog;// 伺服原点感应
+JacketStripping.Hmi.rotateAxis.targetDistance:=rotateAxis.targetDistance;// 目标距离
+JacketStripping.Hmi.rotateAxis.targetVelocity:=rotateAxis.targetVelocity;// 目标速度
+
+
+
+
+
+cutAxis.powerhmi:=JacketStripping.Hmi.cutAxis.powerhmi;// 伺服Onhmi
+JacketStripping.Hmi.cutAxis.powerForbidIcon:=cutAxis.powerForbidIcon;// 伺服On禁止图标
+JacketStripping.Hmi.cutAxis.isPowerOn:=cutAxis.isPowerOn;// 伺服On状态
+cutAxis.halthmi:=JacketStripping.Hmi.cutAxis.halthmi;// 伺服暂停hmi
+cutAxis.resethmi:=JacketStripping.Hmi.cutAxis.resethmi;// 伺服复位hmi
+cutAxis.jogForwardhmi:=JacketStripping.Hmi.cutAxis.jogForwardhmi;// 伺服JOG+_hmi
+JacketStripping.Hmi.cutAxis.jogForwardForbidIcon:=cutAxis.jogForwardForbidIcon;// 伺服JOG+禁止图标
+cutAxis.jogBackwardshmi:=JacketStripping.Hmi.cutAxis.jogBackwardshmi;// 伺服JOG-hmi
+JacketStripping.Hmi.cutAxis.jogBackwardsForbidIcon:=cutAxis.jogBackwardsForbidIcon;// 伺服JOG-禁止图标
+cutAxis.homehmi:=JacketStripping.Hmi.cutAxis.homehmi;// 伺服回原点hmi
+JacketStripping.Hmi.cutAxis.homeForbidIcon:=cutAxis.homeForbidIcon;// 伺服回原点禁止图标
+JacketStripping.Hmi.cutAxis.homeDone:=cutAxis.homeDone;// 伺服回原点完成
+cutAxis.brakehmi:=JacketStripping.Hmi.cutAxis.brakehmi;// 伺服刹车hmi
+JacketStripping.Hmi.cutAxis.brakeForbidIcon:=cutAxis.brakeForbidIcon;// 伺服刹车禁止图标
+JacketStripping.Hmi.cutAxis.brake:=cutAxis.brake;// 伺服刹车输出
+cutAxis.movehmi:=JacketStripping.Hmi.cutAxis.movehmi;// 定位启动hmi
+JacketStripping.Hmi.cutAxis.moveForbidIcon:=cutAxis.moveForbidIcon;// 定位启动禁止图标
+cutAxis.posTeach:=JacketStripping.Hmi.cutAxis.posTeach;// 当前位置示教
+cutAxis.movehmiNo:=JacketStripping.Hmi.cutAxis.movehmiNo;// 手动定位编号
+JacketStripping.Hmi.cutAxis.inPosNo:=cutAxis.inPosNo;// 伺服到位编号
+JacketStripping.Hmi.cutAxis.status:=cutAxis.status;// 伺服状态
+JacketStripping.Hmi.cutAxis.ncErrID:=cutAxis.ncErrID;// 伺服NC错误代码
+JacketStripping.Hmi.cutAxis.driverErrID:=cutAxis.driverErrID;// 伺服驱动器代码
+JacketStripping.Hmi.cutAxis.warnID :=cutAxis.warnID ;// 伺服警告代码
+JacketStripping.Hmi.cutAxis.posUnit:=cutAxis.posUnit;// 位置单位
+JacketStripping.Hmi.cutAxis.veloUnit:=cutAxis.veloUnit;// 速度单位
+JacketStripping.Hmi.cutAxis.accDecUnit:=cutAxis.accDecUnit;// 加/减速度单位
+JacketStripping.Hmi.cutAxis.actPos:=cutAxis.actPos;// 当前坐标
+JacketStripping.Hmi.cutAxis.actVelo:=cutAxis.actVelo;// 当前速度
+JacketStripping.Hmi.cutAxis.actTorque:=cutAxis.actTorque;// 当前转矩
+JacketStripping.Hmi.cutAxis.lsp:=cutAxis.lsp;// 伺服正极限
+JacketStripping.Hmi.cutAxis.lsn:=cutAxis.lsn;// 伺服负极限
+JacketStripping.Hmi.cutAxis.dog:=cutAxis.dog;// 伺服原点感应
+JacketStripping.Hmi.cutAxis.targetDistance:=cutAxis.targetDistance;// 目标距离
+JacketStripping.Hmi.cutAxis.targetVelocity:=cutAxis.targetVelocity;// 目标速度
+
+
+
+
+transferAxis.powerhmi:=JacketStripping.Hmi.transferAxis.powerhmi;// 伺服Onhmi
+JacketStripping.Hmi.transferAxis.powerForbidIcon:=transferAxis.powerForbidIcon;// 伺服On禁止图标
+JacketStripping.Hmi.transferAxis.isPowerOn:=transferAxis.isPowerOn;// 伺服On状态
+transferAxis.halthmi:=JacketStripping.Hmi.transferAxis.halthmi;// 伺服暂停hmi
+transferAxis.resethmi:=JacketStripping.Hmi.transferAxis.resethmi;// 伺服复位hmi
+transferAxis.jogForwardhmi:=JacketStripping.Hmi.transferAxis.jogForwardhmi;// 伺服JOG+_hmi
+JacketStripping.Hmi.transferAxis.jogForwardForbidIcon:=transferAxis.jogForwardForbidIcon;// 伺服JOG+禁止图标
+transferAxis.jogBackwardshmi:=JacketStripping.Hmi.transferAxis.jogBackwardshmi;// 伺服JOG-hmi
+JacketStripping.Hmi.transferAxis.jogBackwardsForbidIcon:=transferAxis.jogBackwardsForbidIcon;// 伺服JOG-禁止图标
+transferAxis.homehmi:=JacketStripping.Hmi.transferAxis.homehmi;// 伺服回原点hmi
+JacketStripping.Hmi.transferAxis.homeForbidIcon:=transferAxis.homeForbidIcon;// 伺服回原点禁止图标
+JacketStripping.Hmi.transferAxis.homeDone:=transferAxis.homeDone;// 伺服回原点完成
+transferAxis.brakehmi:=JacketStripping.Hmi.transferAxis.brakehmi;// 伺服刹车hmi
+JacketStripping.Hmi.transferAxis.brakeForbidIcon:=transferAxis.brakeForbidIcon;// 伺服刹车禁止图标
+JacketStripping.Hmi.transferAxis.brake:=transferAxis.brake;// 伺服刹车输出
+transferAxis.movehmi:=JacketStripping.Hmi.transferAxis.movehmi;// 定位启动hmi
+JacketStripping.Hmi.transferAxis.moveForbidIcon:=transferAxis.moveForbidIcon;// 定位启动禁止图标
+transferAxis.posTeach:=JacketStripping.Hmi.transferAxis.posTeach;// 当前位置示教
+transferAxis.movehmiNo:=JacketStripping.Hmi.transferAxis.movehmiNo;// 手动定位编号
+JacketStripping.Hmi.transferAxis.inPosNo:=transferAxis.inPosNo;// 伺服到位编号
+JacketStripping.Hmi.transferAxis.status:=transferAxis.status;// 伺服状态
+JacketStripping.Hmi.transferAxis.ncErrID:=transferAxis.ncErrID;// 伺服NC错误代码
+JacketStripping.Hmi.transferAxis.driverErrID:=transferAxis.driverErrID;// 伺服驱动器代码
+JacketStripping.Hmi.transferAxis.warnID :=transferAxis.warnID ;// 伺服警告代码
+JacketStripping.Hmi.transferAxis.posUnit:=transferAxis.posUnit;// 位置单位
+JacketStripping.Hmi.transferAxis.veloUnit:=transferAxis.veloUnit;// 速度单位
+JacketStripping.Hmi.transferAxis.accDecUnit:=transferAxis.accDecUnit;// 加/减速度单位
+JacketStripping.Hmi.transferAxis.actPos:=transferAxis.actPos;// 当前坐标
+JacketStripping.Hmi.transferAxis.actVelo:=transferAxis.actVelo;// 当前速度
+JacketStripping.Hmi.transferAxis.actTorque:=transferAxis.actTorque;// 当前转矩
+JacketStripping.Hmi.transferAxis.lsp:=transferAxis.lsp;// 伺服正极限
+JacketStripping.Hmi.transferAxis.lsn:=transferAxis.lsn;// 伺服负极限
+JacketStripping.Hmi.transferAxis.dog:=transferAxis.dog;// 伺服原点感应
+JacketStripping.Hmi.transferAxis.targetDistance:=transferAxis.targetDistance;// 目标距离
+JacketStripping.Hmi.transferAxis.targetVelocity:=transferAxis.targetVelocity;// 目标速度
+
+
+Station.inithmi:=JacketStripping.Hmi.Station.inithmi;// 工站初始化hmi
+JacketStripping.Hmi.Station.initForbidIcon:=Station.initForbidIcon;// 工站初始化禁止图标
+JacketStripping.Hmi.Station.initing:=Station.initing;// 工站初始化中
+Station.cycleRunhmi:=JacketStripping.Hmi.Station.cycleRunhmi;// 工站单循环hmi
+JacketStripping.Hmi.Station.cycleRunForbidIcon:=Station.cycleRunForbidIcon;// 工站单循环禁止图标
+JacketStripping.Hmi.Station.cycleRunning:=Station.cycleRunning;// 工站单循环中
+Station.jogRunhmi:=JacketStripping.Hmi.Station.jogRunhmi;// 工站寸动hmi
+JacketStripping.Hmi.Station.jogRunForbidIcon:=Station.jogRunForbidIcon;// 工站寸动禁止图标
+JacketStripping.Hmi.Station.jogRunning:=Station.jogRunning;// 工站寸动中
+Station.pausehmi:=JacketStripping.Hmi.Station.pausehmi;// 工站暂停hmi
+Station.disablehmi:=JacketStripping.Hmi.Station.disablehmi;// 工站屏蔽hmi
+Station.repetitionsEnable:=JacketStripping.Hmi.Station.repetitionsEnable;// 单循环重复动作开启
+Station.repetitionsClear:=JacketStripping.Hmi.Station.repetitionsClear;// 单循环重复动作计数清零
+JacketStripping.Hmi.Station.repetitions:=Station.repetitions;// 单循环重复动作计数
+Station.repetitionsTimes:=JacketStripping.Hmi.Station.repetitionsTimes;// 单循环重复动作次数设置
+JacketStripping.Hmi.Station.status:=Station.status;// 工站状态显示
+JacketStripping.Hmi.Station.cycleTime:=Station.cycleTime;// 工站周期时间
+JacketStripping.Hmi.Station.flow[0].actStep:=Station.flow[0].actStep;// 流程当前步号
+JacketStripping.Hmi.Station.flow[1].actStep:=Station.flow[1].actStep;// 流程当前步号
+
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ManualTip" Id="{675a859f-e0c7-4f4d-9a4f-ee17218ba80b}">
+      <Implementation>
+        <ST><![CDATA[ JacketStripping.Message.presetManualTips[0] := machine.presetManualTips[0];//急停中,无法操作
+ JacketStripping.Message.presetManualTips[1] := machine.presetManualTips[1];//安全条件不满足,无法操作
+ JacketStripping.Message.presetManualTips[2] := machine.presetManualTips[2];//安全门未锁好,无法操作
+ JacketStripping.Message.presetManualTips[3] := machine.presetManualTips[3];//气压不足,无法操作
+ JacketStripping.Message.presetManualTips[4] := machine.presetManualTips[4];//不在手动模式,无法操作
+ 
+ JacketStripping.Message.userManualTips[0]:= rotateAxis.notPowerOnManualTip;
+ JacketStripping.Message.userManualTips[1]:= rotateAxis.unableBrakeManualTip;
+ JacketStripping.Message.userManualTips[2]:= rotateAxis.unablePowerOnManualTip;
+ JacketStripping.Message.userManualTips[3]:= cutAxis.notPowerOnManualTip;
+ JacketStripping.Message.userManualTips[4]:= cutAxis.unableBrakeManualTip;
+ JacketStripping.Message.userManualTips[5]:= cutAxis.unablePowerOnManualTip;
+ JacketStripping.Message.userManualTips[6]:= transferAxis.notPowerOnManualTip;
+ JacketStripping.Message.userManualTips[7]:= transferAxis.unableBrakeManualTip;
+ JacketStripping.Message.userManualTips[8]:= transferAxis.unablePowerOnManualTip;
+ JacketStripping.Message.userManualTips[9]:= fixCyl.noWorkPermitManualTip;
+ JacketStripping.Message.userManualTips[10]:= stepFixCyl.noWorkPermitManualTip;
+ 
+ 
+ JacketStripping.Message.presetManualTips16 := FUN_AryToWord_RD(JacketStripping.Message.presetManualTips);
+ JacketStripping.Message.userManualTips64 := FUN_AryToLword_RD(JacketStripping.Message.userManualTips);
+ 
+ ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Permit" Id="{e7e60a10-53ba-4fdc-ad68-004dd66a69a2}">
+      <Implementation>
+        <ST><![CDATA[fixCyl.workPermit := JacketStripping.Imm.carrierInPos;
+stepFixCyl.workPermit := JacketStripping.Imm.carrierInPos;
+JacketStripping.Imm.carrierFree := gripCyl.inHome AND jackCyl.inHome  AND fixCyl.inHome AND stepFixCyl.inHome AND transferAxis.inPos[HOME_TRANS];]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{72ea1e3a-04c1-454d-b202-f8fcb08c401f}">
+      <Implementation>
+        <ST><![CDATA[//FB
+
+  fb_JacketStripping(machine:=Machine , station:=station );
+  
+  fb_gripCyl(machine:= Machine, station:= station, vari:= gripCyl, data:=JacketStrippingData.GripCyl );
+  fb_jackCyl(machine:=Machine , station:=station , vari:= jackCyl, data:= JacketStrippingData.JackCyl);
+  fb_blow(machine:= Machine, station:= station, vari:=blow , data:= JacketStrippingData.Blow);
+  
+  fb_fixCyl(machine:= Machine, station:= station, vari:= fixCyl, data:=JacketStrippingData.FixCyl );
+  fb_stepFixCyl(machine:=Machine , station:=station , vari:= stepFixCyl, data:=JacketStrippingData.StepFixCyl );
+  
+  fb_rotateAxis(machine:= Machine, station:= station, vari:= rotateAxis, data:= JacketStrippingData.RotateAxis);
+  fb_transferAxis(machine:= Machine, station:= station, vari:= transferAxis, data:= JacketStrippingData.TransferAxis);
+  fb_cutAxis(machine:= Machine, station:= station, vari:= cutAxis, data:= JacketStrippingData.CutAxis);
+   
+  fb_produce(machine:= Machine, station:= station, vari:= produceVari, data:= produceData, badVar:= badVar, badData:= badData, lastProduce:=lastProduce );
+  
+
+//Imm
+
+  Machine.airOn := JacketStripping.Imm.Machine_airOn;
+  Machine.allDoorClosed:=JacketStripping.Imm.Machine_allDoorClosed;
+  Machine.eStop:=JacketStripping.Imm.Machine_eStop;
+  Machine.safety:=JacketStripping.Imm.Machine_safety;
+  Machine.manualMode:=JacketStripping.Imm.Machine_manualMode;
+  Machine.autoMode:=JacketStripping.Imm.Machine_autoMode;
+  Machine.reset := JacketStripping.Imm.Machine_reset;
+  machine.stopping := JacketStripping.Imm.Machine_stopping;
+
+  
+   
+  station.canRun:= JacketStripping.Imm.stationCanRun; 
+  station.done := JacketStripping.Imm.stationDone;
+ 
+// VAR INPUT
+  
+  gripCyl.homeSensor[0]:= HomeSensor_gripCyl ;
+  gripCyl.workSensor[0]:= WorkSensor_gripCyl ;
+  HomeValve_gripCyl:= gripCyl.homeValve ;
+  WorkValve_gripCyl:= gripCyl.workValve ;
+  gripCyl.homeSensorLabel[0] := HomeLabel_gripCyl;
+  gripCyl.workSensorLabel[0] := WorkLabel_gripCyl;
+  
+  jackCyl.homeSensor[0]:= HomeSensor_jackCyl ;
+  jackCyl.workSensor[0]:= WorkSensor_jackCyl ;
+  HomeValve_jackCyl:= jackCyl.homeValve ;
+  WorkValve_jackCyl:= jackCyl.workValve ;
+  jackCyl.homeSensorLabel[0] := HomeLabel_jackCyl;
+  jackCyl.workSensorLabel[0] := WorkLabel_jackCyl;
+  
+  HomeValve_blow:= blow.homeValve ;
+  WorkValve_blow:= blow.workValve ;
+  
+  fixCyl.homeSensor[0]:= HomeSensor_fixCyl ;
+  fixCyl.workSensor[0]:= WorkSensor_fixCyl ;
+  HomeValve_fixCyl:= fixCyl.homeValve ;
+  WorkValve_fixCyl:= fixCyl.workValve ;
+  fixCyl.homeSensorLabel[0] := HomeLabel_fixCyl;
+  fixCyl.workSensorLabel[0] := WorkLabel_fixCyl;
+  
+  stepFixCyl.homeSensor[0]:= HomeSensor_stepFixCyl ;
+  stepFixCyl.workSensor[0]:= WorkSensor_stepFixCyl ;
+  HomeValve_stepFixCyl:= stepFixCyl.homeValve ;
+  WorkValve_stepFixCyl:= stepFixCyl.workValve ;
+  stepFixCyl.homeSensorLabel[0] := HomeLabel_stepFixCyl;
+  stepFixCyl.workSensorLabel[0] := WorkLabel_stepFixCyl;
+  
+// Parameter 
+
+  JacketStrippingData.Blow.homeSensorDisabled[0] := TRUE;
+  JacketStrippingData.Blow.workSensorDisabled[0] := TRUE;
+  
+  rotateAxis.modulo.divisor := 2;
+  rotateAxis.modulo.stepPoint :=1;
+  rotateAxis.modulo.factor :=360;
+  rotateAxis.modulo.mode := 1;
+  rotateAxis.modulo.enable :=TRUE;
+  rotateAxis.posUnit			:='deg';
+  rotateAxis.veloUnit			:='deg/s';
+  rotateAxis.accDecUnit	  :="deg/s²";
+  
+  cutAxis.movePosNum := 18;
+  transferAxis.movePosNum := 15;
+  rotateAxis.velocity :=1000;
+  
+  rotateAxis.Override := JacketStrippingData.CPP.override;
+  TransferAxis.Override := JacketStrippingData.CPP.override;
+  CutAxis.Override := JacketStrippingData.CPP.override;
+  
+  tonOn(IN:= onePlus, PT:= T#2S, Q=> , ET=> );
+  tonOff(IN:= NOT onePlus, PT:= T#2S, Q=> , ET=> );
+  IF tonOn.Q OR tonOff.Q THEN
+    onePlus := NOT onePlus;
+  END_IF
+  
+  mcWriteParameterPersistent(
+    Axis:= rotateAxis.axis, 
+    Execute:= onePlus, 
+    ParameterNumber:= 1045, 
+    Value:= 360.0, 
+    Done=> , 
+    Busy=> , 
+    Error=> , 
+    ErrorID=> );
+    
+
+
+//DATA 模拟
+
+  IF NOT activated THEN
+  
+  activated:=TRUE;
+  
+  JacketStripping.Imm.Machine_airOn := TRUE;
+  JacketStripping.Imm.Machine_allDoorClosed:= TRUE;
+  JacketStripping.Imm.Machine_eStop:= TRUE;
+  JacketStripping.Imm.Machine_safety:= TRUE;
+  JacketStripping.Imm.Machine_manualMode:= TRUE;
+  
+  JacketStripping.Imm.carrierInPos := TRUE;
+  JacketStripping.Imm.carrierPos := ENUM_CarrierPos.Left;
+  JacketStripping.Imm.StationCanRun := TRUE;
+  JacketStrippingData.CPP.override := 100;
+  
+  JacketStrippingData.CutAxis.movePos[HOME_CUT] := 40;
+  JacketStrippingData.CutAxis.movePos[FIRST_PRECUT_CUT] := 30;
+  JacketStrippingData.CutAxis.movePos[FIRST_CUT_CUT] := 10;
+  JacketStrippingData.CutAxis.movePos[FIRST_BACK_CUT] := 20;
+  JacketStrippingData.CutAxis.movePos[SECOND_PRECUT_CUT] := 25;
+  JacketStrippingData.CutAxis.movePos[SECOND_CUT_CUT] :=5;
+  JacketStrippingData.CutAxis.movePos[SECOND_BACK_CUT] := 15;
+  
+  JacketStrippingData.TransferAxis.movePos[HOME_TRANS] := 0;
+  JacketStrippingData.TransferAxis.movePos[FIRST_CUT_TRANS] := 200;
+  JacketStrippingData.TransferAxis.movePos[FIRST_BACK_TRANS] := 50;
+  JacketStrippingData.TransferAxis.movePos[SECOND_CUT_TRANS] := 100;
+  JacketStrippingData.TransferAxis.movePos[SECOND_BACK_TRANS] := 25;
+  
+  JacketStrippingData.GripCyl.homeSensorDisabled[0] := TRUE;
+  JacketStrippingData.GripCyl.workSensorDisabled[0] := TRUE;
+  JacketStrippingData.JackCyl.homeSensorDisabled[0] := TRUE;
+  JacketStrippingData.JackCyl.workSensorDisabled[0] := TRUE;
+  JacketStrippingData.FixCyl.homeSensorDisabled[0] := TRUE;
+  JacketStrippingData.FixCyl.workSensorDisabled[0] := TRUE;
+  JacketStrippingData.StepFixCyl.homeSensorDisabled[0] := TRUE;
+  JacketStrippingData.StepFixCyl.workSensorDisabled[0] := TRUE;
+  JacketStrippingData.GripCyl.homeTime := 500;
+  JacketStrippingData.GripCyl.workTime := 500;
+  JacketStrippingData.JackCyl.homeTime := 500;
+  JacketStrippingData.JackCyl.workTime := 500;
+  JacketStrippingData.FixCyl.homeTime := 500;
+  JacketStrippingData.FixCyl.workTime := 500;
+  JacketStrippingData.StepFixCyl.homeTime := 500;
+  JacketStrippingData.StepFixCyl.workTime := 500;
+  JacketStrippingData.Blow.homeTime := 500;
+  JacketStrippingData.Blow.workTime := 500;
+  
+  END_IF
+  
+
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="StepAuto" Id="{920d3909-8a2f-496b-9209-6b5312d7b910}">
+      <Implementation>
+        <ST><![CDATA[IF NOT station.initDone THEN
+	station.flow[AUTO].actStep:=0;
+ELSIF station.running 
+THEN
+
+CASE station.flow[AUTO].actStep OF
+
+//	Home Step
+0:
+IF station.disabled
+	AND station.canRun
+  AND JacketStripping.Imm.allObjectInitPos
+  AND NOT machine.stopping
+  AND NOT station.cycleRunning
+THEN
+	JacketStripping.Imm.stationDone:=TRUE;
+END_IF
+
+IF (station.cycleRunning
+		OR station.canRun
+      AND JacketStripping.Imm.allObjectInitPos
+			AND NOT station.Done
+			AND NOT station.Disabled
+      AND NOT machine.stopping
+	)
+	AND JacketStripping.Imm.carrierInPos
+THEN
+	station.flow[AUTO].actStep:=10;
+	station.cycleTimeStart:=TRUE;
+	station.cycleTimeEnd:=FALSE;
+END_IF
+
+
+//	fixCyl up
+10:
+IF JacketStripping.Imm.carrierPos= ENUM_CarrierPos.Left THEN
+  fixCyl.auto:= TRUE;
+  JacketStripping.Imm.carrierLeftProductState := 0;
+	IF fixCyl.inWork THEN
+		station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+	END_IF
+ELSIF JacketStripping.Imm.carrierPos= ENUM_CarrierPos.Right THEN
+  stepFixCyl.auto:= TRUE;
+  JacketStripping.Imm.carrierRightProductState := 0;
+	IF stepFixCyl.inWork THEN
+		station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+	END_IF
+END_IF
+
+
+//	jackCyl up
+20:
+jackCyl.auto:=TRUE;
+IF jackCyl.inWork THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//	gripCyl close
+30:
+gripCyl.auto:=TRUE;
+IF gripCyl.inWork THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//transferAxis to firstCut pos
+40:
+transferAxis.moveAutoNo:=FIRST_CUT_TRANS;
+IF transferAxis.inPos[FIRST_CUT_TRANS] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//cutAxis to firstPreCut pos
+50:
+cutAxis.moveAutoNo:=FIRST_PRECUT_CUT;
+rotateAxis.velocityAuto:=TRUE;
+IF cutAxis.inPos[FIRST_PRECUT_CUT] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//rotateAxis start
+60:
+IF rotateAxis.InVelocity THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//cutAxis to firstCut pos
+70:
+cutAxis.moveAutoNo:= FIRST_CUT_CUT;
+IF cutAxis.inPos[FIRST_CUT_CUT] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+firstCutTimer(IN:=FALSE,PT:=UDINT_TO_TIME(JacketStrippingData.CPP.FirstCutTime),Q=>,ET=>);
+
+
+//Wait firstCut delay
+80:
+firstCutTimer(IN:=TRUE,PT:=UDINT_TO_TIME(JacketStrippingData.CPP.FirstCutTime),Q=>,ET=>);
+IF firstCutTimer.Q THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//rotateAxis end
+90:
+  rotateAxis.stopAuto:=TRUE;
+  IF rotateAxis.Axis.Status.NotMoving THEN
+    rotateAxis.stopAuto:=FALSE;
+    station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 5;
+	END_IF
+  
+//cutAxis to firstBack pos  
+95:
+  rotateAxis.stopAuto:=FALSE;
+cutAxis.moveAutoNo:= FIRST_BACK_CUT;
+IF cutAxis.inPos[FIRST_BACK_CUT] THEN 	
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 5;
+END_IF
+firstOpenTimer(IN:=FALSE,PT:= UDINT_TO_TIME(JacketStrippingData.CPP.firstOpenTime),Q=>,ET=>);
+
+
+//Wait firstOpen delay
+100:
+firstOpenTimer(IN:=TRUE,PT:=UDINT_TO_TIME(JacketStrippingData.CPP.firstOpenTime),Q=>,ET=>);
+IF firstOpenTimer.Q THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+110:
+//transferAxis to firstBack pos
+transferAxis.moveAutoNo:=FIRST_BACK_TRANS;
+IF transferAxis.inPos[FIRST_BACK_TRANS] THEN
+	IF NOT JacketStrippingData.CPP.secondCutEnable THEN
+		IF JacketStripping.Imm.carrierPos = ENUM_CarrierPos.Left THEN
+			JacketStripping.Imm.carrierLeftProductState:=ENUM_ProductState.Good;
+		ELSIF JacketStripping.Imm.carrierPos =ENUM_CarrierPos.Right THEN
+			JacketStripping.Imm.carrierRightProductState:=ENUM_ProductState.Good;
+		END_IF
+		station.flow[AUTO].actStep:=900;
+	ELSE
+		station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+	END_IF
+END_IF
+
+
+//cutAxis to home pos
+120:
+cutAxis.moveAutoNo:= HOME_CUT;
+IF cutAxis.inPos[HOME_CUT] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 80;
+END_IF
+
+//transferAxis to secondCut pos
+200:
+transferAxis.moveAutoNo:=SECOND_CUT_TRANS;
+IF transferAxis.inPos[SECOND_CUT_TRANS] THEN
+  	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//cutAxis to secondPreCut pos
+210:
+rotateAxis.VelocityAuto:=TRUE;
+cutAxis.moveAutoNo:= SECOND_PRECUT_CUT;
+IF cutAxis.inPos[SECOND_PRECUT_CUT] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//rotateAxis start
+220:
+IF rotateAxis.InVelocity THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//cutAxis to secondCut pos
+230:
+
+cutAxis.moveAutoNo:= SECOND_CUT_CUT;
+IF cutAxis.inPos[SECOND_CUT_CUT] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+SecondCutTimer(IN:=FALSE,PT:=UDINT_TO_TIME(JacketStrippingData.CPP.SecondCutTime),Q=>,ET=>);
+
+
+//Wait secondCut delay
+240:
+SecondCutTimer(IN:=TRUE,PT:=UDINT_TO_TIME(JacketStrippingData.CPP.SecondCutTime),Q=>,ET=>);
+IF SecondCutTimer.Q THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//rotateAxis end
+250:
+  rotateAxis.stopAuto:=TRUE;
+  IF rotateAxis.Axis.Status.NotMoving THEN
+    rotateAxis.stopAuto:=FALSE;
+    station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 5;
+	END_IF
+  
+//cutAxis to firstBack pos  
+255:
+  rotateAxis.stopAuto:=FALSE;
+cutAxis.moveAutoNo:= SECOND_BACK_CUT;
+IF cutAxis.inPos[SECOND_BACK_CUT] THEN 	
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 5;
+END_IF
+secondOpenTimer(IN:=FALSE,PT:=UDINT_TO_TIME(JacketStrippingData.CPP.secondOpenTime),Q=>,ET=>);
+
+
+//Wait secondOpen delay
+260:
+secondOpenTimer(IN:=TRUE,PT:=UDINT_TO_TIME(JacketStrippingData.CPP.secondOpenTime),Q=>,ET=>);
+IF secondOpenTimer.Q THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//transferAxis to secondBack pos
+270:
+transferAxis.moveAutoNo:=SECOND_BACK_TRANS;
+IF transferAxis.InPos[SECOND_BACK_TRANS] THEN
+	IF JacketStripping.Imm.carrierPos = ENUM_CarrierPos.Left THEN
+		JacketStripping.Imm.carrierLeftProductState:=ENUM_ProductState.Good;
+	ELSIF JacketStripping.Imm.carrierPos = ENUM_CarrierPos.Right THEN
+		JacketStripping.Imm.carrierLeftProductState:=ENUM_ProductState.Good;
+	END_IF
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 30;
+END_IF
+
+
+//cutAxis to home pos
+900:
+cutAxis.moveAutoNo := HOME_CUT;
+IF cutAxis.InPos[HOME_CUT] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//transferAxis&rotateAxis to home pos
+910:
+transferAxis.moveAutoNo:= HOME_TRANS;
+rotateAxis.moveAutoNo:=HOME_ROTATE;
+IF transferAxis.InPos[HOME_TRANS]
+	AND rotateAxis.inPos[HOME_ROTATE]
+THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//gripCyl home
+920:
+gripCyl.auto:=FALSE;
+IF gripCyl.inHome THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//fixCyl jackCyl home
+930:
+fixCyl.auto:=FALSE;
+stepFixCyl.auto:=FALSE;
+jackCyl.auto:=FALSE;
+IF fixCyl.inHome
+	AND jackCyl.inHome
+	AND stepFixCyl.inHome
+THEN
+	station.flow[AUTO].actStep:=999;
+END_IF
+blowTimer(IN:=FALSE,PT:=UDINT_TO_TIME(JacketStrippingData.CPP.blowTime),Q=>,ET=>);
+
+//blow start
+940:
+blow.auto:=TRUE;
+blowTimer(IN:=TRUE,PT:=UDINT_TO_TIME(JacketStrippingData.CPP.blowTime),Q=>,ET=>);
+IF blowTimer.Q THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//blow stop
+950:
+blow.Auto:=FALSE;
+station.flow[AUTO].actStep:=999;
+
+
+//	Single Run Finish
+999:
+station.cycleRunFlag:=FALSE;
+station.flow[AUTO].actStep:=0;
+station.cycleTimeStart:=FALSE;
+station.cycleTimeEnd:=TRUE;
+JacketStripping.Imm.stationDone:=TRUE;
+END_CASE
+
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="StepInit" Id="{f34edfba-50b6-4f5f-9b28-f11d6bc7e5a1}">
+      <Implementation>
+        <ST><![CDATA[IF NOT station.Initing THEN
+	station.flow[INIT].actStep:=0;
+ELSE
+
+CASE station.flow[INIT].actStep OF
+//	Home Step
+0:
+IF station.Initing
+	AND NOT station.InitDone
+THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	Axis Power
+10:
+rotateAxis.stopAuto:=TRUE;
+rotateAxis.VelocityAuto:=FALSE;
+cutAxis.PowerInit:=TRUE;
+rotateAxis.PowerInit:=TRUE;
+transferAxis.PowerInit:=TRUE;
+IF rotateAxis.isPowerOn
+	AND transferAxis.isPowerOn
+	AND cutAxis.isPowerOn
+THEN
+station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	cutAxis home
+20:
+rotateAxis.stopAuto:=FALSE;
+cutAxis.moveAutoNo :=HOME_CUT;
+IF cutAxis.inPos[HOME_CUT] THEN
+  station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	transferAxis home
+30:
+transferAxis.moveAutoNo:= HOME_TRANS;
+IF transferAxis.inPos[HOME_TRANS] THEN
+  station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	gripCyl home
+40:
+gripCyl.homeInit:=TRUE;
+IF gripCyl.inHome THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+
+//	fixCyl down
+50:
+jackCyl.homeInit:=TRUE;
+fixCyl.homeInit:=TRUE;
+stepFixCyl.homeInit:=TRUE;
+blow.homeInit:=TRUE;
+IF fixCyl.inHome 
+	AND stepFixCyl.inHome
+	AND jackCyl.inHome
+  AND blow.inHome
+THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+
+//	rotateAixs home
+60:
+rotateAxis.moveAutoNo:= HOME_ROTATE;
+IF rotateAxis.inPos[HOME_ROTATE] THEN
+	station.flow[INIT].actStep:=999;
+END_IF
+
+
+//	Init Done
+999:
+station.flow[INIT].actStep:=0;
+station.InitDone:=1;
+
+END_CASE
+
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Tip" Id="{434628cd-6789-4e6b-91bd-d4fdfb1f4cf8}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_JacketStripping_RD">
+      <LineId Id="29" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="30" Count="1" />
+      <LineId Id="21" Count="1" />
+      <LineId Id="24" Count="2" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="95" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_JacketStripping_RD.Alarm">
+      <LineId Id="30" Count="27" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="94" Count="1" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="96" Count="3" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="106" Count="1" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="102" Count="1" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="113" Count="1" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="121" Count="1" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="88" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_JacketStripping_RD.AutoTip">
+      <LineId Id="1" Count="0" />
+      <LineId Id="3" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="4" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="5" Count="1" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="73" Count="2" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="45" Count="7" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="79" Count="7" />
+      <LineId Id="54" Count="2" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="89" Count="1" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="92" Count="1" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="57" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_JacketStripping_RD.Command">
+      <LineId Id="199" Count="3" />
+      <LineId Id="196" Count="2" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="203" Count="2" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="159" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="92" Count="1" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="86" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_JacketStripping_RD.General">
+      <LineId Id="10" Count="5" />
+      <LineId Id="8" Count="1" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_JacketStripping_RD.Hmi">
+      <LineId Id="1548" Count="2" />
+      <LineId Id="1559" Count="0" />
+      <LineId Id="1558" Count="0" />
+      <LineId Id="1563" Count="1" />
+      <LineId Id="1566" Count="0" />
+      <LineId Id="1565" Count="0" />
+      <LineId Id="1567" Count="0" />
+      <LineId Id="1575" Count="0" />
+      <LineId Id="1574" Count="0" />
+      <LineId Id="1576" Count="1" />
+      <LineId Id="1556" Count="0" />
+      <LineId Id="1552" Count="3" />
+      <LineId Id="1547" Count="0" />
+      <LineId Id="840" Count="13" />
+      <LineId Id="864" Count="15" />
+      <LineId Id="890" Count="15" />
+      <LineId Id="916" Count="15" />
+      <LineId Id="942" Count="15" />
+      <LineId Id="839" Count="0" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="1506" Count="8" />
+      <LineId Id="1516" Count="12" />
+      <LineId Id="1569" Count="0" />
+      <LineId Id="1529" Count="11" />
+      <LineId Id="1363" Count="4" />
+      <LineId Id="1471" Count="8" />
+      <LineId Id="1481" Count="13" />
+      <LineId Id="1571" Count="0" />
+      <LineId Id="1495" Count="10" />
+      <LineId Id="1400" Count="1" />
+      <LineId Id="1155" Count="1" />
+      <LineId Id="1435" Count="8" />
+      <LineId Id="1445" Count="11" />
+      <LineId Id="1470" Count="0" />
+      <LineId Id="1458" Count="0" />
+      <LineId Id="1573" Count="0" />
+      <LineId Id="1459" Count="10" />
+      <LineId Id="1158" Count="18" />
+      <LineId Id="1178" Count="0" />
+      <LineId Id="1177" Count="0" />
+      <LineId Id="1157" Count="0" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="30" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_JacketStripping_RD.ManualTip">
+      <LineId Id="2" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="18" Count="1" />
+      <LineId Id="22" Count="3" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="15" Count="2" />
+      <LineId Id="13" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_JacketStripping_RD.Permit">
+      <LineId Id="1" Count="2" />
+    </LineIds>
+    <LineIds Name="FB_JacketStripping_RD.SetUp">
+      <LineId Id="304" Count="1" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="18" Count="1" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="115" Count="1" />
+      <LineId Id="321" Count="0" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="354" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="172" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="360" Count="0" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="303" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="306" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="221" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="52" Count="2" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="95" Count="1" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="55" Count="2" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="63" Count="2" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="308" Count="0" />
+      <LineId Id="317" Count="1" />
+      <LineId Id="316" Count="0" />
+      <LineId Id="309" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="312" Count="1" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="314" Count="0" />
+      <LineId Id="124" Count="1" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="248" Count="2" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="283" Count="3" />
+      <LineId Id="290" Count="0" />
+      <LineId Id="289" Count="0" />
+      <LineId Id="341" Count="0" />
+      <LineId Id="275" Count="7" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="339" Count="0" />
+      <LineId Id="203" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="315" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="230" Count="5" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="243" Count="2" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="144" Count="4" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="151" Count="1" />
+      <LineId Id="183" Count="4" />
+      <LineId Id="190" Count="7" />
+      <LineId Id="200" Count="2" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="319" Count="1" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="155" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_JacketStripping_RD.StepAuto">
+      <LineId Id="320" Count="2" />
+      <LineId Id="324" Count="7" />
+      <LineId Id="712" Count="0" />
+      <LineId Id="702" Count="0" />
+      <LineId Id="635" Count="0" />
+      <LineId Id="334" Count="5" />
+      <LineId Id="711" Count="0" />
+      <LineId Id="340" Count="0" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="703" Count="0" />
+      <LineId Id="344" Count="5" />
+      <LineId Id="351" Count="4" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="707" Count="1" />
+      <LineId Id="359" Count="3" />
+      <LineId Id="709" Count="1" />
+      <LineId Id="363" Count="19" />
+      <LineId Id="384" Count="4" />
+      <LineId Id="640" Count="1" />
+      <LineId Id="389" Count="0" />
+      <LineId Id="392" Count="1" />
+      <LineId Id="639" Count="0" />
+      <LineId Id="395" Count="7" />
+      <LineId Id="404" Count="23" />
+      <LineId Id="674" Count="0" />
+      <LineId Id="679" Count="1" />
+      <LineId Id="682" Count="0" />
+      <LineId Id="681" Count="0" />
+      <LineId Id="683" Count="0" />
+      <LineId Id="678" Count="0" />
+      <LineId Id="676" Count="0" />
+      <LineId Id="684" Count="0" />
+      <LineId Id="643" Count="0" />
+      <LineId Id="430" Count="0" />
+      <LineId Id="434" Count="6" />
+      <LineId Id="442" Count="6" />
+      <LineId Id="450" Count="7" />
+      <LineId Id="467" Count="8" />
+      <LineId Id="651" Count="2" />
+      <LineId Id="650" Count="0" />
+      <LineId Id="481" Count="0" />
+      <LineId Id="649" Count="0" />
+      <LineId Id="483" Count="0" />
+      <LineId Id="656" Count="0" />
+      <LineId Id="655" Count="0" />
+      <LineId Id="657" Count="1" />
+      <LineId Id="488" Count="3" />
+      <LineId Id="660" Count="3" />
+      <LineId Id="659" Count="0" />
+      <LineId Id="497" Count="3" />
+      <LineId Id="502" Count="6" />
+      <LineId Id="665" Count="3" />
+      <LineId Id="512" Count="9" />
+      <LineId Id="701" Count="0" />
+      <LineId Id="685" Count="15" />
+      <LineId Id="535" Count="3" />
+      <LineId Id="540" Count="14" />
+      <LineId Id="564" Count="41" />
+      <LineId Id="607" Count="4" />
+      <LineId Id="704" Count="0" />
+      <LineId Id="613" Count="7" />
+      <LineId Id="622" Count="6" />
+      <LineId Id="636" Count="0" />
+      <LineId Id="631" Count="3" />
+      <LineId Id="318" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_JacketStripping_RD.StepInit">
+      <LineId Id="2" Count="0" />
+      <LineId Id="8" Count="43" />
+      <LineId Id="53" Count="7" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="68" Count="2" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="72" Count="1" />
+      <LineId Id="75" Count="1" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="78" Count="9" />
+      <LineId Id="89" Count="1" />
+      <LineId Id="92" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_JacketStripping_RD.Tip">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

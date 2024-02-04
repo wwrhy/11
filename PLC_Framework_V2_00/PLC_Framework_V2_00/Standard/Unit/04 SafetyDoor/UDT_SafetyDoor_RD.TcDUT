@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_SafetyDoor_RD" Id="{dc06f670-7d08-4e2f-a984-91a82d8bde3e}">
+    <Declaration><![CDATA[TYPE UDT_SafetyDoor_RD :
+STRUCT
+inputArrived             : BOOL;
+inputLocked              : BOOL;
+inputUnlockButton        : BOOL;
+outputLockCoil           : BOOL;
+outputUnlockButtonLight  : BOOL;
+notLocked                : BOOL;
+prohibitUnlock           : BOOL;
+lightWhenLocked          : BOOL;
+disabled                 : BOOL;
+autoLock                 : BOOL;
+autoLockTime             : TIME;
+arrivedLabel             : STRING[10];
+lockedLabel              : STRING[10];
+name                     : ARRAY[0..3] OF STRING[30];
+machineNo                : UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

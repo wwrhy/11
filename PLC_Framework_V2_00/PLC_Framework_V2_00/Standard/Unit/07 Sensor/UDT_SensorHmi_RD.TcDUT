@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_SensorHmi_RD" Id="{18c5cc9b-ecbd-458a-848d-98f1f44530fe}">
+    <Declaration><![CDATA[TYPE UDT_SensorHmi_RD :
+STRUCT
+subDisplay : BOOL; //子画面显示
+input : Bool; //传感器输入
+display : Bool; //画面显示
+count : Int; //感应器异常计次
+label : String[10]; //传感器标签
+disabled : Bool; //传感器屏蔽
+setCount : Int; //传感器异常报警次数设置
+onTime : DINT; //On延时时间值
+offTime : DINT; //Off延时时间值
+flickerTime : DINT; //闪烁延时时间值
+number : INT; //部件编号
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

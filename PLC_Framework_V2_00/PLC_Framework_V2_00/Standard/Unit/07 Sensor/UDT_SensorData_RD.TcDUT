@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_SensorData_RD" Id="{2c62a382-195a-4226-a9ea-20c6049ae81e}">
+    <Declaration><![CDATA[TYPE UDT_SensorData_RD :
+STRUCT
+disabled         : BOOL; //传感器屏蔽
+setCount         : UINT; //传感器异常报警次数设置
+onTime           : UDINT; //On延时时间值
+offTime          : UDINT; //Off延时时间值
+flickerTime      : UDINT; //闪烁延时时间值
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

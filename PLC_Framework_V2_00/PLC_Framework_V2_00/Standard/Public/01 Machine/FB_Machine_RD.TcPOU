@@ -1,0 +1,759 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Machine_RD" Id="{622ab36b-de7c-4c3a-ad08-6887e69abf30}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Machine_RD
+VAR_IN_OUT
+machine  : UDT_Machine_RD;
+hmi      : UDT_Hmi_RD;
+clock    : UDT_Clock_RD;
+END_VAR
+VAR
+initTimer : TON; //
+initDoneTimer : TON; //
+cycleTimeTimer : TON; //
+flowTimeoutTimer : ARRAY[0..5] OF TON; //
+isFlowTimeout : Array[0..5] of BOOL; //
+flowStepCache : Array[0..5] of UInt; //
+setUpModehmiCache : BOOL; //
+safePermit : Bool; //
+manualSwitch : Bool; //
+manualModehmiCache : BOOL; //
+manualModehmi : Bool; //
+jogModehmiCache : BOOL; //
+isInitDoneTimer : BOOL; //
+initPermit : Bool; //
+initingCache : BOOL; //整机初始化中缓存
+initConfirmCache : BOOL; //整机初始化确认缓存
+emptyPermit : Bool; //
+autoSwitch : Bool; //
+autoModehmiCache : BOOL; //
+autoModehmi : Bool; //
+alarmingCache : BOOL; //整机报警中缓存
+activated : BOOL; //
+language : UINT; //
+index : UINT; //
+flowNum : UINT; //
+stopTimer : TON; //
+initTimeoutTimer : TON; //
+buzzerTimer : TON; //
+  
+END_VAR
+
+VAR CONSTANT
+MAX_FLOW : UINT :=5; // 流程最大数量
+POPUP_MANUAL_TIP : UINT:=10; //  手动提示弹窗
+POPUP_AUTO_TIP : UINT:=11; //  自动提示弹窗
+POPUP_INIT_FAILED : UINT:=20; //  初始化确认弹窗
+POPUP_INIT_DONE : UINT:=21; //  初始化完成弹窗
+POPUP_INIT_ALARM : UINT:=22; //  初始化有报警弹窗
+POPUP_INIT_CONFIRM : UINT:=23; //  初始化失败弹窗
+POPUP_INITING_ALARM : UINT:=24; //  初始化中有报警弹窗
+POPUP_EMPTY_CONFIRM : UINT:=30; //  清料确认弹窗
+POPUP_EMPTY_DONE : UINT:=31; //  清料完成弹窗
+UNDEFINED_MODE : UINT:=0; // 无模式
+MANUAL_MODE : UINT:=1; // 手动模式
+AUTO_MODE : UINT:=2; // 自动模式
+INCHING_MODE : UINT:=3; // 寸动模式
+SETUP_MODE : UINT:=4; // 设置模式
+ALARMING : UINT:=1; // 报警中
+INITING : UINT:=4; // 初始化中
+RUNNING : UINT:=5; // 运行中
+READY : UINT:=6; // 准备就绪
+NOT_READY : UINT:=7; // 未准备好
+DRY_RUN : UINT:=21; // 空跑屏蔽中
+E_STOP : UINT:=100; // 急停中
+SAFETY_NOT_MET : UINT:=101; // 安全条件不满足
+SAFETY_DOOR_NOT_LOCKED : UINT:=102; // 安全门未锁好
+INSUFFICIENT_AIR_PRESSURE : UINT:=103; // 气压不足
+NOT_IN_MANUAL_MODE : UINT:=104; // 不在手动模式
+NOT_IN_AUTO_MODE : UINT:=105; // 不在自动模式
+NOT_IN_INCHING_MODE : UINT:=106; // 不在寸动模式
+NOT_IN_SETUP_MODE : UINT:=107; // 不在设置模式
+INITIALIZATION_TIMEOUT : UINT:=200; // 初始化超时
+FLOW_TIMEOUT : UINT:=201; // 流程超时
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//--------------------------Description header 
+  //================================================================================== 
+  // Harmontromics / (C) Copyright (2021) 
+  //----------------------------------------------------------------------------------
+  // Title:               Machine control
+  // Comment/Function:    Realize the common control of the machine, such as start, stop, alarm,
+  //                      whole machine initialization, automatic prompt, manual prompt, etc
+  // Library/Family:      (that the source is dedicated to)
+  // Author:              David.Wong
+  // Target System: 
+  // Engineering:         Sysmac Studio
+  // Restrictions:        (OB types, etc.)
+  // Requirements:        (hardware, technological package, etc.) 
+  //----------------------------------------------------------------------------------
+  // Change log table:
+  // Version     | Date       | Expert in charge | Changes applied
+  //-------------|------------|------------------|------------------------------------
+  // 001.000.000 | 2021-12-11 | David.Wong       | First released version
+  // 001.000.001 | 2022-4-1   | David.Wong       | First released version
+  // 001.000.001 | 2022-11-8  | David.Wong       | 增加工站、安全门、急停数组上限获取
+  // 001.002.000 | 2023-5-18  | David.Wong       | 修复流程超时报警不显示报警文本
+  //             |            |                  |              
+  //             |            |                  | 
+  //================================================================================== 
+//------------------------------------------------------//
+SetUp();
+General();
+Safety();
+Flow();
+Alarm();
+AutoTip();
+ManualTip();
+Tip();
+Init();
+Empty();
+Paused();
+Stop();
+Start();
+CycleTime();
+LeftSidebar();]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{6dac73b0-246d-48c0-a8e9-6ba91c1f7e0d}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------Alarm---------------------------//
+  
+//正在报警条数
+machine.actAlarmTimes := machine.alarmCount;
+machine.alarmCount := 0;
+
+IF NOT machine.eStop THEN
+  machine.presetAlarms[0] := TRUE;//急停报警
+END_IF;
+IF NOT machine.safety THEN
+  machine.presetAlarms[1] := TRUE;//安全条件不满足报警
+END_IF;
+IF machine.running AND NOT machine.allDoorClosed THEN
+  machine.presetAlarms[2] := TRUE;//运行中安全门打开报警
+END_IF;
+IF machine.running AND NOT machine.airOn THEN
+  machine.presetAlarms[3] := TRUE;//运行中气压不足报警
+END_IF;
+IF initTimeoutTimer.Q AND initTimeoutTimer.PT > T#0MS THEN
+  machine.presetAlarms[4] := TRUE;//整机初始化超时报警
+END_IF;
+
+
+//公共报警中
+IF FUN_AryBitCount_RD(machine.presetAlarms) >0 THEN
+  machine.publicAlarm := TRUE;
+  machine.alarmCount := machine.alarmCount +1;
+END_IF;
+IF FUN_AryBitCount_RD(machine.userAlarms) >0 THEN
+  machine.publicAlarm := TRUE;
+  machine.alarmCount := machine.alarmCount + FUN_AryBitCount_RD(machine.userAlarms);
+END_IF;
+
+//机器报警中
+machine.alarming :=
+machine.publicAlarm               //公共报警
+OR machine.report.alarming         //所属部件反馈报警
+OR machine.report.stationAlarming;  //所属工站反馈报警
+
+//报警复位
+IF machine.reset THEN
+  MEMSET(ADR(machine.presetAlarms),0,SIZEOF(machine.presetAlarms));
+  MEMSET(ADR(machine.userAlarms),0,SIZEOF(machine.userAlarms));
+  machine.publicAlarm := FALSE;
+  machine.report.alarming := FALSE;
+  machine.report.stationAlarming := FALSE;
+END_IF;
+
+// 报警顶栏显示
+IF NOT alarmingCache AND  machine.alarming THEN
+  machine.alarmTopBarDisplay := TRUE;
+ELSIF NOT machine.alarming THEN
+  machine.alarmTopBarDisplay := FALSE;
+END_IF;
+alarmingCache :=  machine.alarming;
+
+//复位按钮灯
+machine.alarmCanReset := machine.report.alarmCanReset;
+
+machine.resetButtonLight := machine.lampTesthmi        //指示灯测试
+OR (NOT machine.alarmCanReset AND machine.alarming) //报警中常亮
+OR (machine.alarmCanReset AND clock.c1s);           //报警可复位闪烁
+machine.alarmCanReset := FALSE;
+machine.report.alarmCanReset := FALSE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="AutoTip" Id="{d451c339-2355-4fba-94b7-f98ad73b8fcb}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------AutoTip---------------------------//
+  
+//机器未初始化
+machine.presetAutoTips[0] := NOT machine.initDone;
+//机器运行条件不足
+machine.presetAutoTips[1] := NOT machine.runPermit;
+
+//整机自动提示
+machine.autoTip :=
+FUN_AryBitCount_RD(machine.presetAutoTips) >0
+OR FUN_AryBitCount_RD(machine.userAutoTips) >0
+OR machine.report.autoTip
+OR machine.report.stationAutoTip;
+machine.report.autoTip := FALSE;
+machine.report.stationAutoTip := FALSE; 
+
+//自动提示弹窗
+IF machine.autoTip AND machine.start THEN
+  machine.autoTipTrigger := TRUE;
+  machine.popup := POPUP_AUTO_TIP;
+END_IF;
+IF machine.popup = 0 THEN
+  machine.autoTipTrigger := FALSE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CycleTime" Id="{49be96fd-335a-4356-9002-7880ac207ef2}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------CycleTime---------------------------//
+//机器周期计时,
+IF machine.cycleTimeEnd THEN
+  machine.cycleTime :=TIME_TO_DINT( cycleTimeTimer.ET);
+END_IF;
+cycleTimeTimer(IN := machine.cycleTimeStart AND NOT (machine.cycleTimeEnd OR machine.initing),
+               PT := T#10M
+);
+machine.cycleTimeEnd := FALSE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Empty" Id="{8b70cedf-4699-454d-83b6-a801f2f75eda}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------Empty---------------------------//
+  
+//清料条件
+emptyPermit := machine.eStop
+AND machine.initDone
+AND NOT machine.initing;
+
+// 清料完成，延时复位完成信号
+IF machine.emptyDone
+  AND NOT machine.emptying   //确保清料中断开
+  AND NOT machine.running    //确保自动中断开
+THEN
+  machine.emptyDone := FALSE;
+END_IF;
+
+// 清料hmi，弹出清料确认对话框
+IF emptyPermit
+  AND machine.emptyhmi
+THEN
+  machine.popup := POPUP_EMPTY_CONFIRM;
+END_IF;
+// 清料中
+IF NOT machine.initing
+  AND NOT machine.emptyDone
+THEN
+  IF machine.emptyConfirm
+    AND emptyPermit
+  THEN
+    machine.emptying := TRUE;
+  END_IF;
+  
+ELSE
+  machine.emptying := FALSE;
+END_IF;
+
+// 不在清料中且清料完成，弹出清料完成对话框
+// 清料完成信号由功能块外部判断清料完成后置位，功能块内部不进行置位
+IF NOT machine.emptying
+  AND machine.emptyDone
+THEN
+  machine.popup := POPUP_EMPTY_DONE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Flow" Id="{f6fd0e29-7f7d-47ec-ba4a-6683cacf02a9}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------Flow---------------------------//
+//流程监控
+FOR index := 0 TO flowNum DO
+  IF machine.flow[index].actStep = 999 THEN
+    machine.flow[index].uninterrupted := TRUE;
+  END_IF;
+  //流程上一步记录
+  IF machine.flow[index].actStep <> flowStepCache[index] THEN
+    machine.flow[index].prevStep := flowStepCache[index];
+  END_IF;
+  flowStepCache[index] := machine.flow[index].actStep;
+  //流程超时计时
+flowTimeoutTimer[index](IN := machine.flow[index].timeoutEnable
+            AND NOT machine.flow[index].timeoutException
+            AND (machine.running OR machine.initing)
+            AND machine.flow[index].actStep > 0
+            AND machine.flow[index].actStep = flowStepCache[index],
+            PT := machine.flow[index].setTimeout,
+		  Q=>);
+  machine.flow[index].timeoutException := FALSE;
+  //流程超时报警置位
+IF flowTimeoutTimer[index].Q THEN
+    machine.flow[index].timeoutAlarm := TRUE;
+    machine.presetAlarms[index + 8] := TRUE;
+  ELSIF machine.reset THEN
+    machine.flow[index].timeoutAlarm := FALSE;
+  END_IF;
+END_FOR;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{de85b64b-1aad-4ba9-85ef-a2ef2e2ee2e5}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------General---------------------------//
+FUN_UpdateLeftSidebar_RD(machine:=machine,
+			  				hmi:=hmi);
+
+//  触摸屏按钮
+machine.start := machine.startButton OR hmi.button.start OR machine.starthmi;
+machine.stop := machine.stopButton OR hmi.button.stop OR machine.stophmi;
+machine.reset := machine.resetButton OR hmi.button.reset OR machine.resethmi;
+machine.pause := machine.pauseButton OR hmi.button.pause OR machine.pausehmi;
+machine.init := machine.initButton OR hmi.button.init OR machine.inithmi;
+manualSwitch := machine.manualSwitch OR hmi.button.manualSwitch;
+autoSwitch := machine.autoSwitch OR hmi.button.autoSwitch;
+IF manualSwitch OR autoSwitch THEN
+  manualModehmi := FALSE;   //实体手自动旋钮复位hmi
+  autoModehmi := FALSE;
+END_IF;
+
+IF NOT manualModehmiCache AND machine.manualModehmi THEN
+	autoModehmi := FALSE;
+	manualModehmi := NOT manualModehmi;
+END_IF;
+manualModehmiCache := machine.manualModehmi;
+
+IF  NOT autoModehmiCache AND machine.autoModehmi THEN
+	autoModehmi := NOT autoModehmi;
+	manualModehmi := FALSE;
+END_IF;
+autoModehmiCache := machine.autoModehmi;
+
+//手动模式
+machine.manualMode := NOT machine.jogMode
+AND (manualSwitch AND NOT autoSwitch
+OR NOT manualSwitch AND NOT autoSwitch
+AND manualModehmi AND NOT autoModehmi
+);
+//自动模式
+machine.autoMode := NOT machine.jogMode
+AND (NOT manualSwitch AND autoSwitch
+OR NOT manualSwitch AND NOT autoSwitch
+AND NOT manualModehmi AND autoModehmi
+);
+
+IF machine.manualMode THEN
+  machine.mode := MANUAL_MODE;
+ELSIF machine.autoMode THEN
+  machine.mode := AUTO_MODE;
+ELSE
+  machine.mode := UNDEFINED_MODE;
+END_IF;
+
+// 三色灯
+machine.greenStatusLight := machine.lampTesthmi OR (machine.running AND NOT machine.alarming);
+machine.yellowStatusLight := machine.lampTesthmi OR (NOT machine.running AND NOT machine.alarming);
+machine.redStatusLight := machine.lampTesthmi OR machine.alarming;
+machine.buzzer := machine.alarming AND NOT buzzerTimer.Q;
+buzzerTimer(IN := machine.alarming,
+             PT := machine.buzzerTime);]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Init" Id="{f50fae0c-300c-4ad7-ae29-386a386dadc0}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------Init---------------------------//
+// 初始化条件
+initPermit := safePermit
+AND machine.manualMode
+AND NOT machine.alarming;
+
+//初始化确认弹窗
+IF machine.init THEN
+  IF machine.alarming THEN
+    machine.popup := POPUP_INIT_ALARM;
+  ELSIF initPermit AND NOT machine.initing THEN
+    machine.popup := POPUP_INIT_FAILED;
+  END_IF;
+END_IF;
+
+ //整机初始化完成
+machine.initDone := initDoneTimer.Q
+												AND NOT machine.initConfirm
+												AND machine.initFlowDone
+												AND NOT machine.report.stationNotInitDone;
+
+// 初始化中
+IF initPermit
+  AND NOT machine.pause
+  AND NOT machine.initDone
+AND FUN_AryBitCount_RD(machine.userManualTips) =0
+THEN
+  IF initConfirmCache AND NOT machine.initConfirm THEN
+    machine.initing := TRUE;
+  END_IF;
+ELSE
+  machine.initing := FALSE;
+END_IF;
+initConfirmCache := machine.initConfirm ;  // 初始化确认下降沿
+
+// 初始化延时
+initTimer(IN := machine.initing,
+           PT := T#10S,
+           Q  => );
+
+// 初始化完成延时
+initDoneTimer(IN := NOT machine.initConfirm,
+               PT := T#10S,
+			 Q=>);
+
+// 初始化超时
+initTimeoutTimer(IN := machine.initing,
+                  PT := machine.initTimeout);
+
+// 初始化按钮灯，初始化中常亮  
+machine.initButtonLight := machine.lampTesthmi OR machine.initing;
+  
+machine.report.stationNotInitDone := FALSE;
+
+ //整机初始化中下降沿
+IF  initingCache AND NOT machine.initing THEN
+  IF  machine.alarming THEN			// 初始化中报警对话框
+    machine.popup := POPUP_INITING_ALARM;	
+	ELSIF machine.initDone THEN		// 初始化完成对话框
+    machine.popup := POPUP_INIT_DONE;	  
+	ELSE												// 初始化失败对话框
+    machine.popup := POPUP_INIT_CONFIRM;
+  END_IF;	  
+END_IF;
+initingCache:=machine.initing;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="LeftSidebar" Id="{9bcb227c-cf2c-4c1f-9cb0-062bc1258732}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------LeftSidebar---------------------------//
+  //左侧边栏按钮控制
+
+//---------------------------
+
+hmi.button.startLight := machine.startButtonLight;
+hmi.button.stopLight := machine.stopButtonLight;
+hmi.button.resetLight :=machine.resetButtonLight;
+hmi.button.pauseLight :=   machine.pauseButtonLight;
+hmi.button.initLight := machine.initButtonLight;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ManualTip" Id="{4dcee643-4f68-4fb9-aa25-fb921b7e56b2}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------ManualTip---------------------------//
+  
+// 复位手动提示
+IF machine.reset OR Hmi.machineHmi.tipReset THEN
+  machine.tipReset := TRUE;
+END_IF;
+IF machine.tipReset THEN
+  MEMSET(ADR(machine.presetAutoTips),0,SIZEOF(machine.presetAutoTips));
+  MEMSET(ADR(machine.userAutoTips),0,SIZEOF(machine.userAutoTips));
+  MEMSET(ADR(machine.presetManualTips),0,SIZEOF(machine.presetManualTips));
+  MEMSET(ADR(machine.userManualTips),0,SIZEOF(machine.userManualTips));	
+  //复位提示窗口
+  IF machine.popup = 0 THEN
+ Hmi.machineHmi.tipReset:=FALSE;	
+    machine.tipReset := FALSE; 
+  ELSE
+    machine.popup := 0;
+  END_IF;
+END_IF;
+
+//机器手动提示
+IF machine.start OR machine.init THEN
+  machine.presetManualTips[0] := NOT machine.eStop;     //急停中,无法操作
+  machine.presetManualTips[1] := NOT machine.safety;    //安全条件不满足,无法操作
+  machine.presetManualTips[2] := NOT machine.allDoorClosed;  //安全门未锁好,无法操作
+  machine.presetManualTips[3] := NOT machine.airOn;     //气压不足,无法操作
+  IF machine.init THEN
+    machine.presetManualTips[4] := NOT machine.manualMode;//不在手动模式,无法操作
+  ELSIF machine.start THEN
+    machine.presetManualTips[5] := NOT machine.autoMode;  //不在自动模式,无法操作
+  END_IF;
+END_IF;
+
+//机器手动提示中
+machine.manualTip :=
+FUN_AryBitCount_RD(machine.presetManualTips) >0
+OR FUN_AryBitCount_RD(machine.userManualTips) >0
+OR machine.report.stationManualTip
+OR machine.report.manualTip;
+machine.report.manualTip := FALSE;
+machine.report.stationManualTip := FALSE;
+
+// 手动提示弹窗
+IF machine.manualTip THEN
+  machine.popup := POPUP_MANUAL_TIP;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Paused" Id="{c25e1675-89a2-4135-a121-24997d995ca5}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------Paused---------------------------//
+// 暂停中
+IF machine.pause THEN
+  machine.paused := TRUE;
+END_IF;
+
+// 急停、初始化、启动，复位暂停中
+IF NOT machine.eStop
+  OR machine.initing
+  OR machine.start
+THEN
+  machine.paused := false;
+END_IF;
+
+// 暂停按钮灯，暂停中常亮
+machine.pauseButtonLight := machine.lampTesthmi  OR machine.paused;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Safety" Id="{7b5403b5-8583-43bd-819e-f36e238100c6}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------Safety---------------------------//
+  
+//急停就绪    
+machine.eStop := NOT machine.report.notEstops;
+machine.report.notEstops := FALSE;
+
+//安全门就绪 
+// machine.allDoorClosed := NOT machine.report.notSafetyDoors;
+machine.report.notSafetyDoors := FALSE;
+
+safePermit := machine.eStop
+AND machine.allDoorClosed
+AND machine.airOn
+AND machine.safety;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{61a29375-4636-490a-9a18-55ed9a5b4f9c}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------SetUp---------------------------//
+
+  
+IF NOT activated THEN
+	  activated:=TRUE;
+	//赋初始值
+	machine.runPermit			:=TRUE;
+	machine.startPermit			:=TRUE;
+	machine.mainScreenNo 		:= 10; //自定义主画面显示
+	machine.initTimeout			:= T#60s; // 初始化超时时间
+	machine.idealCycleTime 		:= t#2s;  //理想周期时间
+	machine.stopTimeout			:= T#4s; //停止超时时间,理想周期2倍以上时间
+	machine.buzzerTime			:= T#3s; // 蜂鸣器持续时间
+	machine.requestCountdown 	:=UINT#10;  // HMI请求控制权倒计时
+	machine.sidebar.typeData[1]:=1;
+	machine.sidebar.typeData[2]:=2;
+	machine.sidebar.typeData[5]:=3;
+    //流程数量
+	flowNum := SIZEOF(machine.flow) -1;
+	FOR index:=0 TO flowNum DO
+		//machine.flow[index].timeoutEnable	:=FALSE;
+	    machine.flow[index].setTimeout			:=T#30s;
+	END_FOR;
+	
+END_IF;
+machine.sidebar.typeData[1]:=1;
+machine.sidebar.typeData[2]:=2;
+machine.sidebar.typeData[5]:=3;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Start" Id="{ae87915d-166d-4f1b-a3ca-a4c74c1341d7}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------Start---------------------------//
+// 运行条件
+machine.ready := safePermit
+AND machine.runPermit
+AND machine.initDone
+AND (machine.autoMode OR machine.jogMode)
+AND NOT machine.alarming
+AND NOT machine.autoTip;
+// 运行中
+IF machine.ready
+  AND NOT machine.pause
+  AND NOT machine.paused
+  AND NOT machine.stopDone
+  AND NOT machine.emptyDone
+THEN
+  IF machine.autoMode THEN
+    IF machine.start
+      AND NOT machine.reset
+      AND NOT machine.stop
+    THEN     //自动模式下按下启动按钮自动中保持
+      machine.running := TRUE;
+    END_IF;
+  ELSIF machine.jogMode
+    AND NOT machine.reset
+    AND NOT machine.stop
+    AND machine.start
+  THEN
+    machine.running := TRUE;  //寸动模式下按下启动按钮自动中，抬起按钮复位自动中
+  ELSE
+    machine.running := FALSE;
+  END_IF;
+ELSE
+  machine.running := FALSE;
+END_IF;
+
+// 启动按钮灯，运行中常亮，准备就绪时闪烁
+
+machine.startButtonLight := machine.lampTesthmi
+OR machine.running
+OR (machine.ready AND clock.c1s);]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Stop" Id="{2eecc96e-f5ce-4658-9ebb-0afc5719ea08}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------Stop---------------------------//
+// 自动中按停止，置位停止中
+IF (machine.stop OR machine.alarming)
+  AND NOT machine.stopDone
+  AND NOT machine.paused
+THEN
+  machine.stopping := TRUE;
+END_IF;
+
+// 急停，初始化，启动，暂停，停止完成且不在自动中，复位停止中
+IF NOT machine.eStop
+  OR machine.initing
+  OR machine.start
+  OR machine.pause
+  OR machine.stopDone
+  AND NOT machine.running
+THEN
+  machine.stopping := FALSE;
+END_IF;
+
+//停止完成
+stopTimer(IN := machine.stopping,
+           PT := machine.stopTimeout);
+IF machine.stopping AND (machine.stopDoneAllow OR stopTimer.Q) THEN
+  machine.stopDone := TRUE;
+ELSIF NOT machine.eStop
+  OR machine.initing
+  OR machine.start
+  OR machine.pause
+THEN
+  machine.stopDone := FALSE;
+END_IF;
+
+// 停止按钮灯，停止完成常亮，停止中闪烁
+  machine.stopButtonLight := machine.lampTesthmi
+OR machine.stopDone
+OR (machine.stopping AND clock.c1s);]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Tip" Id="{e03fb85d-5fc5-4116-b51c-56745d4646e6}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------Tip ---------------------------//
+  
+IF machine.alarming THEN
+  machine.status := ALARMING;
+ELSIF machine.initing THEN
+  machine.status := INITING;
+ELSIF machine.running THEN
+  machine.status := RUNNING;
+ELSIF machine.ready THEN
+  machine.status := READY;
+ELSE
+  machine.status := 0;
+END_IF;
+
+machine.presetTips[1] := machine.alarming;
+machine.presetTips[2] := machine.paused;
+machine.presetTips[3] := machine.stopping;
+machine.presetTips[4] := machine.initing;
+machine.presetTips[5] := machine.running;
+machine.presetTips[6] := machine.ready AND NOT machine.running;
+machine.presetTips[7] := NOT machine.ready;
+machine.presetTips[10] := machine.emptying;
+machine.presetTips[11] := machine.emptyDone;
+machine.presetTips[21] := machine.dryRun;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_Machine_RD">
+      <LineId Id="234" Count="23" />
+      <LineId Id="233" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="147" Count="13" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.Alarm">
+      <LineId Id="2" Count="41" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="45" Count="19" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.AutoTip">
+      <LineId Id="2" Count="22" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.CycleTime">
+      <LineId Id="2" Count="5" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.Empty">
+      <LineId Id="2" Count="40" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.Flow">
+      <LineId Id="2" Count="17" />
+      <LineId Id="21" Count="8" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.General">
+      <LineId Id="58" Count="55" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.Init">
+      <LineId Id="2" Count="37" />
+      <LineId Id="41" Count="4" />
+      <LineId Id="47" Count="20" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.LeftSidebar">
+      <LineId Id="2" Count="8" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.ManualTip">
+      <LineId Id="2" Count="6" />
+      <LineId Id="47" Count="3" />
+      <LineId Id="13" Count="33" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.Paused">
+      <LineId Id="2" Count="14" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.Safety">
+      <LineId Id="2" Count="12" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.SetUp">
+      <LineId Id="2" Count="25" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.Start">
+      <LineId Id="2" Count="38" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.Stop">
+      <LineId Id="2" Count="35" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Machine_RD.Tip">
+      <LineId Id="2" Count="22" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

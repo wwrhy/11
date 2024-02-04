@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_RightSidebar_RD" Id="{04802d88-ea27-4467-b93c-288990ab0780}">
+    <Declaration><![CDATA[TYPE UDT_RightSidebar_RD :
+STRUCT
+typeData : ARRAY[0..100] OF INT; // 按钮类型缓存
+typeShow : Array[0..6] of Int; // 按钮类型显示
+iconShow : Array[0..6] of Int; // 图标显示编号
+textShow : Array[0..6] of Int; // 文本显示控制
+buttonClick : Array[0..6] of bool; // 按钮点击
+buttonStatus : Array[0..6] of bool; // 按钮状态
+buttonClickNo : Int; // 按钮点击编号
+pageUp : Bool; // 上一页按钮
+pageDown : Bool; // 下一页按钮
+pageUpDisplay : Bool; // 上一页按钮显示
+pageDownDisplay : Bool; // 下一页按钮显示
+ 
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

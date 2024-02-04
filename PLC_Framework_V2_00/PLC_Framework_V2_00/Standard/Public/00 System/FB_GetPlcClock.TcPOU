@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_GetPlcClock" Id="{5121a99f-41b0-4bc4-a55f-b5a5cff4cd7f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_GetPlcClock
+
+
+VAR_IN_OUT 
+clock :  UDT_Clock_RD;
+END_VAR
+
+VAR 
+fbBlinker : ARRAY[1..6] OF FB_Blinker_RD; 
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ACT();]]></ST>
+    </Implementation>
+    <Action Name="ACT" Id="{f4c10c7a-ae5f-4073-b662-3136819d9a4a}">
+      <Implementation>
+        <ST><![CDATA[fbBlinker[1](
+	OnTime:= T#1MS, 
+	OffTime:= T#1MS, 
+	clock=> clock.c1ms, 
+	R_Plus=> clock.p1ms, 
+	F_Plus=> );
+
+fbBlinker[2](
+	OnTime:= T#10MS, 
+	OffTime:= T#10MS, 
+	clock=> clock.c10ms, 
+	R_Plus=> clock.p10ms, 
+	F_Plus=> );
+
+fbBlinker[3](
+	OnTime:= T#20MS, 
+	OffTime:= T#20MS, 
+	clock=> clock.c20ms, 
+	R_Plus=> clock.p20ms, 
+	F_Plus=> );
+  
+  
+fbBlinker[4](
+	OnTime:= T#100MS, 
+	OffTime:= T#100MS, 
+	clock=> clock.c100ms, 
+	R_Plus=> clock.p100ms, 
+	F_Plus=> );
+
+
+fbBlinker[5](
+	OnTime:= T#1000MS, 
+	OffTime:= T#1000MS, 
+	clock=> clock.c1s, 
+	R_Plus=> clock.p1s, 
+	F_Plus=> );
+  
+  
+fbBlinker[6](
+	OnTime:= T#1M, 
+	OffTime:= T#1M, 
+	clock=> clock.c1min, 
+	R_Plus=> clock.p1min, 
+	F_Plus=> );
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_GetPlcClock">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_GetPlcClock.ACT">
+      <LineId Id="39" Count="4" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="44" Count="5" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="50" Count="4" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="55" Count="6" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="97" Count="4" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="108" Count="1" />
+      <LineId Id="102" Count="5" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

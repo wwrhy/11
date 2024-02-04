@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_BadData_RD" Id="{a7391c6e-344f-49cd-a963-eb55a111c9be}">
+    <Declaration><![CDATA[TYPE UDT_BadData_RD :
+STRUCT
+continuous : DINT; // 连续不良报警数量
+cumulative : DInt; // 累计不良报警数量n
+cumulativeRange : DInt; // 累计不良计算范围m
+quantity : DInt; // 不良品数量
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

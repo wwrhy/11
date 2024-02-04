@@ -1,0 +1,1219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Axis_RD" Id="{73d76000-f2bb-44ca-b497-d5721a49aa70}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Axis_RD
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+
+VAR_IN_OUT
+machine : UDT_Machine_RD; //
+station : UDT_Station_RD; //
+vari : UDT_AxisVar_RD; //
+data : UDT_AxisData_RD; //
+  
+END_VAR
+
+VAR
+safetyPermit : BOOL; //
+operatePermit : BOOL; //
+mcPower : MC_Power; //
+mcReadStatus : MC_ReadStatus;//
+mcMoveJog : MC_Jog; //
+mcHome : MC_Home; //
+mcMoveAbs : MC_MoveAbsolute; //
+mcMoveAbs2 : MC_MoveAbsolute; //
+mcMoveRel : MC_MoveRelative; //
+mcMoveModulo :MC_MoveModulo;//
+mcReset : MC_Reset; //
+mcStop : MC_Stop; //
+mcHalt : MC_Halt;//
+mcVelocity					: MC_MoveVelocity;		//
+inPositionTimer : TON; //
+brakeOpenTimer : TON; //
+brakeCloseTimer : TON; //
+homehmiTimer : TON; //
+autoTipsTimer : TON; //
+notPowerOnTimer : TON; //
+notHomeTimer : TON; //
+velocityTimer	: TON;					//
+posTeachTimer :TON;
+isBrakeOpenTimer : BOOL; //
+isBrakeCloseTimer : BOOL; //
+isAutoTipsTimer : BOOL; //
+powerhmiCache : BOOL; //
+brakehmiCache : BOOL; //
+movehmiCache : BOOL; //
+jogForward : BOOL; //
+jogBackward : BOOL; //
+moveNo : UINT; //
+moveNoCache : UINT; //
+moveVelo : REAL; //
+index : UINT; //
+moduloPresetPos : UINT; //模长控制预置定位数量
+notMovePermitManualTipCache : UINT; //
+moduloCalculate : FB_ModuloCalculate_RD; //
+
+mcReadAxisParameter : MC_ReadParameterSet; //读取NC参数设置功能块
+mcWriteParameterPersistent	: MC_WriteParameterPersistent;	//修改NC参数功能块
+parameter				: ST_AxisParameterSet;	//NC参数设置
+fbSoEReset			: FB_SoEReset;			//动器复位功能块
+
+mcMoveAdditive : MC_MoveAdditive;
+
+
+activated : Bool; //
+calibratePos : REAL; //
+error : BOOL; //
+homed : BOOL; //
+ncErrCode : UDINT; //
+driverErrID : UDINT; //
+jogft:F_TRIG;
+ 
+  
+END_VAR
+
+VAR CONSTANT
+END_VAR
+
+VAR PERSISTENT
+  homeOffset :REAL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SetUp();
+Servo();
+Alarm();
+General();
+Modulo();
+Manual();
+Power();
+Brake();
+Reset();
+Home();
+StopAndHalt();
+JOG();
+Movement();
+InPosition();
+Velocity();
+ManualTip();
+AutoTip();
+AutoReturn();
+Status();
+Display();
+Additive();
+
+]]></ST>
+    </Implementation>
+    <Action Name="Additive" Id="{646bde26-b9a8-48c7-865b-70abe7ea8552}">
+      <Implementation>
+        <ST><![CDATA[mcMoveAdditive(
+	Axis:= vari.axis, 
+	Execute:= vari.additiveAuto, 
+	Distance:= vari.additiveDistance, 
+	Velocity:= vari.additiveVelo, 
+	Acceleration:= data.acceleration, 
+	Deceleration:= data.deceleration, 
+	Jerk:= , 
+	BufferMode:= , 
+	Options:= , 
+	Done=> , 
+	Busy=> , 
+	Active=> , 
+	CommandAborted=> , 
+	Error=> , 
+	ErrorID=> );]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Alarm" Id="{554af477-4aec-4bf8-b1f1-b60894ce99bb}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------------------Alarm-------------------------------------------------------//
+    
+    //报警复位
+    IF vari.resethmi OR machine.reset THEN
+      vari.error := FALSE;
+      vari.driverErrID := 0;
+      vari.ncErrID := 0;
+    END_IF;
+
+    //伺服错误中
+    IF error OR ncErrCode <> 0 OR driverErrID <> 0 THEN
+		vari.error := TRUE;
+		vari.ncErrID := ncErrCode;
+    vari.driverErrID := driverErrID;
+    END_IF;
+    vari.alarming := vari.error OR vari.warning;
+    //反馈报警中
+    IF vari.alarming THEN
+      machine.alarmCount := machine.alarmCount+1; 
+      station.report.alarming := TRUE;
+    END_IF;
+   
+  //----------------------------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="AutoReturn" Id="{d17d36c6-0ac5-43ce-9917-ea7a2b4f3fe1}">
+      <Implementation>
+        <ST><![CDATA[ //---------------------------------------AutoReturn------------------------------------------------//
+    //自动回位
+    IF vari.autoReturnEnable THEN
+      IF vari.notInPosAutoTip > 0
+        AND vari.notInPosAutoTip = vari.moveAutoNoCache
+        AND machine.autoMode
+        AND NOT station.running
+        AND vari.ready
+        AND NOT vari.busy
+        AND (ABS(vari.actPos - data.movePos[vari.moveAutoNoCache]) <= vari.autoReturnScope //位置偏差在自动回位范围之内
+        OR vari.movePermits[vari.moveAutoNoCache] AND vari.autoReturnPermit) //或者定位条件满足
+      THEN
+        vari.autoReturnAllow := TRUE;
+        IF machine.reset THEN
+          moveNo := vari.moveAutoNoCache;
+          vari.autoReturning := TRUE;
+        ELSE
+          vari.autoReturning := FALSE;
+        END_IF;
+      ELSIF NOT vari.busy THEN
+        vari.autoReturnAllow := FALSE;
+        vari.autoReturning := FALSE;
+      END_IF;
+    ELSE
+      vari.autoReturnAllow := FALSE;
+      vari.autoReturning := FALSE;
+    END_IF;
+  //----------------------------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="AutoTip" Id="{75124205-1b0b-4f65-bfda-4484b60462f0}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------------------AutoTip----------------------------------------------------//
+    
+    // 伺服未使能提示
+    notPowerOnTimer(IN := vari.powerAuto AND NOT vari.isPowerOn,
+                  PT := T#0.3S,
+                  Q  => vari.notPowerOnAutoTip); //伺服未使能延时
+ 
+    // 伺服未回原点提示
+    notHomeTimer(IN := NOT vari.homeDone,
+                  PT := T#0.3S,
+                  Q  => vari.notHomeAutoTip); //伺服未回原点延时
+    
+    //伺服不在位自动提示延时,伺服未动作且工站未运行时
+    autoTipsTimer(IN := NOT vari.busy AND NOT station.running,
+                   PT := T#0.5S,
+				   Q=>isAutoTipsTimer);
+    IF isAutoTipsTimer
+      AND NOT vari.inPos[vari.moveAutoNoCache]
+      AND NOT vari.absOrRel[vari.moveAutoNoCache]
+      AND vari.moveAutoNoCache > 0
+      AND vari.moveAutoNoCache <= vari.movePosNum
+    THEN
+      vari.notInPosAutoTip := vari.moveAutoNoCache;
+    ELSE
+      vari.notInPosAutoTip := 0;
+    END_IF;
+    
+    // 自动提示
+    vari.autoTip := vari.notHomeAutoTip OR vari.notPowerOnAutoTip OR vari.notInPosAutoTip > 0;
+
+    // 反馈工站自动提示
+    IF vari.autoTip THEN
+      station.report.autoTip := TRUE;
+    END_IF;
+    
+  //----------------------------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Brake" Id="{40deb92c-6283-4869-b565-a0947abee5da}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------------------Brake -------------------------------------------------------//
+    
+    vari.brake := vari.brakeManual OR vari.isPowerOn;//刹车正常打开输出
+    vari.brakeForced := vari.brakeManual;//刹车强制打开输出
+    brakeCloseTimer(IN := NOT vari.brakeForced,
+                     PT := T#0.3S,
+					 Q=>isBrakeCloseTimer);
+    brakeOpenTimer(IN := vari.brake,
+                    PT := T#0.3S,
+					Q=>isBrakeOpenTimer);
+    
+  //----------------------------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Display" Id="{03fb6f6f-201f-4385-88c6-63c246e5b1e1}">
+      <Implementation>
+        <ST><![CDATA[ 
+    //---------------------------------------Display------------------------------------------------------//
+      
+      //禁止图标显示
+      vari.powerForbidIcon := NOT machine.manualMode OR NOT vari.powerAllow;
+      vari.homeForbidIcon := NOT machine.manualMode OR NOT vari.homeAllow;
+      vari.moveForbidIcon := NOT machine.manualMode OR NOT vari.moveAllow OR NOT vari.movePermits[vari.movehmiNo];
+      vari.jogForwardForbidIcon := NOT machine.manualMode OR NOT vari.jogForwardAllow;
+      vari.jogBackwardsForbidIcon := NOT machine.manualMode OR NOT vari.jogBackwardsAllow;
+      vari.brakeForbidIcon := NOT vari.brakeAllow AND vari.brakeEnable;
+      
+      //刹车按钮指示状态
+      IF NOT vari.brakeEnable THEN
+        vari.brakeState := 2;
+      ELSIF vari.brake THEN
+        vari.brakeState := 1;
+      ELSE
+        vari.brakeState := 0;
+      END_IF;
+      
+    //----------------------------------------------------------------------------------------------------//
+    ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{74dc6c10-84d3-42ad-b368-2b8f1f17a013}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------------------General-----------------------------------------------------//
+
+    //已回原点
+    vari.homeDone := homed OR TRUE;
+    
+    //安全条件
+    safetyPermit := machine.eStop
+    AND machine.safety
+    AND machine.airOn
+    AND machine.allDoorClosed;
+    
+    //伺服可操作
+    operatePermit := safetyPermit
+    AND NOT vari.alarming;
+    
+    //伺服忙信号
+    vari.busy :=
+    mcReset.Busy
+    OR mcMoveJog.Busy
+    OR mcMoveAbs.Busy
+    OR mcMoveRel.Busy	
+    OR mcHome.Busy
+    OR mcMoveModulo.Busy
+    OR mcVelocity.Busy;
+	
+    //伺服准备好信号
+    vari.ready := operatePermit
+    AND vari.isPowerOn
+    AND isBrakeOpenTimer;
+    
+    //伺服On允许操作
+    vari.powerAllow := operatePermit AND NOT vari.brakeManual;
+    //回原点允许操作
+    vari.homeAllow :=  vari.homePermit;
+    //定位允许操作
+    vari.moveAllow := vari.ready AND vari.movePermit;
+    //JOG+允许操作
+    vari.jogForwardAllow := vari.ready AND vari.jogForwardPermit AND NOT vari.lsp;
+    //JOG-允许操作
+    vari.jogBackwardsAllow := vari.ready AND vari.jogBackwardsPermit AND NOT vari.lsn;
+    //刹车允许操作
+    vari.brakeAllow := machine.manualMode AND NOT vari.isPowerOn AND vari.brakeEnable;
+    //回原点按钮显示
+    vari.homeDisplay := NOT vari.homeDone OR data.homeDisplay;
+    
+    
+  //----------------------------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Home" Id="{8db33e93-7013-42e3-be01-9411446a71d0}">
+      <Implementation>
+        <ST><![CDATA[  //---------------------------------------Home-------------------------------------------------------//
+    //回原点执行   
+  
+IF vari.homeMode = 0 THEN
+  IF (vari.homeManual OR vari.homeInit) AND vari.homePermit THEN 
+    homeOffset := LREAL_TO_REAL(REAL_TO_LREAL(0.0-vari.actPos)+parameter.fEncOffset);
+    mcWriteParameterPersistent.Execute:=TRUE;
+	END_IF
+  IF ABS(REAL_TO_LREAL(homeOffset)-parameter.fEncOffset)>0.01 THEN
+    IF NOT mcWriteParameterPersistent.Busy 
+		  AND NOT mcWriteParameterPersistent.Error
+		  AND NOT mcWriteParameterPersistent.Execute
+	  THEN
+		  mcWriteParameterPersistent.Execute:=TRUE;
+	  END_IF	
+  END_IF
+
+  mcWriteParameterPersistent(
+    Axis:= vari.axis, 
+    Execute:= , 
+    ParameterNumber:= MC_AxisParameter.AxisEncoderOffset, 
+    Value:= homeOffset, 
+    Done=> , 
+    Busy=> , 
+    Error=> , 
+    ErrorID=> );
+
+  mcWriteParameterPersistent.Execute:=FALSE;
+ 
+ELSIF vari.homeMode = 1 THEN
+  
+  mcHome(
+        	Axis:=vari.axis,
+	        Execute:=(vari.homeManual OR vari.homeInit) AND vari.homePermit,
+          bCalibrationCam:= , 
+	        Busy=>vari.homing,
+        );
+  vari.homeInit := FALSE;
+
+END_IF
+  
+
+
+    
+    
+      //----------------------------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="InPosition" Id="{85267e19-a958-4aa6-8fec-cfb35a4ce6f0}">
+      <Implementation>
+        <ST><![CDATA[  //---------------------------------------In Position--------------------------------------------------//
+    
+    //伺服到位延时
+    inPositionTimer(IN := vari.ready AND NOT vari.busy,
+                     PT := vari.inPosTime);
+    //根据设定的伺服到位精度显示伺服位置
+    FOR index := 1 TO vari.movePosNum DO
+      IF NOT vari.modulo.enable
+        OR index > moduloPresetPos
+      THEN
+        vari.inPos[index] := inPositionTimer.Q AND ABS(vari.actPos - data.movePos[index]) <= vari.inPosScope;
+      END_IF;
+    END_FOR;
+    
+    vari.inPosNo := FUN_AryBitOnNum_RD(vari.inPos);
+  //----------------------------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="JOG" Id="{d7f2d495-7098-4f46-83f7-eb4c14a9ae13}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------------------JOG  --------------------------------------------------------//
+    //点动+执行
+    jogForward := vari.jogForwardAllow
+    AND NOT jogBackward
+    AND (vari.jogForwardhmi
+    AND machine.manualMode
+    OR vari.jogForwardAuto);
+    
+    //点动-执行
+    jogBackward := vari.jogBackwardsAllow
+    AND NOT jogForward
+    AND (vari.jogBackwardshmi
+    AND machine.manualMode
+    OR vari.jogBackwardsAuto);
+	
+ IF  data.jogDistance = 0 THEN
+   mcMoveJog.Mode := MC_JOGMODE_CONTINOUS;
+ ELSE
+   mcMoveJog.Mode := MC_JOGMODE_INCHING;
+ END_IF
+  
+	mcMoveJog(
+	Axis:=vari.axis,
+	JogForward:=jogForward,
+	JogBackwards:=jogBackward,
+	Mode:=,
+	Position:= data.jogDistance,
+	Velocity:=REAL_TO_LREAL(data.jogVelo),
+	Acceleration:=data.acceleration,
+	Deceleration:=data.deceleration,
+	Jerk:=,
+	Done=>,
+	Busy=>,
+	Active=>,
+	CommandAborted=>,
+	Error=>,
+	ErrorID=>
+);
+  
+jogft(CLK:= vari.jogForwardhmi OR vari.jogBackwardshmi, Q=> );              
+IF  mcMoveJog.Mode = MC_JOGMODE_INCHING AND NOT vari.Axis.Status.NotMoving THEN
+  IF jogft.Q =TRUE THEN  
+    vari.haltAuto :=TRUE;
+   END_IF 
+END_IF
+IF mcHalt.Done THEN 
+  vari.haltAuto :=FALSE;
+END_IF
+ 
+       
+                
+	  vari.jogForwardAuto := FALSE;
+    vari.jogBackwardsAuto := FALSE;
+	
+  //----------------------------------------------------------------------------------------------------//
+  ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Manual" Id="{ca210f7b-9904-4ff5-9fb1-a48fa409d15b}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------------------Manual-----------------------------------------------------//
+    
+    IF machine.manualMode THEN//只有在手动模式且hmi操作/显示激活
+      
+      //伺服On
+      IF powerhmiCache AND NOT vari.powerhmi AND vari.powerAllow THEN
+        vari.powerManual := NOT vari.powerManual;
+      END_IF;
+      powerhmiCache:=vari.powerhmi;
+      //手动刹车
+      IF brakehmiCache AND NOT vari.brakehmi AND vari.brakeAllow THEN
+        vari.brakeManual := NOT vari.brakeManual;
+      END_IF;
+      brakehmiCache:= vari.brakehmi;
+      //手动回原点	  
+      homehmiTimer(IN := vari.homehmi AND vari.homeAllow,
+                    PT := T#1S,
+					Q=>vari.homeManual);
+      
+      //手动定位
+
+      IF movehmiCache AND NOT vari.movehmi
+        AND vari.moveAllow
+        AND vari.moveAutoNo = 0
+      THEN
+        moveNo := vari.movehmiNo;
+      END_IF;
+      movehmiCache := vari.movehmi;
+    END_IF;
+    
+    
+    posTeachTimer(IN:= vari.posTeach, PT:=T#1S , Q=> , ET=> );   
+    IF NOT vari.modulo.enable THEN
+      IF posTeachTimer.Q THEN
+        data.movePos[vari.movehmiNo]:=vari.actPos;
+		  END_IF
+		END_IF
+
+
+    
+    vari.targetDistance := data.movePos[vari.movehmiNo];
+    vari.targetVelocity := data.manualVelo ;
+  //----------------------------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ManualTip" Id="{60010830-2242-4fc0-a80a-5809e603af29}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------------------ManualTip -------------------------------------------------//
+    
+    // 整机手动提示           
+    IF vari.powerhmi
+      OR vari.movehmi
+      OR vari.homehmi
+      OR vari.jogForwardhmi
+      OR vari.jogBackwardshmi
+      OR vari.brakehmi AND vari.brakeEnable AND NOT vari.brakeAllow
+    THEN
+      machine.presetManualTips[0] := NOT machine.eStop;     //急停中,无法操作
+      machine.presetManualTips[1] := NOT machine.safety;    //安全条件不满足,无法操作
+      machine.presetManualTips[2] := NOT machine.allDoorClosed;  //安全门未锁好,无法操作
+      machine.presetManualTips[3] := NOT machine.airOn;     //气压不足,无法操作
+      machine.presetManualTips[4] := NOT machine.manualMode;//不在手动模式,无法操作
+    END_IF;
+    
+    //手动提示复位
+    IF machine.tipReset
+      OR (notMovePermitManualTipCache <> 0
+      AND vari.notMovePermitManualTip = 0)
+    THEN
+      vari.notMovePermitManualTip := 0;
+	  vari.notPowerOnManualTip:=FALSE;
+	  vari.unableBrakeManualTip:=FALSE;
+	   vari.unablePowerOnManualTip:=FALSE; 
+    END_IF;
+    notMovePermitManualTipCache := vari.notMovePermitManualTip;
+    
+    //手动提示
+    IF NOT vari.isPowerOn
+      AND (vari.movehmi
+      OR vari.jogForwardhmi
+      OR vari.jogBackwardshmi)
+    THEN
+	 vari.notPowerOnManualTip:=TRUE;//  伺服未使能无法操作
+    ELSIF vari.brakehmi AND vari.brakeEnable AND vari.isPowerOn THEN
+      vari.unableBrakeManualTip:=TRUE; //  伺服ON时无法操作刹车
+    ELSIF vari.powerhmi AND operatePermit AND vari.brakeManual THEN
+      vari.unablePowerOnManualTip:=TRUE;  // 刹车手动打开时无法操作伺服ON   
+    ELSIF vari.movehmi AND (NOT vari.movePermit OR NOT vari.movePermits[vari.movehmiNo]) THEN
+      vari.notMovePermitManualTip := vari.movehmiNo;  // 定位条件不足手动提示
+    END_IF;
+    
+    // 手动提示
+    vari.manualTip := vari.notMovePermitManualTip <> 0
+	OR vari.notPowerOnManualTip
+	OR vari.unableBrakeManualTip
+	OR vari.unablePowerOnManualTip;
+	
+    // 反馈工站手动提示
+    IF vari.manualTip THEN
+      station.report.manualTip := TRUE;
+    END_IF;
+    
+  //----------------------------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Modulo" Id="{e396c3c1-28cd-4d82-bab4-ad2b7b96711e}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------------- ModuloCalculate------------------------------------------------//
+  
+	IF vari.modulo.enable THEN
+		IF vari.modulo.mode =0 THEN
+			moduloCalculate(actPos       		:= vari.actPos,
+					                    modulo       		:= vari.modulo,
+					                    calibratePos 	:= data.movePos[1]);
+			vari.movePosNum := MAX(vari.movePosNum, moduloPresetPos);
+			vari.absOrRel[1] := FALSE;
+			vari.absOrRel[2] := FALSE;
+			vari.absOrRel[3] := FALSE;
+			vari.absOrRel[4] := FALSE;
+			vari.absOrRel[5] := FALSE;
+			vari.absOrRel[6] := FALSE;
+			IF vari.moveAutoNoCache = 2
+				OR vari.moveAutoNoCache = 3
+				OR vari.moveAutoNoCache = 5
+				OR vari.moveAutoNoCache = 6
+			THEN
+				vari.moveAutoNoCache := 4;
+			END_IF;
+			data.movePos[2] := vari.modulo.closestPos;   //最近分割点位置
+			data.movePos[3] := vari.modulo.autoNextPos;  //下一自动分割点位置
+			data.movePos[4] := vari.modulo.autoPos;      //自动分割点位置
+			data.movePos[5] := vari.modulo.nextPos;      //下一分割点位置
+			data.movePos[6] := vari.modulo.previousPos;  //上一分割点位置
+
+			vari.inPos[1] := vari.modulo.inCalibratePos;     //在标定分割点位置
+			vari.inPos[2] := vari.modulo.inClosestPos;  //在分割点位置
+			vari.inPos[3] := vari.modulo.inAutoNextPos; //在下一自动分割点位置
+			vari.inPos[4] := vari.modulo.inAutoPos;     //在自动分割点位置
+			vari.inPos[5] := FALSE;
+			vari.inPos[6] := FALSE;
+
+		ELSIF  vari.modulo.mode =1 THEN
+			moduloCalculate(actPos       		:= vari.actPos,
+					            modulo       		:= vari.modulo,
+					            calibratePos 	:= calibratePos);
+			vari.movePosNum := MAX(vari.movePosNum, moduloPresetPos);
+			vari.absOrRel[1] := FALSE;
+			vari.absOrRel[2] := FALSE;
+			vari.absOrRel[3] := FALSE;
+			vari.absOrRel[4] := TRUE;
+			
+			IF vari.moveAutoNoCache = 2
+				OR vari.moveAutoNoCache = 3
+				OR vari.moveAutoNoCache = 4
+			THEN
+				vari.moveAutoNoCache := 1;
+			END_IF;
+			data.movePos[1] := vari.modulo.closestPos;   //最近分割点位置
+			data.movePos[2] := vari.modulo.nextPos;      //下一分割点位置
+			data.movePos[3] := vari.modulo.previousPos;  //上一分割点位置
+			vari.inPos[1] := vari.modulo.inClosestPos;  //在分割点位置
+			vari.inPos[2] := FALSE;
+			vari.inPos[3] := FALSE;
+			vari.inPos[4] := FALSE;
+			
+		ELSIF  vari.modulo.mode =2 THEN
+			moduloCalculate(actPos       		:= vari.actPos,
+					            modulo       		:= vari.modulo,
+					            calibratePos 	:= calibratePos);
+			vari.movePosNum := MAX(vari.movePosNum, moduloPresetPos);
+			vari.absOrRel[1] := FALSE;
+			data.movePos[1] := vari.modulo.closestPos;   //最近分割点位置
+			vari.inPos[1] := vari.modulo.inClosestPos;  //在分割点位置
+			
+		END_IF;
+	END_IF;
+  
+  
+  (**)
+ 
+  //----------------------------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Movement" Id="{08a65f39-f2ea-4adf-b090-4c071b9c3f1a}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------------------Move-------------------------------------------------------//
+    //自动定位
+    IF vari.moveAutoNo > 0 THEN
+      moveNo := vari.moveAutoNo;
+    END_IF;
+    // 定位执行
+    IF vari.moveAllow
+      AND moveNo > 0
+      AND moveNoCache <> moveNo
+      AND (vari.movePermits[moveNo] OR vari.autoReturning)
+    THEN
+      IF NOT machine.autoMode THEN
+        moveVelo := data.manualVelo;  //手动速度
+      ELSE
+        IF vari.differentVelo = 0.0 THEN//当设定单独定位速度时以单独定位速度执行，否则按自动速度执行
+          moveVelo := data.autoVelo;  //自动速度
+        ELSE
+          moveVelo := vari.differentVelo; //单独定位速度
+        END_IF;
+      END_IF;
+      
+      
+          IF NOT vari.modulo.enable THEN    
+              IF NOT vari.absOrRel[moveNo] THEN
+                // 绝对定位时
+                  mcMoveAbs(axis := vari.axis,
+                            Execute := TRUE,
+                            Position := data.movePos[moveNo],
+                            Velocity := moveVelo,
+                            Acceleration := data.acceleration,
+                            Deceleration := data.deceleration
+                            );
+              IF vari.moveAutoNo > 0 THEN //自动定位编号暂存写入相应值
+                vari.moveAutoNoCache := vari.moveAutoNo;
+              END_IF;
+            ELSE
+                // 相对定位时
+                  mcMoveRel(axis := vari.axis,
+                            Execute := TRUE,
+                            Distance := data.movePos[moveNo],
+                            Velocity := moveVelo,
+                            Acceleration := data.acceleration,
+                            Deceleration := data.deceleration
+                        );
+                vari.moveAutoNoCache := 0; //自动定位编号暂存写入0
+             END_IF;
+          ELSIF vari.modulo.enable THEN
+                  mcMoveModulo(
+                          Axis:= vari.axis, 
+                          Execute:= TRUE, 
+                          Position:= data.movePos[moveNo], 
+                          Velocity:= moveVelo, 
+                          Acceleration:= data.acceleration, 
+                          Deceleration:= data.deceleration, 
+                          Direction:= MC_Shortest_Way, 
+                        );    
+              IF vari.moveAutoNo > 0 THEN //自动定位编号暂存写入相应值
+                vari.moveAutoNoCache := vari.moveAutoNo;
+              END_IF;    
+        END_IF;
+ END_IF;   
+    
+    moveNoCache := moveNo;
+    moveNo := 0;
+    vari.moveAutoNo := 0;
+    vari.differentVelo := 0.0;
+		mcMoveAbs   (axis    := vari.axis,
+	               			Execute := FALSE);
+	  mcMoveRel   (axis    := vari.axis,
+	               			Execute := FALSE);
+    mcMoveModulo(axis := vari.axis,
+	                    Execute := FALSE);                     
+                      
+
+  //----------------------------------------------------------------------------------------------------//*)
+  ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Power" Id="{3456d833-cc92-48aa-811e-cedfef155537}">
+      <Implementation>
+        <ST><![CDATA[  //---------------------------------------Power------------------------------------------------------//
+    
+    IF vari.powerInit THEN
+      vari.powerAuto := TRUE;
+      vari.powerManual := FALSE;
+      vari.powerInit := FALSE;
+    END_IF;
+	
+	mcPower(
+	Axis:=vari.axis,
+	Enable:=operatePermit
+					AND isBrakeCloseTimer
+					 AND (vari.powerAuto XOR vari.powerManual),
+	Enable_Positive:=operatePermit,
+	Enable_Negative:=operatePermit,
+	Override:=vari.Override,
+	BufferMode:=,
+	Options:=,
+	Status=>vari.isPowerOn,
+	Busy=>,
+	Active=>,
+	Error=>,
+	ErrorID=>
+);
+
+  //----------------------------------------------------------------------------------------------------//
+  ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Reset" Id="{20e40756-4520-4b03-988c-f753d448fb68}">
+      <Implementation>
+        <ST><![CDATA[  //---------------------------------------Reset-------------------------------------------------------//
+    //异常复位
+   mcReset.Execute := (vari.resethmi OR machine.reset) AND (vari.error OR vari.warning);    	
+	 mcReset(axis := vari.axis);
+
+  //----------------------------------------------------------------------------------------------------//
+  
+  
+  //	NC轴错误复位
+fbSoEReset(
+	NetId:=,
+	Execute:= (vari.resethmi OR machine.reset) AND (vari.error OR vari.warning),
+	Timeout:=,
+	Axis:=vari.axis,
+	Busy=>,
+	Error=>,
+	AdsErrId=>,
+	SercosErrId=>
+);
+
+//	驱动器错误复位
+mcReset(
+	Axis:=vari.axis,
+	Execute:= (vari.resethmi OR machine.reset) AND (vari.error OR vari.warning),
+	Done=>,
+	Busy=>,
+	Error=>,
+	ErrorID=>
+);
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Servo" Id="{a560108f-ab4b-40d0-b8cc-2d28d189f60b}">
+      <Implementation>
+        <ST><![CDATA[ //---------------------------------------Servo-----------------------------------------------------//
+   IF  NOT vari.modulo.enable THEN
+     vari.actPos := LREAL_TO_REAL(vari.axis.NcToPlc.ActPos);
+     ELSE
+     vari.actPos := LREAL_TO_REAL(vari.axis.NcToPlc.ModuloActPos);  
+	 END_IF;
+
+     
+    
+    vari.actVelo := LREAL_TO_REAL(vari.axis.NcToPlc.ActVelo);
+    vari.actTorque := LREAL_TO_REAL(vari.axis.NcToPlc.ActTorque);
+        
+    //正负极限位置
+	//vari.lsn := vari.axis.DrvStatus.N_OT;
+	//vari.lsp := vari.axis.DrvStatus.P_OT;
+	//vari.dog := vari.axis.Status.Homed;
+	error:= vari.axis.Status.Error OR vari.axis.Status.DriveDeviceError;
+	ncErrCode:=vari.axis.NcToPlc.ErrorCode;
+  driverErrID:=vari.axis.Status.ErrorID;
+	homed:=vari.axis.Status.Homed;
+  
+  
+	mcReadAxisParameter(
+	Parameter:=parameter,
+	Axis:=vari.axis,
+	Execute:=activated,
+	Done=> , 
+	Busy=> , 
+	Error=> , 
+	ErrorID=>);
+  
+  mcReadStatus(
+	Axis:= vari.axis, 
+	Enable:= activated, 
+ );
+
+  
+	
+  //----------------------------------------------------------------------------------------------------//
+  ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{9c00b433-68a7-48ff-8b86-c064f5dfeac6}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------------------SetUp------------------------------------------------------//
+    
+	//第一个扫描周期
+	IF NOT activated THEN
+		activated 		:=TRUE;
+		vari.autoReturnEnable		:=TRUE;
+		vari.jogForwardPermit		:=TRUE;
+		vari.jogBackwardsPermit	:=TRUE;
+		vari.homePermit			:=TRUE;
+		vari.movePermit			:=TRUE;
+    vari.VelocityPermit :=TRUE;
+		vari.inPosScope			:=0.03;
+		vari.autoReturnScope	:=2.0;
+
+		IF vari.modulo.mode =0 THEN
+			moduloPresetPos:=6;		
+		ELSIF  vari.modulo.mode =1 THEN
+			moduloPresetPos:=4;
+		ELSIF  vari.modulo.mode =2 THEN
+			moduloPresetPos:=1;
+		END_IF;
+		
+		FOR index :=0 TO SIZEOF(vari.inPos) -1 DO
+			vari.movePermits[index]:=TRUE;
+		END_FOR;		
+		
+		//伺服单位赋初值
+		vari.posUnit			:='mm';
+		vari.veloUnit			:='mm/s';
+		vari.accDecUnit	  :="mm/s²";
+		//伺服速度赋初值
+    moveVelo := 1;
+		IF data.manualVelo <= 0.0 THEN
+		  data.manualVelo := 5.0;
+		END_IF;
+		IF data.autoVelo <= 0.0 THEN
+		  data.autoVelo := 10.0;
+		END_IF;
+		IF data.jogVelo <= 0.0 THEN
+		  data.jogVelo := 1.0;
+		END_IF;
+		//伺服加减速度赋初值
+		IF data.acceleration = 0.0 THEN
+		  	data.acceleration := 30000.0;
+		END_IF;
+		IF data.deceleration = 0.0 THEN
+		  	data.deceleration := 30000.0;
+		END_IF;
+	END_IF;
+ 
+	// 显示在hmi上面
+	vari.display := vari.stationNo >0;
+       
+    //检查定位位置数量
+   vari.movePosNum :=	MIN(vari.movePosNum,
+												(SIZEOF(vari.inPos)-1));]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Status" Id="{bc2d3bca-193b-4ccc-a321-c89de0df33cc}">
+      <Implementation>
+        <ST><![CDATA[    
+    //---------------------------------------Status----------------------------------------------------//
+      // 伺服状态显示
+      IF vari.error THEN
+        vari.status := 0;//伺服报警中
+      ELSIF vari.warning THEN
+        vari.status := 1;//伺服警告中
+      ELSIF NOT vari.isPowerOn THEN
+        vari.status := 2;//伺服OFF
+      ELSIF vari.isPowerOn THEN
+        vari.status := 3;//伺服准备好
+      END_IF;
+      IF NOT vari.homeDone THEN
+        vari.status := 4;//伺服未回原点
+      END_IF;
+      IF mcHome.Busy THEN
+        vari.status := 5;//伺服回原点中
+      END_IF;
+      IF vari.lsp THEN
+        vari.status := 6;//伺服正极限
+      ELSIF vari.lsn THEN
+        vari.status := 7;//伺服负极限
+      END_IF;
+    //----------------------------------------------------------------------------------------------------//
+    ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="StopAndHalt" Id="{b36c9f89-7293-424a-8286-6ddbb3649802}">
+      <Implementation>
+        <ST><![CDATA[  //---------------------------------------Stop--------------------------------------------------------//
+    //停止伺服
+    vari.stopManual := vari.stophmi AND operatePermit;
+    
+	  mcStop(	axis := vari.axis,
+			   	  Execute := NOT vari.isPowerOn OR NOT safetyPermit OR vari.stopAuto OR vari.stopManual,
+            Deceleration:=data.deceleration , 
+	          Jerk:=, );
+            
+  //---------------------------------------Halt--------------------------------------------------------//
+     
+    //暂停伺服
+  vari.haltManual := vari.halthmi AND operatePermit;
+
+	  mcHalt(	axis := vari.axis,
+			   	  Execute := NOT vari.isPowerOn OR NOT safetyPermit OR vari.haltAuto OR vari.haltManual,
+	          Deceleration:= data.deceleration, 
+	          Jerk:=, );
+            
+            
+
+            ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Velocity" Id="{1e5814f2-c856-472c-b2f2-34151e6021d2}">
+      <Implementation>
+        <ST><![CDATA[  vari.VelocityAllow := vari.ready AND vari.VelocityPermit ;
+
+//	速度定位超时
+velocityTimer(
+	IN:=vari.velocityBusy,
+	PT:=T#20S,
+	Q=>, ET=>
+);
+
+    
+    
+IF velocityTimer.Q
+	OR NOT vari.ready
+  OR vari.InVelocity
+THEN
+	vari.velocityAuto:=FALSE;
+	vari.velocityHmi:=FALSE;
+END_IF
+
+
+mcVelocity(
+	Axis:=vari.axis,
+	Execute:=vari.VelocityAllow AND (vari.velocityHmi AND machine.manualMode OR vari.velocityAuto),
+	Velocity:=vari.Velocity,
+	Acceleration:=data.acceleration,
+	Deceleration:=data.deceleration,
+	Jerk:=,
+	Direction:=,
+	BufferMode:=,
+	Options:=,
+	InVelocity=>vari.InVelocity,
+	Busy=>vari.velocityBusy,
+	Active=>,
+	CommandAborted=>,
+	Error=>vari.velocityError,
+	ErrorID=>vari.velocityErrorID
+);
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_Axis_RD">
+      <LineId Id="246" Count="19" />
+      <LineId Id="341" Count="0" />
+      <LineId Id="266" Count="0" />
+      <LineId Id="144" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Additive">
+      <LineId Id="2" Count="14" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Alarm">
+      <LineId Id="2" Count="5" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="8" Count="5" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="14" Count="7" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.AutoReturn">
+      <LineId Id="2" Count="26" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.AutoTip">
+      <LineId Id="2" Count="4" />
+      <LineId Id="8" Count="4" />
+      <LineId Id="14" Count="4" />
+      <LineId Id="20" Count="19" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Brake">
+      <LineId Id="2" Count="5" />
+      <LineId Id="9" Count="2" />
+      <LineId Id="13" Count="1" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Display">
+      <LineId Id="2" Count="20" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.General">
+      <LineId Id="2" Count="12" />
+      <LineId Id="16" Count="8" />
+      <LineId Id="47" Count="1" />
+      <LineId Id="25" Count="21" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Home">
+      <LineId Id="2" Count="1" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="110" Count="4" />
+      <LineId Id="105" Count="1" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="80" Count="7" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="73" Count="2" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="76" Count="1" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="37" Count="2" />
+      <LineId Id="33" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.InPosition">
+      <LineId Id="17" Count="14" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.JOG">
+      <LineId Id="2" Count="15" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="51" Count="2" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="32" Count="15" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="59" Count="1" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="61" Count="2" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="25" Count="3" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Manual">
+      <LineId Id="2" Count="16" />
+      <LineId Id="20" Count="12" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="55" Count="1" />
+      <LineId Id="53" Count="1" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="36" Count="3" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.ManualTip">
+      <LineId Id="2" Count="54" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Modulo">
+      <LineId Id="2" Count="2" />
+      <LineId Id="6" Count="67" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Movement">
+      <LineId Id="2" Count="19" />
+      <LineId Id="105" Count="2" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="99" Count="5" />
+      <LineId Id="38" Count="12" />
+      <LineId Id="52" Count="1" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="139" Count="6" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="148" Count="1" />
+      <LineId Id="146" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="130" Count="1" />
+      <LineId Id="55" Count="3" />
+      <LineId Id="61" Count="3" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="65" Count="1" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Power">
+      <LineId Id="2" Count="7" />
+      <LineId Id="41" Count="14" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Reset">
+      <LineId Id="2" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="11" Count="1" />
+      <LineId Id="14" Count="15" />
+      <LineId Id="31" Count="4" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Servo">
+      <LineId Id="2" Count="1" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="36" Count="2" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="4" Count="8" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="28" Count="1" />
+      <LineId Id="20" Count="7" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="41" Count="2" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.SetUp">
+      <LineId Id="2" Count="9" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="12" Count="12" />
+      <LineId Id="28" Count="6" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="35" Count="22" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Status">
+      <LineId Id="2" Count="23" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.StopAndHalt">
+      <LineId Id="2" Count="2" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="6" Count="1" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="59" Count="1" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="58" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Axis_RD.Velocity">
+      <LineId Id="140" Count="0" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="168" Count="1" />
+      <LineId Id="176" Count="3" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="166" Count="1" />
+      <LineId Id="81" Count="1" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="89" Count="1" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="97" Count="1" />
+      <LineId Id="148" Count="15" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="96" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

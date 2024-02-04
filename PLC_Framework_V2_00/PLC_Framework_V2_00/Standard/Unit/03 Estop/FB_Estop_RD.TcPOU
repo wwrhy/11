@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Estop_RD" Id="{b3b05556-d76d-4422-a8af-f197fdbdfb23}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Estop_RD
+VAR_IN_OUT
+vari         : UDT_Estop_RD;
+machine      : UDT_Machine_RD;
+
+END_VAR
+VAR
+resetCache      : BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//急停复位
+IF machine.reset AND NOT resetCache AND vari.input THEN
+	vari.notEstop:=FALSE;
+END_IF;
+
+//急停
+IF NOT vari.disable AND NOT vari.input THEN
+	Vari.notEstop:=TRUE;
+	machine.report.notEstops:=TRUE;
+END_IF;
+
+resetCache:=machine.reset;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Estop_RD">
+      <LineId Id="15" Count="10" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

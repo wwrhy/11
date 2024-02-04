@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_DelayHmi_RD" Id="{2103b7bb-6bf9-4ceb-9300-478e541d2751}">
+    <Declaration><![CDATA[TYPE UDT_DelayHmi_RD :
+STRUCT
+isOn                 : BOOL; // On延时输出
+display              : BOOL; // 显示
+actTime              : DINT; // 当前计时时间
+setTime              : DINT; // 设置延时时间值
+number               : INT; // 编号
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

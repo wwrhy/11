@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL_Constant" Id="{c2111011-621f-48e1-bac7-3403eb487cd6}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+
+
+
+BOWL_FEEDER_NUM : UINT :=3; //振动盘数量,范围:0 - 30
+BAD_TYPE_NUM : UINT :=10; //不良品类型数量,范围:0 - 30
+
+RFID_NUM : UINT :=2; //RFID数量,范围:0 - 30
+WEAR_PART_NUM : UINT :=10; //易损件数量,范围:0 - 30
+CCD_NUM : UINT :=2; //CCD数量,范围:0 - 30
+
+
+CKD_NUM : UINT :=2; //CKD转台数量,范围:0 - 10
+vacuum_NUM : UINT :=2; //真空发生器数量,范围:0 - 300
+
+
+PART_NO_NUM : UINT :=30; //多料号数量,范围:1 - 100
+KEYENCE_IV_NUM : UINT :=2; //KEYENCE IV系列传感器数量,范围:0 - 30
+WEISS_NUM : UINT :=2; //Weiss转台数量,范围:0 - 10
+KEYENCE_MARKING_NUM : UINT :=2; //KEYENCE MD-X系列激光打码数量,范围:0 - 30
+KEYENCE_IX_NUM : UINT :=2; //KEYENCE IX系列传感器数量,范围:0 - 30
+KEYENCE_GT_NUM : UINT :=2; //KEYENCE GT2、GT、IL、IG的高度传感器数量,范围:0 - 30
+RACK_FEEDER_NUM : UINT :=5; //料架数量,范围:0 - 30
+FEEDING_NUM : UINT :=10; //进料数量,范围:0 - 30
+AXIS_POS_NUM : UINT :=24; //单轴定位数量,范围:8 - 64
+DATALOGIC_SCAN_NUM : UINT :=2; //Datalogic DM系列扫码枪数量,范围:0 - 30
+HONEYWELL_SCAN_NUM : UINT :=10; //Honeywell扫码枪数量,范围:0 - 30
+RCON_NUM : UINT :=2; //IAI电缸数量,范围:0 - 30
+EPSON_ROBOT_NUM : UINT :=2; //EPSON机器人数量,范围:0 - 4
+
+
+MACHINE_NUM : UINT :=1; //机器数量,范围:1 - 4
+STATION_NUM : UINT :=20; //工站数量,范围:1 - 50
+CYLINDER_NUM : UINT :=100; //气缸数量,范围:0 - 300
+AXIS_NUM : UINT :=12; //TO轴数量,范围:0 - 30
+ESTOP_NUM : UINT :=10; //急停数量,范围:0 - 100
+SAFETY_DOOR_NUM : UINT :=10; //安全门数量,范围:0 - 100
+SENSOR_NUM : UINT :=50; //检测传感器数量,范围:0 - 300
+DELAY_NUM : UINT :=50; //延时数量,范围:0 - 300
+MOTOR_NUM : UINT :=5; //普通马达数量,范围:0 - 100
+PRODUCE_NUM: UINT :=1;
+OEE_NUM: UINT :=1;
+KEYENCE_SCAN_NUM : UINT :=2; //KEYENCE SR系列扫码枪数量,范围:0 - 30
+VALVE_NUM : UINT :=20; //单阀数量,范围:0 - 300
+
+
+HMI_NUM : UINT :=2; //HMI数量,范围:1 - 6
+
+
+
+SMC_IONIZER_NUM : UINT :=2; //SMC离子发生器数量,范围:0 - 100
+DUMMY_NUM : UINT :=10; //点检数量,范围:0 - 50
+SMC_ELECTRIC_CYL_NUM : UINT :=2; //SMC电缸数量,范围:0 - 30
+AXIS_EPOS_NUM : UINT :=2; //EPOS轴数量,范围:0 - 30
+ATEQ_NUM : UINT :=2; //ATEQ泄露仪数量,范围:0 - 30
+COSMO_NUM : UINT :=2; //COSMO泄露仪数量,范围:0 - 30
+COGNEX_CAMERA_NUM : UINT :=1; //Cognex In-Sight相机数量,范围:0 - 30
+COGNEX_SCAN_NUM : UINT :=1; //Cognex DataMan系列扫码枪数量,范围:0 - 30
+KEYENCE_CAMERA_NUM : UINT :=5; //KEYENCE CV-X、XG-X系列相机数量,范围:0 - 30
+OMRON_CAMERA_NUM : UINT :=2; //Omron FH系列相机数量,范围:0 - 30
+
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

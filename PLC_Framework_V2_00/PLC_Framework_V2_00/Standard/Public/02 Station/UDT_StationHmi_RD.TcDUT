@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_StationHmi_RD" Id="{7cf1f009-bf11-49ad-9044-86ae75a0bcfc}">
+    <Declaration><![CDATA[TYPE UDT_StationHmi_RD :
+STRUCT
+inithmi : BOOL; // 工站初始化hmi
+initForbidIcon : Bool; // 工站初始化禁止图标
+initing : Bool; // 工站初始化中
+cycleRunhmi : Bool; // 工站单循环hmi
+cycleRunForbidIcon : Bool; // 工站单循环禁止图标
+cycleRunning : Bool; // 工站单循环中
+jogRunhmi : Bool; // 工站寸动hmi
+jogRunForbidIcon : Bool; // 工站寸动禁止图标
+jogRunning : Bool; // 工站寸动中
+pausehmi : Bool; // 工站暂停hmi
+disablehmi : Bool; // 工站屏蔽hmi
+repetitionsEnable : Bool; // 单循环重复动作开启
+repetitionsClear : Bool; // 单循环重复动作计数清零
+repetitions : UInt; // 单循环重复动作计数
+repetitionsTimes : UInt; // 单循环重复动作次数设置
+status : UINT; // 工站状态显示 0工站报警中... 1工站未准备好 2工站准备好 3工站运行中 4工站单循环中 5工站单循环暂停中 6工站初始化中 7工站未初始化
+flowDisplay : UInt; // 流程显示数量
+flow : Array[0..5] of UDT_FlowHmi_RD; // 流程
+number : INT; // 部件编号
+selectPageValue : ARRAY[0..8] OF Int; // 工站选择页值
+cycleTime : UDINT; // 工站周期时间
+historicalCycleTime : ARRAY[1..5] OF UDINT; // 工站周期时间
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,592 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <FileVersion>1.0.0.0</FileVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{f541a67e-488f-45fc-9b6b-ca2b872933d4}</ProjectGuid>
+    <SubObjectsSortedByName>True</SubObjectsSortedByName>
+    <DownloadApplicationInfo>true</DownloadApplicationInfo>
+    <WriteProductVersion>true</WriteProductVersion>
+    <GenerateTpy>false</GenerateTpy>
+    <Name>PLC_Framework_V2_00</Name>
+    <ProgramVersion>3.1.4023.0</ProgramVersion>
+    <Application>{d242a08d-9675-46e5-a65b-cbf968e88b77}</Application>
+    <TypeSystem>{32922b57-a535-4adf-aff4-1b34e12ab79f}</TypeSystem>
+    <Implicit_Task_Info>{28ebbe44-6961-4358-a2cc-cda27a88c478}</Implicit_Task_Info>
+    <Implicit_KindOfTask>{a956fd9f-52f2-4bab-aadd-7b5b135221c7}</Implicit_KindOfTask>
+    <Implicit_Jitter_Distribution>{91dbffca-1d70-471f-84ce-bb11392ff39c}</Implicit_Jitter_Distribution>
+    <LibraryReferences>{98379500-fa13-4bf9-95df-62730cd9c82b}</LibraryReferences>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="GVLs\GVL_Module.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
+    <Compile Include="GVLs\GVL_Constant.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
+    <Compile Include="GVLs\GVL_Standard.TcGVL">
+      <SubType>Code</SubType>
+      <LinkAlways>true</LinkAlways>
+    </Compile>
+    <Compile Include="PlcTask.TcTTO">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\MAIN.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\CallStandard.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\CallStandardModule.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\ENUM\ENUM_CarrierPos.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\ENUM\ENUM_ExecState.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\ENUM\ENUM_NgReason.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\ENUM\ENUM_ProductState.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\ENUM\ENUM_StationCommand.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\ENUM\ENUM_UnitState.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\FUN\FUN_AryBitCount_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\FUN\FUN_AryBitOnNum_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\FUN\FUN_AryToLword_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\FUN\FUN_AryToWord_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\FUN\FUN_TimeToDate_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\FUN\FUN_UpdateLeftSidebar_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\FUN\FUN_WordToAry.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\FUN\F_Sum.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\Connector\Termininal\FB_Terminal2_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\Connector\Termininal\FB_Terminal_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\Connector\Termininal\UDT_TerminalData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\Connector\Termininal\UDT_TerminalHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\Connector\Termininal\UDT_TerminalMessage_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\Connector\Termininal\UDT_TerminalVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\Connector\Termininal\UDT_Terminal_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\BraidFlaring\FB_BraidFlaring_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\BraidFlaring\UDT_BraidFlaring_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\BraidFlaring\UDT_Data_BraidFlaring_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\BraidFlaring\UDT_Hmi_BraidFlaring_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\BraidFlaring\UDT_Imm_BraidFlaring_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\BraidFlaring\UDT_Parameters_BraidFlaring_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\Crimping\FB_Crimping_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\Crimping\UDT_Crimping_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\Crimping\UDT_Data_Crimping_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\Crimping\UDT_Hmi_Crimping_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\Crimping\UDT_Imm_Crimping_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\Crimping\UDT_Parameters_Crimping_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\JacketStripping\FB_JacketStripping_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\JacketStripping\UDT_CriticalProcessParameters_JacketStripping_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\JacketStripping\UDT_Data_JacketStripping_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\JacketStripping\UDT_Hmi_JacketStripping_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\JacketStripping\UDT_Imm_JacketStripping_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Module\FAKRA\JacketStripping\UDT_JacketStripping_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\00 System\FB_Blinker_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\00 System\FB_GetPlcClock.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\00 System\UDT_PlcStatus_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\00 System\UDT_ProgramStatus_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\00 System\UDT_System_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\01 Machine\FB_Machine_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\01 Machine\UDT_MachineHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\01 Machine\UDT_MachineReport_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\01 Machine\UDT_MachineSidebar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\01 Machine\UDT_Machine_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\02 Station\FB_Station_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\02 Station\UDT_FlowHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\02 Station\UDT_Flow_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\02 Station\UDT_StationHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\02 Station\UDT_StationMessage_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\02 Station\UDT_StationReport_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\02 Station\UDT_StationSidebar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\02 Station\UDT_Station_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\UDT_RightSidebar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\FB_GetPageSerialNo_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\FB_GetPlcClock_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\FB_Hmi_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\FB_IV3_G120_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\FB_Tben_L5_4Rfid_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\FB_TurnPages_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\FB_UpdateAxisHmi_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\FB_UpdateCycleTimeHmi_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\FB_UpdateInsertHmi_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\FB_UpdateProduceHmi_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\UDT_Clock_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\UDT_CycleTimeHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\UDT_DayTime_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\UDT_Hmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\UDT_HmiButton_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\UDT_LeftSidebar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\03 HMI\UDT_TurnPages_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\06 Produce\FB_Produce_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\06 Produce\FB_Produce.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\06 Produce\UDT_BadData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\06 Produce\UDT_BadHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\06 Produce\UDT_BadVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\06 Produce\UDT_ProduceDataRecord_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\06 Produce\UDT_ProduceData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\06 Produce\UDT_ProduceHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\06 Produce\UDT_ProduceVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\08 WearPart\FB_WearPart.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\08 WearPart\UDT_WearPartData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\08 WearPart\UDT_WearPartHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\08 WearPart\UDT_WearPartVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\11 Oee\FB_Oee_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\11 Oee\UDT_OeeData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\11 Oee\UDT_OeeHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Public\11 Oee\UDT_OeeVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\00 General\FB_Click_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\03 Estop\FB_Estop_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\03 Estop\UDT_Estop_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\04 SafetyDoor\FB_SafetyDoor_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\04 SafetyDoor\UDT_SafetyDoor_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\05 Cylinder\FB_Cylinder_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\05 Cylinder\UDT_CylinderData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\05 Cylinder\UDT_CylinderHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\05 Cylinder\UDT_CylinderMessage_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\05 Cylinder\UDT_CylinderVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\06 Axis\FB_Axis_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\06 Axis\FB_ModuloCalculate_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\06 Axis\UDT_AxisData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\06 Axis\UDT_AxisHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\06 Axis\UDT_AxisMessage_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\06 Axis\UDT_AxisVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\06 Axis\UDT_ModuloProperty_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\07 Sensor\FB_Sensor_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\07 Sensor\UDT_SensorData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\07 Sensor\UDT_SensorHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\07 Sensor\UDT_SensorVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\08 Motor\FB_Motor_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\08 Motor\UDT_MotorData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\08 Motor\UDT_MotorHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\08 Motor\UDT_MotorVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\11 KeyenceScan\FB_KeyenceScan_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\11 KeyenceScan\UDT_KeyenceScanData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\11 KeyenceScan\UDT_KeyenceScanHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\11 KeyenceScan\UDT_KeyenceScanVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\12 Delay\FB_Delay_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\12 Delay\UDT_DelayData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\12 Delay\UDT_DelayHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\12 Delay\UDT_DelayVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\13 Valve\FB_Valve_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\13 Valve\UDT_ValveData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\13 Valve\UDT_ValveHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\13 Valve\UDT_ValveVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\40 RackFeeder\FB_RackFeeder_RD.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\40 RackFeeder\UDT_RackFeederData_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\40 RackFeeder\UDT_RackFeederHmi_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\40 RackFeeder\UDT_RackFeederInput_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\40 RackFeeder\UDT_RackFeederOutput_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\40 RackFeeder\UDT_RackFeederVar_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Standard\Unit\40 RackFeeder\UDT_RackFeedMessage_RD.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DUTs" />
+    <Folder Include="GVLs" />
+    <Folder Include="Standard" />
+    <Folder Include="Standard\FUN" />
+    <Folder Include="Standard\Module" />
+    <Folder Include="Standard\Module\Connector\Termininal" />
+    <Folder Include="Standard\Module\FAKRA" />
+    <Folder Include="Standard\Module\FAKRA\BraidFlaring" />
+    <Folder Include="Standard\Module\FAKRA\Crimping" />
+    <Folder Include="Standard\Module\FAKRA\JacketStripping" />
+    <Folder Include="Standard\ENUM" />
+    <Folder Include="Standard\Module\Connector" />
+    <Folder Include="Standard\Public\00 System" />
+    <Folder Include="Standard\Public\01 Machine" />
+    <Folder Include="Standard\Public\02 Station" />
+    <Folder Include="Standard\Public\03 HMI" />
+    <Folder Include="Standard\Public\04 Language" />
+    <Folder Include="Standard\Public\05 CycleTime" />
+    <Folder Include="Standard\Public\06 Produce" />
+    <Folder Include="Standard\Public\07 PartNo" />
+    <Folder Include="Standard\Public\08 WearPart" />
+    <Folder Include="Standard\Public\09 Dummy" />
+    <Folder Include="Standard\Public\10 Message" />
+    <Folder Include="Standard\Public\11 Oee" />
+    <Folder Include="Standard\Public\12 Order" />
+    <Folder Include="Standard\Public\13 Feeding" />
+    <Folder Include="Standard\Public\20 Function" />
+    <Folder Include="Standard\Unit" />
+    <Folder Include="Standard\Public" />
+    <Folder Include="Standard\Unit\03 Estop" />
+    <Folder Include="Standard\Unit\04 SafetyDoor" />
+    <Folder Include="Standard\Unit\06 Axis" />
+    <Folder Include="Standard\Unit\05 Cylinder" />
+    <Folder Include="Standard\Unit\07 Sensor" />
+    <Folder Include="Standard\Unit\08 Motor" />
+    <Folder Include="Standard\Unit\09 CCD" />
+    <Folder Include="Standard\Unit\10 CKD" />
+    <Folder Include="Standard\Unit\11 KeyenceScan" />
+    <Folder Include="Standard\Unit\12 Delay" />
+    <Folder Include="Standard\Unit\13 Valve" />
+    <Folder Include="Standard\Unit\14 BowlFeeder" />
+    <Folder Include="Standard\Unit\15 Vacuum" />
+    <Folder Include="Standard\Unit\16 SiemensRfid" />
+    <Folder Include="Standard\Unit\17 KeyenceGT" />
+    <Folder Include="Standard\Unit\18 WeissTable" />
+    <Folder Include="Standard\Unit\19 KeyenceMarking" />
+    <Folder Include="Standard\Unit\20 KeyenceIV" />
+    <Folder Include="Standard\Unit\21 KeyenceIX" />
+    <Folder Include="Standard\Unit\22 KeyenceCamera" />
+    <Folder Include="Standard\Unit\25 DatalogicScan" />
+    <Folder Include="Standard\Unit\27 CognexCamera" />
+    <Folder Include="Standard\Unit\28 CognexScan" />
+    <Folder Include="Standard\Unit\30 HoneywellScan" />
+    <Folder Include="Standard\Unit\32 EpsonRobot" />
+    <Folder Include="Standard\Unit\34 OmronCamera" />
+    <Folder Include="Standard\Unit\35 IAI_Rcon" />
+    <Folder Include="Standard\Unit\37 SmcIonizer" />
+    <Folder Include="Standard\Unit\38 SmcElectricCyl" />
+    <Folder Include="Standard\Unit\40 RackFeeder" />
+    <Folder Include="Standard\Unit\42 Ateq" />
+    <Folder Include="Standard\Unit\43 Cosmo" />
+    <Folder Include="Standard\Unit\00 General" />
+    <Folder Include="VISUs" />
+    <Folder Include="POUs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PlaceholderReference Include="CAA Memory">
+      <DefaultResolution>CAA Memory, * (CAA Technical Workgroup)</DefaultResolution>
+      <Namespace>MEM</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Math">
+      <DefaultResolution>Tc2_Math, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Math</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_MC2">
+      <DefaultResolution>Tc2_MC2, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_MC2</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_MC2_Drive">
+      <DefaultResolution>Tc2_MC2_Drive, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_MC2_Drive</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Standard">
+      <DefaultResolution>Tc2_Standard, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Standard</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_System">
+      <DefaultResolution>Tc2_System, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_System</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_Utilities">
+      <DefaultResolution>Tc2_Utilities, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_Utilities</Namespace>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc3_Module">
+      <DefaultResolution>Tc3_Module, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc3_Module</Namespace>
+    </PlaceholderReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PLC_Framework_V2_00.tmc">
+      <SubType>Content</SubType>
+    </None>
+  </ItemGroup>
+  <ProjectExtensions>
+    <PlcProjectOptions>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="OptionKey">
+      <v n="Name">"&lt;ProjectRoot&gt;"</v>
+      <d n="SubKeys" t="Hashtable" ckt="String" cvt="OptionKey">
+        <v>{40450F57-0AA3-4216-96F3-5444ECB29763}</v>
+        <o>
+          <v n="Name">"{40450F57-0AA3-4216-96F3-5444ECB29763}"</v>
+          <d n="SubKeys" t="Hashtable" />
+          <d n="Values" t="Hashtable" ckt="String" cvt="String">
+            <v>ActiveVisuProfile</v>
+            <v>IR0whWr8bwfwBwAAiD2qpQAAAABVAgAA37x72QAAAAABAAAAAAAAAAEaUwB5AHMAdABlAG0ALgBTAHQAcgBpAG4AZwACTHsAZgA5ADUAYgBiADQAMgA2AC0ANQA1ADIANAAtADQAYgA0ADUALQA5ADQAMAAwAC0AZgBiADAAZgAyAGUANwA3AGUANQAxAGIAfQADCE4AYQBtAGUABDBUAHcAaQBuAEMAQQBUACAAMwAuADEAIABCAHUAaQBsAGQAIAA0ADAAMgA0AC4ANwAFFlAAcgBvAGYAaQBsAGUARABhAHQAYQAGTHsAMQA2AGUANQA1AGIANgAwAC0ANwAwADQAMwAtADQAYQA2ADMALQBiADYANQBiAC0ANgAxADQANwAxADMAOAA3ADgAZAA0ADIAfQAHEkwAaQBiAHIAYQByAGkAZQBzAAhMewAzAGIAZgBkADUANAA1ADkALQBiADAANwBmAC0ANABkADYAZQAtAGEAZQAxAGEALQBhADgAMwAzADUANgBhADUANQAxADQAMgB9AAlMewA5AGMAOQA1ADgAOQA2ADgALQAyAGMAOAA1AC0ANAAxAGIAYgAtADgAOAA3ADEALQA4ADkANQBmAGYAMQBmAGUAZABlADEAYQB9AAoOVgBlAHIAcwBpAG8AbgALBmkAbgB0AAwKVQBzAGEAZwBlAA0KVABpAHQAbABlAA4aVgBpAHMAdQBFAGwAZQBtAE0AZQB0AGUAcgAPDkMAbwBtAHAAYQBuAHkAEAxTAHkAcwB0AGUAbQARElYAaQBzAHUARQBsAGUAbQBzABIwVgBpAHMAdQBFAGwAZQBtAHMAUwBwAGUAYwBpAGEAbABDAG8AbgB0AHIAbwBsAHMAEyhWAGkAcwB1AEUAbABlAG0AcwBXAGkAbgBDAG8AbgB0AHIAbwBsAHMAFCRWAGkAcwB1AEUAbABlAG0AVABlAHgAdABFAGQAaQB0AG8AcgAVIlYAaQBzAHUATgBhAHQAaQB2AGUAQwBvAG4AdAByAG8AbAAWFHYAaQBzAHUAaQBuAHAAdQB0AHMAFwxzAHkAcwB0AGUAbQAYGFYAaQBzAHUARQBsAGUAbQBCAGEAcwBlABkmRABlAHYAUABsAGEAYwBlAGgAbwBsAGQAZQByAHMAVQBzAGUAZAAaCGIAbwBvAGwAGyJQAGwAdQBnAGkAbgBDAG8AbgBzAHQAcgBhAGkAbgB0AHMAHEx7ADQAMwBkADUAMgBiAGMAZQAtADkANAAyAGMALQA0ADQAZAA3AC0AOQBlADkANAAtADEAYgBmAGQAZgAzADEAMABlADYAMwBjAH0AHRxBAHQATABlAGEAcwB0AFYAZQByAHMAaQBvAG4AHhRQAGwAdQBnAGkAbgBHAHUAaQBkAB8WUwB5AHMAdABlAG0ALgBHAHUAaQBkACBIYQBmAGMAZAA1ADQANAA2AC0ANAA5ADEANAAtADQAZgBlADcALQBiAGIANwA4AC0AOQBiAGYAZgBlAGIANwAwAGYAZAAxADcAIRRVAHAAZABhAHQAZQBJAG4AZgBvACJMewBiADAAMwAzADYANgBhADgALQBiADUAYwAwAC0ANABiADkAYQAtAGEAMAAwAGUALQBlAGIAOAA2ADAAMQAxADEAMAA0AGMAMwB9ACMOVQBwAGQAYQB0AGUAcwAkTHsAMQA4ADYAOABmAGYAYwA5AC0AZQA0AGYAYwAtADQANQAzADIALQBhAGMAMAA2AC0AMQBlADMAOQBiAGIANQA1ADcAYgA2ADkAfQAlTHsAYQA1AGIAZAA0ADgAYwAzAC0AMABkADEANwAtADQAMQBiADUALQBiADEANgA0AC0ANQBmAGMANgBhAGQAMgBiADkANgBiADcAfQAmFk8AYgBqAGUAYwB0AHMAVAB5AHAAZQAnVFUAcABkAGEAdABlAEwAYQBuAGcAdQBhAGcAZQBNAG8AZABlAGwARgBvAHIAQwBvAG4AdgBlAHIAdABpAGIAbABlAEwAaQBiAHIAYQByAGkAZQBzACgQTABpAGIAVABpAHQAbABlACkUTABpAGIAQwBvAG0AcABhAG4AeQAqHlUAcABkAGEAdABlAFAAcgBvAHYAaQBkAGUAcgBzACs4UwB5AHMAdABlAG0ALgBDAG8AbABsAGUAYwB0AGkAbwBuAHMALgBIAGEAcwBoAHQAYQBiAGwAZQAsEnYAaQBzAHUAZQBsAGUAbQBzAC1INgBjAGIAMQBjAGQAZQAxAC0AZAA1AGQAYwAtADQAYQAzAGIALQA5ADAANQA0AC0AMgAxAGYAYQA3ADUANgBhADMAZgBhADQALihJAG4AdABlAHIAZgBhAGMAZQBWAGUAcgBzAGkAbwBuAEkAbgBmAG8AL0x7AGMANgAxADEAZQA0ADAAMAAtADcAZgBiADkALQA0AGMAMwA1AC0AYgA5AGEAYwAtADQAZQAzADEANABiADUAOQA5ADYANAAzAH0AMBhNAGEAagBvAHIAVgBlAHIAcwBpAG8AbgAxGE0AaQBuAG8AcgBWAGUAcgBzAGkAbwBuADIMTABlAGcAYQBjAHkAMzBMAGEAbgBnAHUAYQBnAGUATQBvAGQAZQBsAFYAZQByAHMAaQBvAG4ASQBuAGYAbwA0MEwAbwBhAGQATABpAGIAcgBhAHIAaQBlAHMASQBuAHQAbwBQAHIAbwBqAGUAYwB0ADUaQwBvAG0AcABhAHQAaQBiAGkAbABpAHQAeQDQAAIaA9ADAS0E0AUGGgfQBwgaAUUHCQjQAAkaBEUKCwQDAAAABQAAAA0AAAAAAAAA0AwLrQIAAADQDQEtDtAPAS0Q0AAJGgRFCgsEAwAAAAUAAAANAAAAKAAAANAMC60BAAAA0A0BLRHQDwEtENAACRoERQoLBAMAAAAFAAAADQAAAAAAAADQDAutAgAAANANAS0S0A8BLRDQAAkaBEUKCwQDAAAABQAAAA0AAAAUAAAA0AwLrQIAAADQDQEtE9APAS0Q0AAJGgRFCgsEAwAAAAUAAAANAAAAAAAAANAMC60CAAAA0A0BLRTQDwEtENAACRoERQoLBAMAAAAFAAAADQAAAAAAAADQDAutAgAAANANAS0V0A8BLRDQAAkaBEUKCwQDAAAABQAAAA0AAAAAAAAA0AwLrQIAAADQDQEtFtAPAS0X0AAJGgRFCgsEAwAAAAUAAAANAAAAKAAAANAMC60EAAAA0A0BLRjQDwEtENAZGq0BRRscAdAAHBoCRR0LBAMAAAAFAAAADQAAAAAAAADQHh8tINAhIhoCRSMkAtAAJRoFRQoLBAMAAAADAAAAAAAAAAoAAADQJgutAAAAANADAS0n0CgBLRHQKQEtENAAJRoFRQoLBAMAAAADAAAAAAAAAAoAAADQJgutAQAAANADAS0n0CgBLRHQKQEtEJoqKwFFAAEC0AABLSzQAAEtF9AAHy0t0C4vGgPQMAutAQAAANAxC60XAAAA0DIarQDQMy8aA9AwC60CAAAA0DELrQMAAADQMhqtANA0Gq0A0DUarQA=</v>
+          </d>
+        </o>
+        <v>{192FAD59-8248-4824-A8DE-9177C94C195A}</v>
+        <o>
+          <v n="Name">"{192FAD59-8248-4824-A8DE-9177C94C195A}"</v>
+          <d n="SubKeys" t="Hashtable" />
+          <d n="Values" t="Hashtable" />
+        </o>
+      </d>
+      <d n="Values" t="Hashtable" />
+    </o>
+        </Data>
+        <TypeList>
+          <Type n="Hashtable">System.Collections.Hashtable</Type>
+          <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
+    </PlcProjectOptions>
+  </ProjectExtensions>
+</Project>

@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_UpdateCycleTimeHmi_RD" Id="{f4f399d8-79a4-4a6a-b8c9-5a3989c06545}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_UpdateCycleTimeHmi_RD
+VAR_IN_OUT
+hmi : UDT_Hmi_RD; //
+machine : UDT_Machine_RD; //
+station : ARRAY[*] OF UDT_Station_RD; //
+cycleTime : UDT_CycleTimeHmi_RD; //
+number : INT; //编号
+END_VAR
+VAR
+upperBound : INT; //
+stationNum : INT; //
+index : INT; //
+stationIndex : INT; //
+fbTurnPages : FB_TurnPages_RD; //
+firstRun : BOOL :=TRUE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[  //================================================================================== 
+  // Harmontromics / (C) Copyright (2021) 
+  //----------------------------------------------------------------------------------
+  // Title:               CycleTime
+  // Comment/Function:    把各个工站CT和整机CT收集并整理后显示到HMI上，分页显示CT超高显示红色
+  // Library/Family:      (that the source is dedicated to)
+  // Author:              David.Wong
+  // Target System: 
+  // Engineering:         TIA Portal (V15.1)
+  // Restrictions:        (OB types, etc.)
+  // Requirements:        (hardware, technological package, etc.) 
+  //----------------------------------------------------------------------------------
+  // Change log table:
+  // Version     | Date       | Expert in charge | Changes applied
+  //-------------|------------|------------------|------------------------------------
+  // 001.000.000 | 2021-12-11 | David.Wong       | First released version
+  // 001.000.001 | 2022-11-8  | David.Wong       | 增加上下翻页按钮的显示/隐藏
+  //             |            |                  |              
+  //             |            |                  | 
+  //================================================================================== 
+SetUp();
+CycleTimeHmi();
+Visibility();]]></ST>
+    </Implementation>
+    <Action Name="CycleTimeHmi" Id="{f4ea5a8f-d732-4694-8f06-009027888ba5}">
+      <Implementation>
+        <ST><![CDATA[//--------------------------- CycleTime-------------------------------------------//
+  
+// 计数之前先清除MAX值
+cycleTime.number[0] := machine.machineNo;
+cycleTime.cycleTime[0] := machine.cycleTime;
+cycleTime.idealCycleTime := TIME_TO_DINT(machine.idealCycleTime);
+cycleTime.cycleTimeMin := 0;
+cycleTime.cycleTimeMax :=  cycleTime.cycleTime[0];
+stationNum := 0;
+FOR index := 1 TO upperBound DO
+  stationIndex := hmi.includingStationIndex[index];  //获取该工站的索引下标
+  // 获取该机器所属工站的CT值，并计数出所有工站最大CT值
+  IF stationIndex > 0 THEN
+    stationNum := stationNum +1;
+    cycleTime.cycleTimeMax := MAX(cycleTime.cycleTimeMax, station[stationIndex].cycleTime);
+  END_IF;
+END_FOR;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{ce99bb04-90ea-49c3-83f5-ea6f55d6935f}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------SetUp-------------------------------------------//
+  IF firstRun THEN
+    // 获取数组的上限
+    upperBound := SIZEOF(station) -1;   
+	firstRun:=FALSE;
+  END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Visibility" Id="{4dd0fe0e-a7ad-4d1c-964c-b902cf206671}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------- Visibility-------------------------------------------//
+// 显示
+IF hmi.actPageNo = 110 THEN
+
+	cycleTime.turnPages.minValue:=0;
+	cycleTime.turnPages.maxValue:=LINT_TO_INT(MAX(0,stationNum));
+	cycleTime.turnPages.increment:=8;
+	fbTurnPages(IN:=cycleTime.turnPages);
+
+	FOR index := 1 TO 8 DO
+		//显示当前页的工站名称
+		cycleTime.number[index] 	:=hmi.includingStationIndex[index + cycleTime.turnPages.value];
+		//显示当前页的CT值
+		cycleTime.cycleTime[index] :=station[cycleTime.number[index]].cycleTime;
+		//当前页的工站CT是否显示
+		cycleTime.display[index] 		:=cycleTime.number[index]>0;
+	END_FOR;
+
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_UpdateCycleTimeHmi_RD">
+      <LineId Id="43" Count="18" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="24" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_UpdateCycleTimeHmi_RD.CycleTimeHmi">
+      <LineId Id="2" Count="15" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_UpdateCycleTimeHmi_RD.SetUp">
+      <LineId Id="2" Count="4" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_UpdateCycleTimeHmi_RD.Visibility">
+      <LineId Id="2" Count="17" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Click_RD" Id="{5ba6f9a9-ec87-4fa9-8d48-56cfcade06e2}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Click_RD
+VAR_INPUT
+CLK          : BOOL;
+END_VAR
+VAR_OUTPUT
+Q            : BOOL;
+END_VAR
+VAR
+timeCache    : UDINT;
+cache        : BOOL;
+clickTimer   : TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[  //================================================================================== 
+  // Harmontromics / (C) Copyright (2022) 
+  //----------------------------------------------------------------------------------
+  // Title:                            按钮点击控制
+  // Comment/Function:    根据按下时长，输出不同脉冲信号
+  //                     				 按下1s内，输出1个脉冲信号
+  //                     				 按下超过1s，已200ms间隔输出脉冲信号
+  //                    				 按下超过2s，已100ms间隔输出脉冲信号
+  //                    				 按下超过3s，已50ms间隔输出脉冲信号
+  //                     			     按下超过5s，已PLC扫描周期间隔输出脉冲信号
+  // Library/Family:      (that the source is dedicated to)
+  // Author:                 David.Wong
+  // Target System: 
+  // Engineering:         Sysmac Studio
+  // Restrictions:           (OB types, etc.)
+  // Requirements:        (hardware, technological package, etc.) 
+  //----------------------------------------------------------------------------------
+  // Change log table:
+  // Version     | Date       | Expert in charge | Changes applied
+  //-------------|------------|------------------|------------------------------------
+  // 001.000.000 | 2023-8-3  | David.Wong       | First released version
+  //            		  |            |                  |              
+  //           	  		  |            |                  | 
+  //================================================================================== 
+IF NOT clickTimer.IN AND CLK THEN
+  Q := TRUE;
+ELSIF clickTimer.Q THEN //长按超过5s，已PLC扫描周期间隔脉冲输出
+  cache := NOT cache;
+  Q := cache;
+ELSIF clickTimer.ET > T#3s THEN //长按超过3s，已50ms间隔脉冲输出
+  Q := timeCache <> TIME_TO_UDINT(clickTimer.ET) / 50;
+  timeCache := TIME_TO_UDINT(clickTimer.ET) / 50;
+ELSIF clickTimer.ET > T#2s THEN  //长按超过2s，已100ms间隔脉冲输出
+  Q := timeCache <> TIME_TO_UDINT(clickTimer.ET) / 100;
+  timeCache := TIME_TO_UDINT(clickTimer.ET) / 100;
+ELSIF clickTimer.ET > T#1s THEN //长按超过1s，已200ms间隔脉冲输出
+  Q := timeCache <> TIME_TO_UDINT(clickTimer.ET) / 200;
+  timeCache := TIME_TO_UDINT(clickTimer.ET) / 200;
+ELSE
+  Q := FALSE;
+END_IF;
+clickTimer(IN := CLK,
+              PT := t#5s);]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Click_RD">
+      <LineId Id="46" Count="22" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="15" Count="17" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

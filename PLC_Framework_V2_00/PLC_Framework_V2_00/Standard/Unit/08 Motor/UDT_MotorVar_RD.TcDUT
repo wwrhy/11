@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_MotorVar_RD" Id="{36fda1a4-8e7d-4a74-9bf7-9b1e18a32dba}">
+    <Declaration><![CDATA[TYPE UDT_MotorVar_RD :
+STRUCT
+inputRunning        : BOOL;// 运行监控输入
+inputError          : BOOL;// 错误输入
+outputForward       : BOOL;// 正转输出
+outputReversal      : BOOL;// 反转输出
+outputErrorReset    : BOOL;// 错误复位输出
+forwardHmi          : BOOL;// 正转HMI
+forwardForbidIcon   : BOOL;// 正转禁止图标
+forwardManual       : BOOL;// 正转手动执行
+forwardAuto         : BOOL;// 正转自动执行
+forwardManualTip    : BOOL;// 正转手动提示
+forwardPermit       : BOOL;// 正转条件
+inForward           : BOOL;// 正转运行中
+reversalHmi         : BOOL;// 反转HMI
+reversalForbidIcon  : BOOL;// 反转禁止图标
+reversalManual      : BOOL;// 反转手动执行
+reversalAuto        : BOOL;// 反转自动执行
+reversalManualTip   : BOOL;// 反转手动提示
+reversalPermit      : BOOL;// 反转条件
+inReversal          : BOOL;// 反转运行中
+init                : BOOL;// 初始化
+alarming            : BOOL;// 报警中
+autoTip             : BOOL;// 自动提示中
+runningAlarm        : BOOL;// 运行监控报警
+inverterAlarm       : BOOL;// 变频器报警
+forwardHmiState     : UINT;// 正转Hmi状态
+reversalHmiState    : UINT;// 反转Hmi状态
+monitorMode         : UINT;// 监控模式: 0停用运行监控 1启用运行监控
+turnMode            : UINT;// 运转模式: 1正转 2反转 3正反转
+stationNo           : UINT;// 所属工站编号
+serialNo            : UINT;// HMI显示序号
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

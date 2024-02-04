@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_WearPart" Id="{6a533d51-1840-4ee3-a6bd-679d26e5b4f6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_WearPart
+VAR_INPUT
+localClock : DATE_AND_TIME; //
+END_VAR
+VAR_IN_OUT
+machine : UDT_Machine_RD; //
+stations : UDT_Station_RD; //
+vari : UDT_WearPartVar_RD; //
+data : UDT_WearPartData_RD; //
+END_VAR
+VAR
+nIndex : UINT;
+tipTimes : DINT;//提示次数             
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Execute();
+Alarm();
+Clear();]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{3c55bf18-fcca-4ae5-95d2-b5d7ff80b304}">
+      <Implementation>
+        <ST><![CDATA[tipTimes:=LREAL_TO_DINT(DINT_TO_LREAL(data.maxUsage)*REAL_TO_LREAL(data.tipRate)/100);
+
+
+vari.alarming:=data.actUsage>=data.maxUsage;
+vari.tip:=data.actUsage>=tipTimes AND NOT vari.alarming;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Clear" Id="{c3f06054-4474-4c02-ab07-8bb709dd91e4}">
+      <Implementation>
+        <ST><![CDATA[vari.clearHmi :=
+vari.clearAuto := FALSE;
+IF data.actUsage>0 THEN
+  vari.clearAllow:=vari.clearPermit;
+  IF vari.clearAllow AND machine.manualMode THEN
+      vari.clearForbidIcon := NOT vari.clearAllow;//清零禁止图标
+      IF vari.clearAllow AND (vari.clearHmi OR  vari.clearAuto) THEN
+        FOR nIndex:=9 TO 1 BY -1 DO
+  		  data.recordsTime[nIndex]:=data.recordsTime[nIndex-1];
+  		  data.recordsUsage[nIndex]:=data.recordsUsage[nIndex-1];
+  	    END_FOR
+  	    data.recordsTime[0]:=DT_TO_SYSTEMTIME(localClock);
+  	    data.recordsUsage[0]:=data.actUsage;
+  	    data.actUsage:=0;
+      END_IF;
+  ELSE
+    vari.clearForbidIcon := TRUE;
+  END_IF;
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Execute" Id="{22f269b0-68b1-44ab-a81a-5b39a0846e1b}">
+      <Implementation>
+        <ST><![CDATA[vari.countExecute:=FALSE;
+IF vari.countExecute THEN
+	data.actUsage:=data.actUsage+vari.increments;
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_WearPart">
+      <LineId Id="9" Count="0" />
+      <LineId Id="21" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_WearPart.Alarm">
+      <LineId Id="2" Count="3" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WearPart.Clear">
+      <LineId Id="47" Count="1" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="17" Count="2" />
+      <LineId Id="41" Count="5" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="28" Count="1" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_WearPart.Execute">
+      <LineId Id="4" Count="0" />
+      <LineId Id="2" Count="1" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

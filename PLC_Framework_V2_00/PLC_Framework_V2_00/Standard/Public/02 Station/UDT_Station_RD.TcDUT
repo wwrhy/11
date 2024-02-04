@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Station_RD" Id="{a9007e67-9a55-4471-b77a-176c7646c2c0}">
+    <Declaration><![CDATA[TYPE UDT_Station_RD :
+STRUCT
+canRun : BOOL; // 工站可动作
+inithmi : Bool; // 工站初始化hmi
+initAllow : Bool; // 工站初始化允许操作
+initAuto : Bool; // 工站初始化Auto
+initForbidIcon : Bool; // 工站初始化禁止图标
+initPermit : Bool; // 工站初始化条件
+initing : Bool; // 工站初始化中
+initDelay : Bool; // 工站初始化延时
+initDone : Bool; // 工站初始化完成
+cycleRunhmi : Bool; // 工站单循环hmi
+cycleRunAllow : Bool; // 工站单循环允许操作
+cycleRunAuto : Bool; // 工站单循环Auto
+cycleRunForbidIcon : Bool; // 工站单循环禁止图标
+cycleRunPermit : Bool; // 工站单循环条件
+cycleRunning : Bool; // 工站单循环中
+cycleRunFlag : Bool; // 工站单循环标志
+jogRunhmi : Bool; // 工站寸动hmi
+jogRunAllow : Bool; // 工站寸动允许操作
+jogRunAuto : Bool; // 工站寸动Auto
+jogRunForbidIcon : Bool; // 工站寸动禁止图标
+jogRunPermit : Bool; // 工站寸动条件
+jogRunning : Bool; // 工站寸动中
+pausehmi : Bool; // 工站暂停hmi
+disablehmi : Bool; // 工站屏蔽hmi
+disablePermit : Bool; // 工站屏蔽条件
+disabled : Bool; // 工站屏蔽中
+ready : Bool; // 工站准备就绪
+alarming : Bool; // 工站报警中
+autoTip : Bool; // 工站自动提示中
+autoTipTrigger : Bool; // 工站自动提示触发显示
+manualTip : Bool; // 工站手动提示中
+running : Bool; // 工站运行中
+runPermit : Bool; // 工站运行条件
+done : Bool; // 工站完成信号
+cycleTimeStart : Bool; // 工站周期计时开始
+cycleTimeEnd : Bool; // 工站周期计时结束
+recordCycleTimeStart : Bool; // 工站详细周期计时开始
+recordCycleTimeEnd : Bool; // 工站详细周期计时结束
+requiresReinitialize : Bool; // 急停后工站需要重新初始化
+syncAlarms : Bool; // 同步报警,其它工站报警本站立即停止
+initResetAutoFlow : Bool; // 初始化时自动复位工站所有流程步
+initSyncMachine : Bool; // 同步机器初始化，1:机器初始化中时单工站同步初始化
+repetitionsEnable : Bool; // 单循环重复动作开启
+sidebar : UDT_StationSidebar_RD; //
+machineNo : UINT; // 所属机器编号
+stationNo : UINT; // 当前工站编号
+cycleTime : DINT; // 工站周期时间
+initTimeout : Time; // 初始化超时时间
+repetitions : UInt; // 单循环重复动作计数
+repetitionsTimes : UInt; // 单循环重复动作次数设置
+status : UInt; // 工站状态显示
+flowDisplay : UINT; // 流程显示数量
+flow : Array[0..5] of UDT_Flow_RD; // 流程
+presetAlarms : Array[0..15] of Bool; // 预置报警
+presetManualTips : Array[0..15] of Bool; // 预置手动提示
+presetAutoTips : Array[0..15] of Bool; // 预置自动提示
+userAlarms : Array[0..63] of Bool; // 用户报警
+userManualTips : Array[0..63] of Bool; // 用户手动提示
+userAutoTips : Array[0..63] of Bool; // 用户自动提示
+userTips : Array[0..63] of Bool; // 用户一般提示
+headerText : STRING[50]; // 标头文本
+report : UDT_StationReport_RD; // 下级状态反馈
+name : STRING[30]; // 工站名称
+
+repetitionsClear : BOOL; // 单循环重复动作计数清零
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

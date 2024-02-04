@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SafetyDoor_RD" Id="{0d99dc70-6e7a-4074-9b90-dc2a72b3dacf}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SafetyDoor_RD
+VAR_IN_OUT
+machine : UDT_Machine_RD; //
+vari : UDT_SafetyDoor_RD; //
+clock : UDT_Clock_RD; //
+END_VAR
+
+VAR
+prohibit : BOOL; // 禁止解锁
+unlockButtonCache : Bool; // 解锁按钮缓存
+permitTimer : TON; // 解锁许可延时
+autoLockTimer : TON; // 自锁延时
+
+END_VAR
+
+VAR CONSTANT
+NOT_LOCKED      : UINT:=1;
+DISABLED        : UINT:=2;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[  //================================================================================== 
+  // Harmontromics / (C) Copyright (2021) 
+  //----------------------------------------------------------------------------------
+  // Title:               Safety Door
+  // Comment/Function:    实现安全门的控制，自/手动上锁、按钮解锁
+  // Library/Family:      (that the source is dedicated to)
+  // Author:              David.Wong
+  // Target System: 
+  // Engineering:         Sysmac Studio
+  // Restrictions:        (OB types, etc.)
+  // Requirements:        (hardware, technological package, etc.) 
+  //----------------------------------------------------------------------------------
+  // Change log table:
+  // Version     | Date       | Expert in charge | Changes applied
+  //-------------|------------|------------------|------------------------------------
+  // 001.000.000 | 2021-12-11 | David.Wong       | First released version
+  //             |            |                  | 
+  //             |            |                  |              
+  //             |            |                  | 
+  //================================================================================== 
+SetUp();
+SafetyDoor();
+Tip();]]></ST>
+    </Implementation>
+    <Action Name="SafetyDoor" Id="{710cffcb-8a8f-4a9b-bfeb-4349be4ee817}">
+      <Implementation>
+        <ST><![CDATA[//------------------------------SafetyDoor-------------------------------------//
+  
+//  禁止解锁
+prohibit := machine.eStop
+AND vari.inputLocked
+AND (NOT machine.manualMode
+OR machine.initing
+OR machine.running
+OR vari.prohibitUnlock);
+
+//  解锁许可延时
+permitTimer(
+	IN:=NOT Prohibit,
+	PT:=T#500MS,
+	Q=> , ET=> 
+);
+  
+//  插销没到位且没锁好信号时自动弹开
+IF vari.inputUnlockButton
+	AND
+	permitTimer.Q	  
+	//AND NOT vari.inputLocked   
+	//AND NOT vari.inputArrived
+THEN
+  vari.outputLockCoil := TRUE;
+END_IF;
+
+//  解锁按钮操作，自动上锁时解锁，非自动上锁时解锁和上锁
+IF NOT unlockButtonCache AND vari.inputUnlockButton THEN
+  vari.outputLockCoil := NOT vari.outputLockCoil AND NOT vari.autoLock;
+END_IF;
+unlockButtonCache := vari.inputUnlockButton;
+
+//  自锁延时
+autoLockTimer(IN := vari.autoLock AND NOT vari.inputUnlockButton,
+			  PT := vari.autoLockTime
+);  
+  
+//  自动上锁及禁止解锁
+IF vari.inputArrived
+  AND
+  (autoLockTimer.Q
+  OR NOT permitTimer.Q)
+THEN
+  vari.outputLockCoil := FALSE;
+END_IF;
+
+//  解锁按钮灯输出
+IF vari.inputLocked THEN
+  vari.outputUnlockButtonLight := vari.lightWhenLocked;
+ELSE
+  vari.outputUnlockButtonLight := clock.c1s;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{80fca33a-a029-4138-8aa2-c8d4191b0a8b}">
+      <Implementation>
+        <ST><![CDATA[//------------------------------SetUp-------------------------------------//
+  IF machine.startUp THEN
+    IF vari.name[machine.actLanguage] <> '' THEN
+      vari.name[0] := vari.name[machine.actLanguage];
+    END_IF;
+	vari.autoLockTime:=T#3s;
+  END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Tip" Id="{867d00c8-7233-4b38-a4e3-caddfdaf119d}">
+      <Implementation>
+        <ST><![CDATA[//------------------------------Tip---------------------------------------------//
+  
+// 安全门未锁好提示
+IF (NOT vari.inputArrived
+  OR NOT vari.inputLocked
+  OR NOT vari.outputLockCoil)
+  AND NOT vari.disabled
+THEN
+  vari.notLocked := TRUE; // 安全门未锁好报警
+ELSIF machine.reset THEN
+  vari.notLocked := FALSE;
+END_IF;
+
+//反馈安全没锁好
+IF vari.notLocked THEN
+  machine.report.notSafetyDoors := TRUE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_SafetyDoor_RD">
+      <LineId Id="29" Count="18" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="48" Count="2" />
+    </LineIds>
+    <LineIds Name="FB_SafetyDoor_RD.SafetyDoor">
+      <LineId Id="2" Count="10" />
+      <LineId Id="55" Count="3" />
+      <LineId Id="16" Count="20" />
+      <LineId Id="38" Count="15" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SafetyDoor_RD.SetUp">
+      <LineId Id="2" Count="5" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_SafetyDoor_RD.Tip">
+      <LineId Id="2" Count="15" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,201 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_UpdateProduceHmi_RD" Id="{4681e18b-13f7-468e-9fef-172b777f1ad5}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_UpdateProduceHmi_RD
+VAR_IN_OUT
+hmi : UDT_ProduceHmi_RD; //
+machine : ARRAY[*] OF UDT_Machine_RD; //
+vari : ARRAY[*] OF UDT_ProduceVar_RD; //
+data : ARRAY[*] OF UDT_ProduceData_RD; //
+badVar : ARRAY[*] OF UDT_BadVar_RD; //
+badData : ARRAY[*] OF UDT_BadData_RD; //
+number : INT; //编号
+END_VAR
+
+VAR
+numberCache : INT; //
+goodExecuteCache : Array[0..99] of Bool; //
+activated : Bool; //
+badExecuteCache : Array[0..99] of Bool; //
+badProducts : Array[0..99] of DInt; //
+badList : Array[0..99] of Int; //
+badSortList : Array[0..99] of Int; //
+refresh : Bool; //
+pageNo : Int; //
+badTypeNum : Int; //
+setUpTimer : TON; //
+sortModeCache : Int; //
+percentModeCache : Int; //
+setUpCache : Bool; //
+turnPages : FB_TurnPages_RD; //
+index : DInt; //
+index1 : DInt; //
+index2 : DInt; //
+temp : DInt; //
+No : Int; //
+fbTurnPages : FB_TurnPages_RD; //
+END_VAR
+
+VAR CONSTANT
+MAX_CONTINUOUS  : INT := 99;//最大连续不良报警数量
+MAX_CUMULATIVE  : INT := 10;//最大累计不良报警数量n
+MAX_CUMULATIVE_RANGE : INT := 999;//最大累计不良计算范围m
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF number >0 THEN
+	IF numberCache <> number THEN
+		numberCache := number;
+				
+		hmi.sortMode						:=vari[number].sortMode;
+		hmi.percentMode				:=vari[number].percentMode;
+	ELSE
+		
+		badList								:=vari[number].badList;
+		badTypeNum					:=vari[number].badTypeNum;
+		vari[number].allClearHmi				:=hmi.allClearHmi;
+		vari[number].sortMode				:=hmi.sortMode;
+		vari[number].percentMode			:=hmi.percentMode;
+
+		IF  hmi.sortMode < 0 OR hmi.sortMode > 2 THEN
+			hmi.sortMode :=0;
+		END_IF;
+		
+		// 超过30s自动退出设定模式
+		setUpTimer(IN := hmi.setUp,
+							PT := t#30S);
+		IF setUpTimer.Q THEN
+			hmi.setUp := FALSE;
+		END_IF;
+  
+		 //不良显示
+		 // 当前不良分类数量多少
+		FOR index := 1 TO badTypeNum DO
+			No := badList[index];
+			badProducts[No] := badData[No].quantity;
+		END_FOR;
+		
+		//不良排序方式
+        CASE hmi.sortMode OF
+          1:  //根据不良率从大到小排序
+            FOR index := 1 TO badTypeNum DO
+              temp := badProducts[1];
+              badSortList[index] := 1;
+              FOR index1 := 1 TO badTypeNum - 1 DO
+                IF badProducts[badList[index1 + 1]] > temp THEN
+                  temp := badProducts[badList[index1 + 1]];
+                  badSortList[index] := badList[index1 + 1];
+                END_IF;
+                IF index1 = badTypeNum - 1 THEN
+                  badProducts[badSortList[index]] := -1;
+                END_IF;
+              END_FOR;
+            END_FOR;
+            
+          2: //根据不良率从小到大排序
+            FOR index := 1 TO badTypeNum DO
+              temp := badProducts[1];
+              badSortList[index] := 1;
+              FOR index1 := 1 TO badTypeNum - 1 DO
+                IF badProducts[badList[index1 + 1]] < temp THEN
+                  temp := badProducts[badList[index1 + 1]];
+                  badSortList[index] := badList[index1 + 1];
+                END_IF;
+                IF index1 = badTypeNum - 1 THEN
+                  badProducts[badSortList[index]] := 99999;
+                END_IF;
+              END_FOR;
+            END_FOR;
+          ELSE  //默认排序根据不良类型序号
+            FOR index := 1 TO badTypeNum DO
+              badSortList[index] := badList[index];
+            END_FOR;
+        END_CASE;
+		
+
+		
+        //滚动条控制
+		hmi.turnPages.minValue:=0;
+		hmi.turnPages.maxValue:=badTypeNum;
+		hmi.turnPages.increment:=5;
+		fbTurnPages(IN:=hmi.turnPages,
+							value=>pageNo);
+		FOR index :=1 TO 5 DO
+			hmi.badShow[index].display:=badList[index + pageNo] > 0;
+		END_FOR;
+		
+        //进入报警设置中
+		badTypeNum:=vari[number].badTypeNum;
+        IF hmi.setUp THEN
+			FOR index :=1 TO 5 DO
+				hmi.badShow[index].setUpDisplay:=badList[index + pageNo] > 0;
+			END_FOR;
+			FOR index := 1 TO MIN(badTypeNum,5) DO   //显示当前5个，小于5个显示实际数量
+				No := badSortList[index + pageNo];
+				IF NOT setUpCache AND hmi.setUp
+					OR fbTurnPages.change
+					OR sortModeCache <> hmi.sortMode
+				THEN  //进入设置中上升沿或翻页后执行一次 Data->Show	
+            		hmi.badShow[index].number := badSortList[index + pageNo];
+					hmi.badShow[index].continuous := badData[No].continuous;
+					hmi.badShow[index].cumulative := badData[No].cumulative;
+					hmi.badShow[index].cumulativeRange := badData[No].cumulativeRange;
+				ELSE//其它时候HMI修改值写入Data Show->Data
+					hmi.badShow[index].continuous := LIMIT(hmi.badShow[index].continuous,0, MAX_CONTINUOUS);
+					hmi.badShow[index].cumulativeRange := LIMIT(hmi.badShow[index].cumulativeRange,0,MAX_CUMULATIVE_RANGE);
+					hmi.badShow[index].cumulative := LIMIT(hmi.badShow[index].cumulative,0,LINT_TO_INT( MIN(MAX_CUMULATIVE,hmi.badShow[index].cumulativeRange)));
+					badData[No].continuous := hmi.badShow[index].continuous;
+					badData[No].cumulative := hmi.badShow[index].cumulative;
+					badData[No].cumulativeRange := hmi.badShow[index].cumulativeRange;
+				END_IF;
+			END_FOR;
+        ELSE//不在报警设置中
+			FOR index :=1 TO 5 DO
+				hmi.badShow[index].setUpDisplay:=FALSE;
+			END_FOR;
+          FOR index := 1 TO MIN(badTypeNum,5) DO //显示当前5个，小于5个显示实际数量
+            No := badSortList[index + pageNo];
+            hmi.badShow[index].number := No;
+            hmi.badShow[index].quantity := badData[No].quantity;
+            hmi.badShow[index].rate := badVar[No].badRatio;
+          END_FOR;
+          
+		  	hmi.badMax	 		:= vari[number].badMax;
+			hmi.badMin 		:= 0;
+			setUpCache 		:= hmi.setUp;
+			hmi.goodValue 	:=  data[number].goodValue;
+			hmi.badValue 		:=  data[number].badValue;
+			hmi.totalValue	 	:=  data[number].totalValue;
+			hmi.cumulativeValue 		:=  data[number].cumulativeValue;
+
+			hmi.yieldRatio  	:=data[number].yieldRatio;
+			hmi.badRatio 		:=data[number].badRatio;
+			hmi.pieChart[1]	:= data[number].yieldRatio;
+			hmi.pieChart[0]	:= data[number].badRatio;
+		  
+		  
+		  
+        END_IF;	
+		setUpCache := hmi.setUp;
+		sortModeCache	:= hmi.sortMode;
+
+
+	END_IF;
+	
+	//连续不良报警
+	FOR index2:=0 TO SIZEOF(badVar) BY 1 DO
+		hmi.continuousAlarm[index2]:=badVar[index2].continuousAlarm;
+		hmi.cumulativeAlarm[index2]:=badVar[index2].cumulativeAlarm;
+	END_FOR;
+	
+END_IF;		]]></ST>
+    </Implementation>
+    <LineIds Name="FB_UpdateProduceHmi_RD">
+      <LineId Id="49" Count="98" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="157" Count="43" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

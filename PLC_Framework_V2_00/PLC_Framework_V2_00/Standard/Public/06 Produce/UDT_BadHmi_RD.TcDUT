@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_BadHmi_RD" Id="{5b1dc4cd-800a-4082-8251-58dbfac63f2a}">
+    <Declaration><![CDATA[TYPE UDT_BadHmi_RD :
+STRUCT
+display : BOOL; // 显示
+setUpDisplay : BOOL; //
+number : Int; // 编号
+quantity : DInt; // 不良品数量
+rate : Real; // 不良率
+continuous : DInt; // 连续不良报警数量
+cumulative : DInt; // 累计不良报警数量n
+cumulativeRange : DInt; // 累计不良计算范围m
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

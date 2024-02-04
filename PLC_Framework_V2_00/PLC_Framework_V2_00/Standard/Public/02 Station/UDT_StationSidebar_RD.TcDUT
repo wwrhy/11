@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_StationSidebar_RD" Id="{54009d2f-1eaa-4e0f-8ee8-1ffde54ed284}">
+    <Declaration><![CDATA[TYPE UDT_StationSidebar_RD :
+STRUCT
+otherEnable : BOOL; // 其它按钮启用
+other2Enable : Bool; // 其它2按钮启用
+other3Enable : Bool; // 其它3按钮启用
+other4Enable : Bool; // 其它4按钮启用
+otherIcon : Int; // 其它按钮图标编号
+other2Icon : Int; // 其它2按钮图标编号
+other3Icon : Int; // 其它3按钮图标编号
+other4Icon : Int; // 其它4按钮图标编号
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

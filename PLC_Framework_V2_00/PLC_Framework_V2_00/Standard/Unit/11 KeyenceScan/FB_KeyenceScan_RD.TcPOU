@@ -1,0 +1,433 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_KeyenceScan_RD" Id="{57387aa7-75c7-4c68-b919-7912097559fb}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_KeyenceScan_RD
+VAR_IN_OUT
+machine : UDT_Machine_RD; //
+station : UDT_Station_RD; //
+vari : UDT_KeyenceScanVar_RD; //
+data : UDT_KeyenceScanData_RD; //
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+activated : BOOL; // 块已运行
+moduleType : UINT; // 模块类型 0:N-L20, 1:SR-1000X, 2:SR-2000X, 3:SR-LR1
+triggerStep : UInt; // 流程字
+resetCache : Bool; // 复位缓存
+triggerAutoCache : Bool; // 触发Auto缓存
+triggerHmiCache : Bool; // 触发Hmi缓存
+gradeCache : Int; // ISO_IEC_16022等级缓存
+readRequest : Bool; // 读取请求
+errorClear : Bool; // 错误清除
+readCompleteClear : Bool; // 读取完成清除
+error : Bool; //错误
+allbusy : Bool; //忙
+trgBusy : Bool; //触发忙
+readComplete : Bool; //读取完成
+resultDataSize : UInt; // 结果数据大小
+generalErrorCode : UInt; // 一般错误代码
+resultData : Array[0..256] of Byte; // 结果数据
+ISO_IEC15415Grade : UInt; // ISO/IEC15415等级
+ISO_IEC_TR29158Grade : UINT; // ISO/IEC TR 29158等级
+timeoutTimer : TON; //
+isTimeoutTimer : BOOL; //
+index          : UINT;
+END_VAR
+
+VAR CONSTANT
+ISO_IEC_15415 	 : UINT :=1 ; // 扫码等级评估标准
+ISO_IEC_TR_29158 : UINT :=2 ; // 扫码等级评估标准
+ISO_IEC_16022    : UINT :=3 ; // 扫码等级评估标准
+RESULT_PASS      : UINT :=1 ; // 扫码结果Pass
+RESULT_FAIL      : UINT :=2 ; // 扫码结果Fail
+RESULT_TIMEOUT   : UINT :=3 ; // 扫码结果Timeout
+ERR_GENERAL      : UINT :=1 ; // 一般错误
+ERR_READL 		 : UINT :=2 ; // 读取错误
+ERR_TIMEOUT      : UINT :=3 ; // 超时报警
+BUSY             : UINT :=4 ; // 处理中
+READ_SUCCESS     : UINT :=6 ; // 读取完成
+READY            : UINT :=7 ; // 准备就绪
+LEVEL_INVALID    : UINT :=99 ; // 扫码等级无效
+LEVEL_A 		 : UINT :=4 ; // 扫码等级A
+LEVEL_B          : UINT :=3 ; // 扫码等级B
+LEVEL_C          : UINT :=2 ; // 扫码等级C
+LEVEL_D 		 : UINT :=1 ; // 扫码等级D
+LEVEL_F 		 : UINT :=0 ; // 扫码等级F
+N_L21 			 : UINT :=0 ; //
+SR_1000X 		 : UINT :=1 ; //
+SR_2000X 		 : UINT :=2 ; //
+SR_LR1 			 : UINT :=3 ; //
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SetUp();
+InPutUpdate();
+Alarm();
+General();
+ScanFlow();
+ManualTip();
+OutPutUpdate();
+Cache();]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{3d7ae533-e3db-4816-8a98-0ea219a38a1e}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------------Alarm-----------------------------------------//  
+//报警复位
+IF NOT resetCache AND machine.reset THEN
+  vari.generalError := FALSE;
+  vari.readError := FALSE;
+  vari.readTimeoutAlarm := FALSE;
+  vari.generalErrorCode := 0;
+  vari.readResultCode := 0;
+  IF vari.alarming THEN
+    triggerStep := 0;
+  END_IF;
+END_IF;
+errorClear := machine.reset;
+
+IF NOT vari.disabled THEN
+  //一般错误报警
+  IF error
+    OR generalErrorCode <> 0
+  THEN
+    vari.generalError := TRUE;
+    vari.generalErrorCode :=generalErrorCode;
+  END_IF;
+  
+  // //读取错误报警
+  // IF failure.readFailure
+  //   OR resultCode.readResultCode <> 0
+  // THEN
+  //   vari.readError := TRUE;
+  //   vari.readResultCode := resultCode.readResultCode;
+  // END_IF;
+  
+  //超时报警
+  timeoutTimer(IN:= vari.busy,
+  			   PT:= data.timeout);
+  IF NOT vari.readTimeoutDisabled AND data.timeout > T#0MS AND timeoutTimer.Q THEN
+  	vari.readTimeoutAlarm:=TRUE;
+  END_IF;
+END_IF;
+
+//工站报警中
+vari.alarming := vari.generalError OR vari.readError OR vari.readTimeoutAlarm;
+//反馈工站报警
+IF vari.alarming THEN
+  machine.alarmCount := machine.alarmCount +1;
+  station.report.alarming := TRUE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Cache" Id="{691879b9-caf4-42ff-a742-3020361e39f5}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------------Cache-----------------------------------------//
+  
+resetCache := machine.reset;
+triggerHmiCache := vari.triggerHmi;
+triggerAutoCache := vari.triggerAuto;
+vari.triggerAuto := FALSE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{96c5106c-d673-4383-b731-6703f5433fe8}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------------General-----------------------------------------//  
+  
+//准备就绪
+vari.ready := NOT allbusy
+AND NOT trgBusy
+AND NOT vari.readError
+AND NOT vari.generalError
+AND NOT vari.readTimeoutAlarm;
+//触发允许操作
+vari.triggerAllow := machine.eStop
+AND vari.ready;
+//触发禁止图标
+vari.triggerForbidIcon := NOT machine.manualMode OR NOT vari.triggerAllow;
+
+//状态
+IF vari.generalError THEN
+  vari.status := ERR_GENERAL;
+ELSIF vari.readError THEN
+  vari.status := ERR_READL;
+ELSIF vari.readTimeoutAlarm THEN
+  vari.status := ERR_TIMEOUT;
+ELSIF vari.busy THEN
+  vari.status := BUSY;
+ELSIF vari.done THEN
+  vari.status := READ_SUCCESS;
+ELSIF vari.ready THEN
+  vari.status := READY;
+ELSE
+  vari.status := 0;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="InPutUpdate" Id="{43bdc5c3-ddbc-498d-8650-3c228a27a521}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------------InPutUpdate-----------------------------------------//
+  
+  // 输入更新
+error					:= vari.input[0].0;
+readComplete			:= vari.input[1].0;
+generalErrorCode		:= WORD_TO_UINT(vari.input[16]);
+resultDataSize			:= WORD_TO_UINT(vari.input[21]);
+	
+resultData[0] := WORD_TO_BYTE(SHR(vari.input[22], 8));
+resultData[1] := WORD_TO_BYTE(vari.input[22]);
+
+IF moduleType = N_L21 OR moduleType = SR_1000X OR moduleType = SR_2000X THEN
+	allbusy				:= vari.input[0].8;
+	trgBusy				:= vari.input[0].9;
+END_IF;
+
+  IF moduleType = SR_1000X OR moduleType = SR_2000X THEN
+	ISO_IEC15415Grade			:=WORD_TO_UINT(vari.input[5]);
+	ISO_IEC_TR29158Grade	:=WORD_TO_UINT(vari.input[6]);
+  END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ManualTip" Id="{40c99c93-f5c6-4901-b7b0-ff592a802cad}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------------ManualTip-----------------------------------------//
+  
+//整机手动提示           
+IF vari.triggerHmi THEN
+  machine.presetManualTips[0] := NOT machine.eStop;     //急停中,无法操作
+  machine.presetManualTips[4] := NOT machine.manualMode;//不在手动模式,无法操作
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="OutPutUpdate" Id="{e5a54a2b-1a9c-4b53-bfea-1dac4a5e53c3}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------------OutPutUpdate-----------------------------------------//
+  
+// 输出更新
+vari.output[0].7:=errorClear;
+vari.output[0].8:=readRequest;
+vari.output[1].0:=readCompleteClear;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ScanFlow" Id="{ddb4dd27-bbb5-4435-bbe2-ab8d16a5e718}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------------ScanFlow-----------------------------------------//
+  
+//================================================================================== 
+// 读取OK时 
+// ...1 将“Read request”设为ON（1）。
+// ...2 将“Read request”设为ON（1）时, SR-1000系列将开始读取, “TRG BUSY”变为ON（1）。
+// ...3 读取条码时, 将在“Result Data”中写入数据。此时, “TRG BUSY”变为OFF（0）, “Read Complete”变为ON（1）。
+// ...4 将“Read request”设为OFF（0）。
+// ...5 确认“Read Complete”为ON（1）后, 将“Read Comlplete Clear”设为ON（1）。
+// ...6 将“Read Comlplete Clear”设为ON（1）时, “Read Complete”变为OFF（0）。
+// ...7 确认“Read Complete”为OFF（0）后, 将“Read Comlplete Clear”设为OFF（0）。
+// 读取错误时
+// ...1 将“Read request”设为ON（1）。
+// ...2 将“Read request”设为ON（1）时, SR-1000系列将开始读取, “TRG BUSY”变为ON（1）。
+// ...3 经过“单脉冲触发持续时间”后, 结束读取。
+// ...4 无法读取条码, 因此将在“Result Data”中写入“错误”。将在“Read Result Code”中写入“201”。此时, “TRG BUSY”变为OFF（0）, “Read Complete”变为ON（1）。
+// ...5 确认“Read Complete”为ON（1）后, 将“Read Comlplete Clear”设为ON（1）。
+// ...6 将“Read Comlplete Clear”设为ON（1）时, “Read Complete”和“Read Failure”变为OFF（0）。
+// ...7 确认“Read Complete”为OFF（0）后, 将“Read Comlplete Clear”设为OFF（0）。
+//================================================================================== 
+
+IF NOT machine.eStop THEN
+  triggerStep := 0;
+END_IF;
+
+CASE triggerStep OF
+    
+  0://Home triggerStep
+    readRequest := FALSE;
+    readCompleteClear := FALSE;
+    vari.busy := FALSE;
+    IF vari.triggerAllow
+      AND (NOT triggerAutoCache AND vari.triggerAuto  //自动触发上升沿
+      OR triggerHmiCache AND NOT vari.triggerHmi AND machine.manualMode)//手动触发下降沿
+    THEN
+      vari.scanGrade := LEVEL_INVALID;
+      vari.resultData := '';
+      vari.result := 0;
+      vari.done := FALSE;
+      vari.busy := TRUE;
+      IF readComplete THEN
+        triggerStep := triggerStep + 5;
+      ELSE
+        triggerStep := triggerStep + 10;
+      END_IF;
+    END_IF;
+    
+  5://读取完成清除
+    readCompleteClear := TRUE;
+    IF NOT readComplete THEN
+      readCompleteClear := FALSE;
+      triggerStep := triggerStep + 5;
+    END_IF;
+    
+  10://扫码读取请求
+    readRequest := TRUE;
+    IF trgBusy
+      OR readComplete
+      OR isTimeoutTimer
+    THEN
+      triggerStep := triggerStep + 10;
+    END_IF;
+    
+  20://扫码中，等待读取完成
+    IF NOT trgBusy
+      AND readComplete
+      OR isTimeoutTimer
+    THEN
+      triggerStep := triggerStep + 10;
+    ELSIF isTimeoutTimer OR vari.disabled THEN
+      triggerStep := 50;
+    END_IF;
+    
+  30://读取数据
+	IF resultDataSize > 0 THEN
+		FOR index := 0 TO MIN( resultDataSize, UINT#128)
+		DO
+			vari.resultData:= CONCAT(vari.resultData,BYTE_TO_STRING(resultData[index]));
+		END_FOR
+	END_IF;
+	IF moduleType = SR_1000X OR moduleType = SR_2000X THEN
+		triggerStep := triggerStep + 10;//只有在SR-1000和SR-2000型号有读取码的等级
+	ELSE
+		triggerStep := 50;
+	END_IF;
+    
+  40://读取评估等级
+	IF data.evaluationMode = ISO_IEC_15415 THEN    //使用ISO/IEC 15415标准
+		vari.scanGrade := ISO_IEC15415Grade;
+	ELSIF data.evaluationMode = ISO_IEC_TR_29158 THEN  //使用ISO/IEC TR 29158标准
+		vari.scanGrade := ISO_IEC_TR29158Grade;
+	ELSIF data.evaluationMode = ISO_IEC_16022 THEN  //使用ISO/IEC 16022标准
+		gradeCache := BYTE_TO_INT(resultData[resultDataSize - 2]);
+		CASE gradeCache OF
+			65:
+				vari.scanGrade := LEVEL_A;
+			66:
+				vari.scanGrade := LEVEL_B;
+			67:
+				vari.scanGrade := LEVEL_C;
+			68:
+				vari.scanGrade := LEVEL_D;
+			70:
+				vari.scanGrade := LEVEL_F;
+		ELSE
+			vari.scanGrade := LEVEL_INVALID;
+		END_CASE;
+	END_IF;
+	triggerStep := triggerStep + 10;
+    
+  50://复位读取请求
+    readRequest := FALSE;
+    IF NOT readRequest THEN
+      triggerStep := triggerStep + 10;
+    END_IF;
+    
+  60://读取完成清除
+    readCompleteClear := TRUE;
+    IF NOT readComplete
+      OR isTimeoutTimer
+    THEN
+      triggerStep := triggerStep + 10;
+    END_IF;
+    
+  70://读取完成清除复位
+    readCompleteClear := FALSE;
+    IF NOT readCompleteClear THEN
+      triggerStep := triggerStep + 10;
+    END_IF;
+    
+  80://结果处理
+    IF vari.scanGrade >= data.evaluationGrade
+      AND vari.scanGrade <= LEVEL_A
+      OR data.evaluationMode = 0
+      OR vari.disabled
+    THEN
+      vari.result := RESULT_PASS;
+    ELSIF isTimeoutTimer THEN
+      vari.result := RESULT_TIMEOUT;
+    ELSE
+      vari.result := RESULT_FAIL;
+    END_IF;
+    triggerStep := 999;
+    
+  999://读取完成 
+    vari.busy := FALSE;
+    vari.done := TRUE;
+    triggerStep := 0;
+    
+END_CASE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{284f58ad-8cda-4e01-b068-6f4856e4daec}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------------SetUp-----------------------------------------//
+  
+IF NOT activated THEN
+  activated:=TRUE;
+  // 判断型号
+  IF vari.sensorSeries = 'N-L20' THEN
+    moduleType := N_L21;
+  ELSIF vari.sensorSeries = 'SR-1000X' THEN
+    moduleType := SR_1000X;
+  ELSIF vari.sensorSeries = 'SR-2000X' THEN
+    moduleType := SR_2000X;
+  ELSIF vari.sensorSeries = 'SR-LR1' THEN
+    moduleType := SR_LR1;
+  END_IF;
+  vari.subDisplay.2:=moduleType = SR_1000X OR moduleType = SR_2000X;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_KeyenceScan_RD">
+      <LineId Id="9" Count="0" />
+      <LineId Id="69" Count="6" />
+    </LineIds>
+    <LineIds Name="FB_KeyenceScan_RD.Alarm">
+      <LineId Id="2" Count="31" />
+      <LineId Id="51" Count="3" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="42" Count="7" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_KeyenceScan_RD.Cache">
+      <LineId Id="2" Count="4" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_KeyenceScan_RD.General">
+      <LineId Id="2" Count="28" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_KeyenceScan_RD.InPutUpdate">
+      <LineId Id="2" Count="7" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="12" Count="7" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_KeyenceScan_RD.ManualTip">
+      <LineId Id="2" Count="5" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_KeyenceScan_RD.OutPutUpdate">
+      <LineId Id="2" Count="4" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_KeyenceScan_RD.ScanFlow">
+      <LineId Id="2" Count="74" />
+      <LineId Id="150" Count="1" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="79" Count="70" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_KeyenceScan_RD.SetUp">
+      <LineId Id="2" Count="13" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Parameters_BraidFlaring_RD" Id="{c76dbcae-86d0-4a45-a3a7-f4f2b8c61367}">
+    <Declaration><![CDATA[TYPE UDT_Parameters_BraidFlaring_RD :
+STRUCT
+	clipEnable						: ARRAY [1..5] OF BOOL;
+	transferAxisClipPosOffset		: ARRAY [1..5] OF REAL;
+	rotateAxisClipPosOffset		    : ARRAY [1..5] OF REAL;
+	transferAxisPushStartPosOffset	: REAL;
+	transferAxisPushEndPosOffset	: REAL;
+	rotateAxisPushPosOffset		    : REAL;
+	rotateAxisBasePos				: REAL;
+	transferAxisBasePos			    : REAL;
+	override :INT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

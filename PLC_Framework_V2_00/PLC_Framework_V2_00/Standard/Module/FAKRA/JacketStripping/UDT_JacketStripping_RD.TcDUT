@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_JacketStripping_RD" Id="{0e8e64bd-d31d-4dff-ad63-9f688984a793}">
+    <Declaration><![CDATA[TYPE UDT_JacketStripping_RD :
+STRUCT
+  
+Imm : UDT_Imm_JacketStripping_RD;
+Message : UDT_StationMessage_RD;
+Hmi : UDT_Hmi_JacketStripping_RD;
+
+UnitState : INT;	//DISABLED := 1,OPERATIONAL :=2,STANDBY :=3,UNKNOWN :=4
+Command :INT; //INIT :=1,START := 2,STOP :=3,PAUSE := 4
+CommandState : INT ; 	//NOT_READY := 1,READY :=2,RUNNING :=3,DONE :=4,CANCEL :=5,INIT := 6,ERROR :=7
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

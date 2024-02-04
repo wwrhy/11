@@ -1,0 +1,531 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Station_RD" Id="{4980fb97-3d38-4ef6-b3cf-52cdcd23c4eb}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Station_RD
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR_IN_OUT
+machine : UDT_Machine_RD; //
+station : UDT_Station_RD; //  
+
+END_VAR
+
+VAR
+END_VAR
+
+VAR
+safetyPermit : BOOL; // 安全条件
+stationIniting : Bool; // 单工站初始化中
+singleRunFlagCache : Bool; // 单循环标志缓存
+machineInit : Bool; // 整机初始化执行
+initExecute : Bool; // 初始化执行
+cycleRunExecute : Bool; // 单循环执行
+jogRunExecute : Bool; // 寸动执行
+initingCache : Bool; // 整机初始化缓存
+inithmiCache : Bool; // 初始化hmi缓存
+initAutoCache : Bool; // 初始化AutoI缓存
+cycleRunhmiCache : Bool; // 单循环hmi缓存
+cycleRunAutoCache : Bool; // 单循环AutoI缓存
+jogRunhmiCache : Bool; // 寸动hmi下缓存
+cycleTimeEndCache : Bool; // 工站周期结束缓存
+cycleTimeTimer : TON; // 工站周期定时器
+initingTimer : TON; // 初始化中定时器
+initTimeoutTimer : TON; // 初始化超时定时器
+jogRunhmiTimer : TON; // 寸动按下定时器
+isJogRunhmiTimer : BOOL; //寸动按下定时到位
+isInitTimeoutTimer : BOOL; //
+flowNum : UINT; // 流程数量
+flowTimeoutTimer : ARRAY[0..5] OF TON ; // 流程步超时定时器
+isFlowTimeout : Array[0..5] of BOOL; //
+flowStepCache : Array[0..5] of UInt; // 流程步缓存
+language : INT; //
+index : UINT; //
+activated : Bool; //
+
+END_VAR
+
+VAR CONSTANT
+MAX_FLOW : UINT:=5; // 流程最大数量
+
+STATE_ALARM : UInt:=0; // 报警中
+STATE_NOT_READY : UInt:=1; // 未准备就绪
+STATE_READY : UInt:=2; // 准备就绪
+STATE_RUNNING : UInt:=3; // 运行中
+STATE_SINGLE_RUN : UInt:=4; // 单循环中
+STATE_SINGLE_PAUSE : UInt:=5; // 单循环暂停
+STATE_INITING : UInt:=6; // 初始化中
+STATE_NOT_INIT : UINT:=7; // 未初始化
+
+INIT_TIMEOUT : UInt:=1; // 初始化超时报警
+NOT_INIT_NOT_START : UInt:=2; // 未初始化不能启动
+SINGLE_RUN_NOT_START : UInt:=3; // 单循环中不能启动
+FLOW_TIMEOUT : UInt:=4; // 流程超时
+NOT_RUN_PERMIT : UInt:=5; // 工站运行条件不足
+AUTO_TIP_POPUP : UINT:=11; //  自动提示弹窗
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SetUp();
+Flow();
+Alarm();
+AutoTip();
+ManualTip();
+General();
+Init();
+Running();
+Status();
+CycleTime();]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{7f15fee1-b876-4e62-9d92-5d296f0d92f6}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------Alarm-----------------------------------------//
+  
+  IF isInitTimeoutTimer  THEN
+    station.presetAlarms[0] := TRUE;//工站初始化超时报警
+  END_IF;
+    
+  //工站报警中 
+  station.alarming :=
+  FUN_AryBitCount_RD(station.presetAlarms) >0 
+  OR FUN_AryBitCount_RD(station.userAlarms) >0 
+  OR station.report.alarming ;
+   
+  IF FUN_AryBitCount_RD(station.presetAlarms) >0 THEN
+    machine.alarmCount :=machine.alarmCount + FUN_AryBitCount_RD(station.presetAlarms);
+  END_IF;
+  IF FUN_AryBitCount_RD(station.userAlarms) >0 THEN
+    machine.alarmCount :=machine.alarmCount  + FUN_AryBitCount_RD(station.userAlarms);
+  END_IF;
+  
+  //反馈机器报警
+  IF station.alarming THEN
+    station.running := FALSE;
+    station.initing := FALSE;
+    machine.report.stationAlarming := TRUE;
+  END_IF;
+  
+  //报警复位
+  IF machine.reset THEN
+    MEMSET(destAddr:=ADR(station.presetAlarms) , fillByte:= 0, n:=SIZEOF(station.presetAlarms));
+    MEMSET(destAddr:=ADR(station.userAlarms) , fillByte:= 0, n:=SIZEOF(station.userAlarms));
+
+    station.report.alarming := FALSE;   //复位下级报警
+  END_IF;
+  
+//-----------------------------------------------------------------------------------//*)]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="AutoTip" Id="{f98af665-5a86-4738-afeb-37ad83e5e520}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------AutoTip-----------------------------------------//
+  
+  //工站未初始化
+  station.presetAutoTips[0] := NOT station.initDone;
+  //工站单循环中
+  station.presetAutoTips[1] := machine.autoMode AND station.cycleRunFlag;
+  //工站运行条件不足
+  station.presetAutoTips[2] := NOT station.runPermit;
+  
+  //工站自动提示
+  station.autoTip :=
+  FUN_AryBitCount_RD(station.presetAutoTips) >0 
+  OR FUN_AryBitCount_RD(station.userAutoTips) >0 
+  OR station.report.autoTip;
+  station.report.autoTip := FALSE;
+  
+  //自动提示弹窗
+  IF station.autoTip AND (station.cycleRunhmi OR station.jogRunhmi) THEN
+    station.autoTipTrigger := TRUE;
+    machine.popup := AUTO_TIP_POPUP;
+  END_IF;
+  IF machine.popup = 0 THEN
+    station.autoTipTrigger := FALSE;
+  END_IF;
+
+  //反馈机器自动提示
+  IF station.autoTip THEN
+    machine.report.stationAutoTip := TRUE;
+  END_IF;
+  
+//-----------------------------------------------------------------------------------//*)]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CycleTime" Id="{4efcb893-b5bb-468f-832e-3d4fa3eda58a}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------CycleTime-------------------------------------//
+  //工站周期计时
+  IF cycleTimeEndCache THEN
+    station.cycleTimeEnd := FALSE;
+  ELSIF station.cycleTimeEnd THEN
+    station.cycleTime := TIME_TO_DINT (cycleTimeTimer.ET);
+    station.cycleTimeStart := FALSE;
+  END_IF;
+  cycleTimeTimer(IN := station.cycleTimeStart,
+                  //Reset := (NOT cycleTimeEndCache AND station.cycleTimeEnd) // 工站周期结束上升沿
+                  //OR station.initing,
+                  PT := T#1000S,
+  );
+  cycleTimeEndCache := station.cycleTimeEnd;
+  
+//-----------------------------------------------------------------------------------//*)
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Flow" Id="{efcf408e-2c08-4f54-9203-5ca2df6ec4f1}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------Flow-----------------------------------------//
+station.flowDisplay:= LINT_TO_UINT( MIN(station.flowDisplay,SIZEOF(machine.flow) -1));
+flowNum := station.flowDisplay;
+  //流程监控
+  FOR index := 0 TO flowNum DO
+    IF station.flow[index].actStep = 999 THEN
+      station.flow[index].uninterrupted := TRUE;
+    END_IF;
+    //流程上一步记录
+    IF station.flow[index].actStep <> flowStepCache[index] THEN
+      station.flow[index].prevStep := flowStepCache[index];
+    END_IF;
+    flowStepCache[index] := station.flow[index].actStep;
+    //流程超时计时
+    flowTimeoutTimer[index](IN := station.flow[index].timeoutEnable
+			AND NOT station.flow[index].timeoutException
+			AND NOT station.disabled
+			AND (station.running OR station.initing)
+			AND station.flow[index].actStep > 0
+			AND station.flow[index].actStep = flowStepCache[index],     
+			PT := station.flow[index].setTimeout,
+			Q=>isFlowTimeout[index]);
+    station.flow[index].timeoutException := FALSE;
+    //流程超时报警置位
+    IF isFlowTimeout[index] THEN
+      station.flow[index].timeoutAlarm := TRUE;
+      station.presetAlarms[index + 8] := TRUE;
+    ELSIF machine.reset THEN
+      station.flow[index].timeoutAlarm := FALSE;
+    END_IF;
+  END_FOR;
+//-----------------------------------------------------------------------------------//*)]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{5235056b-fe34-4655-ad4a-a0be86e130ad}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------General----------------------------------------//
+  
+  //安全条件
+  safetyPermit := machine.eStop
+  AND machine.airOn
+  AND machine.safety
+  AND machine.allDoorClosed;
+  
+  //准备就绪
+  station.ready := safetyPermit
+  AND station.initDone
+  AND station.runPermit
+  AND NOT machine.publicAlarm
+  AND NOT station.alarming
+  AND NOT station.autoTip;
+  
+  // 初始化允许操作
+  station.initAllow :=safetyPermit
+  AND station.initPermit
+  AND NOT machine.publicAlarm
+  AND NOT station.alarming;
+  // 单循环允许操作
+  station.cycleRunAllow := station.ready AND station.cycleRunPermit;
+  // 寸动允许操作
+  station.jogRunAllow := station.ready AND station.jogRunPermit;
+  // 禁止图标
+  station.initForbidIcon := NOT station.initAllow OR NOT machine.manualMode;
+  station.cycleRunForbidIcon := NOT station.cycleRunAllow OR NOT machine.manualMode;
+  station.jogRunForbidIcon := NOT station.jogRunAllow OR NOT machine.manualMode;
+  
+//-----------------------------------------------------------------------------------//*)]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Init" Id="{1aae25ef-e1fe-475f-b37c-b15c6923e8d5}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------Init-----------------------------------------//
+  // 单工站初始化执行
+  initExecute :=
+  inithmiCache AND NOT station.inithmi // inithmi下降沿
+  OR NOT initAutoCache AND station.initAuto // initAuto上升沿
+  OR station.initSyncMachine AND NOT initingCache AND machine.initing; // 整机初始化上升沿
+  inithmiCache := station.inithmi;
+  initAutoCache := station.initAuto;
+  initingCache := machine.initing;
+  station.initAuto := FALSE;
+  // 启用急停后需初始化或初始化时先复位初始化完成
+  IF (NOT machine.eStop AND station.requiresReinitialize) // 急停
+    OR (initExecute AND station.initAllow)  // 初始化执行
+  THEN
+    station.initDone := FALSE;
+    station.cycleRunFlag := FALSE;
+    station.cycleTimeStart := FALSE;
+    station.cycleTimeEnd := FALSE;
+    station.flow[0].nextStep := 0;
+    station.flow[0].actStep := 0;
+    station.flow[0].prevStep := 0;
+  END_IF;
+  //单工站初始化中
+  IF station.initAllow
+    AND NOT station.initDone
+    AND NOT station.pausehmi
+    AND NOT machine.pause
+  THEN
+    IF initExecute AND station.initAllow THEN
+      stationIniting := TRUE;
+    END_IF;
+  ELSE
+    stationIniting := FALSE;
+  END_IF;
+  //工站初始化中
+  station.initing := stationIniting;
+  //初始化延时
+	initingTimer(IN := station.initing,
+				PT := T#10S,
+				Q => station.initDelay);
+  
+  //初始化复位自动流程
+  IF station.initResetAutoFlow
+    AND station.initing
+    AND NOT station.initDelay
+  THEN
+    FOR index := 1 TO MAX_FLOW DO
+      station.flow[index].nextStep := 0;
+      station.flow[index].actStep := 0;
+      station.flow[index].prevStep := 0;
+    END_FOR;
+  END_IF;
+  //初始化超时
+	initTimeoutTimer(IN := station.initing,
+				PT := station.initTimeout,
+				Q=>isInitTimeoutTimer
+	);
+  //反馈给机器初始化未完成
+  IF NOT station.initDone THEN
+    machine.report.stationNotInitDone := TRUE;
+  END_IF;
+//-----------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ManualTip" Id="{24d002a3-02a2-4ef4-918a-883a7b020c74}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------ManualTip-----------------------------------------//
+  
+  //复位手动提示    
+  IF machine.tipReset THEN
+   MEMSET(destAddr:=ADR(station.presetManualTips) , fillByte:= 0, n:=SIZEOF(station.presetManualTips));
+   MEMSET(destAddr:=ADR(station.userManualTips) , fillByte:= 0, n:=SIZEOF(station.userManualTips));
+  END_IF;
+  
+  //手动提示
+  IF station.cycleRunhmi OR station.jogRunhmi OR station.inithmi THEN
+    machine.presetManualTips[0] := NOT machine.eStop;     //急停中,无法操作
+    machine.presetManualTips[1] := NOT machine.safety;    //安全条件不满足,无法操作
+    machine.presetManualTips[2] := NOT machine.allDoorClosed;  //安全门未锁好,无法操作
+    machine.presetManualTips[3] := NOT machine.airOn;     //气压不足,无法操作
+    machine.presetManualTips[4] := NOT machine.manualMode;//不在手动模式,无法操作
+  END_IF;
+  
+  //手动提示中
+  station.manualTip :=
+  FUN_AryBitCount_RD(station.presetManualTips) >0 
+  OR FUN_AryBitCount_RD(station.userManualTips) >0 
+  OR station.report.manualTip;
+  
+  //反馈整机手动提示
+  IF station.manualTip THEN
+    machine.report.stationManualTip := TRUE;
+  END_IF;
+  
+//-----------------------------------------------------------------------------------//
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Running" Id="{08a09e1e-3568-4f51-ba76-b76ff75d273e}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------Running---------------------------------------//
+  
+  // 单循环执行
+  cycleRunExecute := cycleRunhmiCache AND NOT station.cycleRunhmi
+  OR NOT cycleRunAutoCache AND  station.cycleRunAuto;
+  cycleRunhmiCache := station.cycleRunhmi;
+  cycleRunAutoCache :=  station.cycleRunAuto;
+  station.cycleRunAuto := FALSE;
+  // 寸动执行
+  jogRunExecute := jogRunhmiCache AND NOT station.jogRunhmi;
+  jogRunhmiCache := station.jogRunhmi;
+  jogRunhmiTimer(IN := station.jogRunhmi,
+	          PT := T#1S,
+			  Q=>isJogRunhmiTimer
+		  );
+  IF machine.eStop AND station.initDone THEN
+    IF (cycleRunExecute AND station.cycleRunAllow
+      OR jogRunExecute AND station.jogRunAllow)
+      AND station.ready
+      AND machine.manualMode
+    THEN
+      station.cycleRunFlag := TRUE;
+    END_IF;
+    // 单循环标志下降沿 and 单循环重复功能开启
+    IF singleRunFlagCache AND NOT station.cycleRunFlag
+      AND station.repetitionsEnable
+    THEN
+      station.repetitions := station.repetitions +1;  //单循环次数加1
+      // 单循环计次<设定次数
+      station.cycleRunFlag := station.repetitions < station.repetitionsTimes;
+    END_IF;
+  ELSE
+    station.cycleRunFlag := FALSE;
+  END_IF;
+  singleRunFlagCache := station.cycleRunFlag;
+  // 单循环中、寸动中
+  IF station.ready
+    AND machine.manualMode
+    AND station.cycleRunFlag
+    AND NOT station.pausehmi
+    AND NOT machine.pause
+  THEN
+    IF cycleRunExecute AND station.cycleRunAllow THEN
+      station.cycleRunning := TRUE;
+    END_IF;
+    station.jogRunning := jogRunExecute AND station.jogRunAllow     //按下去一秒钟内，点一次动一次
+    OR isJogRunhmiTimer;   //按下去超过一秒钟后，点着动，松开停
+  ELSE
+    station.cycleRunning := FALSE;
+    station.jogRunning := FALSE;
+  END_IF;
+  
+  // 运行中
+  IF machine.manualMode THEN
+    station.running := station.cycleRunning OR station.jogRunning; // 手动模式下工站单循环和工站寸动
+  ELSIF machine.autoMode OR machine.jogMode THEN  // 自动模式下整机运行或整机寸动
+    IF station.ready
+      AND NOT machine.paused
+      AND NOT machine.stopDone
+    THEN
+      IF machine.running THEN
+        station.running := TRUE;
+      ELSIF station.syncAlarms THEN
+        station.running := FALSE;
+      END_IF;
+    ELSE
+      station.running := FALSE;
+    END_IF;
+  ELSE
+    station.running := FALSE;
+  END_IF;
+  
+//-----------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{b66bbbaa-4d73-459f-870b-206132e06660}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------SetUp-----------------------------------------//
+
+  IF NOT activated THEN
+	  activated:=TRUE;
+	//赋初始值
+	station.cycleRunPermit		:=TRUE;
+	station.	jogRunPermit			:=TRUE;
+	station.	disablePermit			:=TRUE;
+	station.	requiresReinitialize	:=TRUE;
+	station.initPermit			:=TRUE;
+	station.runPermit			:=TRUE;
+	station.canRun				:=TRUE;
+	station.initTimeout		:=T#30s;
+    //流程数量
+	station.flowDisplay:=2;
+	FOR index:=0 TO 5 DO
+		station.flow[index].timeoutEnable	:=TRUE;
+	    station.flow[index].setTimeout			:=T#30s;
+	END_FOR;
+
+  END_IF;
+//-----------------------------------------------------------------------------------//
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Status" Id="{325ff04d-57ea-4a80-a641-6049767e76cf}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------Status
+  
+  IF station.alarming THEN
+    station.status := STATE_ALARM;
+  ELSIF station.initing THEN
+    station.status := STATE_INITING;
+  ELSIF NOT station.initDone THEN
+    station.status := STATE_NOT_INIT;
+  ELSIF NOT station.ready THEN
+    station.status := STATE_NOT_READY;
+  ELSIF station.cycleRunning THEN
+    station.status := STATE_SINGLE_RUN;
+  ELSIF station.cycleRunFlag THEN
+    station.status := STATE_SINGLE_PAUSE;
+  ELSIF station.running THEN
+    station.status := STATE_RUNNING;
+  ELSE
+    station.status := STATE_READY;
+  END_IF;
+  
+//-----------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_Station_RD">
+      <LineId Id="9" Count="0" />
+      <LineId Id="73" Count="8" />
+    </LineIds>
+    <LineIds Name="FB_Station_RD.Alarm">
+      <LineId Id="2" Count="29" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="32" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Station_RD.AutoTip">
+      <LineId Id="2" Count="29" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Station_RD.CycleTime">
+      <LineId Id="2" Count="16" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Station_RD.Flow">
+      <LineId Id="2" Count="20" />
+      <LineId Id="24" Count="9" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Station_RD.General">
+      <LineId Id="2" Count="29" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Station_RD.Init">
+      <LineId Id="2" Count="38" />
+      <LineId Id="42" Count="15" />
+      <LineId Id="59" Count="5" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Station_RD.ManualTip">
+      <LineId Id="2" Count="3" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="9" Count="15" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="26" Count="5" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Station_RD.Running">
+      <LineId Id="2" Count="12" />
+      <LineId Id="16" Count="58" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Station_RD.SetUp">
+      <LineId Id="2" Count="21" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Station_RD.Status">
+      <LineId Id="2" Count="19" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

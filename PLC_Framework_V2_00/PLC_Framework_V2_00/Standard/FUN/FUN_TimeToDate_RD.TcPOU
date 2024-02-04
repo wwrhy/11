@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FUN_TimeToDate_RD" Id="{c0acdedc-f9bb-4bf4-94a7-1814a96af05c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION FUN_TimeToDate_RD : bool
+VAR_IN_OUT
+	InOut          : UDT_DayTime_RD;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//	时间转换
+InOut.day:=UDINT_TO_USINT(
+	InOut.timeValue / 86400
+);
+InOut.hour:=UDINT_TO_USINT(
+	(InOut.timeValue / 3600) MOD 24
+);
+InOut.minute:=UDINT_TO_USINT(
+	(InOut.timeValue / 60) MOD 60
+);
+InOut.second:=UDINT_TO_USINT(
+	InOut.timeValue MOD 60
+);]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_TimeToDate_RD">
+      <LineId Id="15" Count="11" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,360 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Terminal2_RD" Id="{05e02ae9-0643-4d9d-905b-64d5bf646b57}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Terminal2_RD
+VAR_IN_OUT
+machine : UDT_Machine_RD; //
+station : UDT_Station_RD; //
+vari : UDT_TerminalVar_RD; //
+data : UDT_TerminalData_RD; //
+axis : ARRAY[*] OF  UDT_AxisVar_RD; //
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+terminalSensor : FB_Sensor_RD; //
+coverSensor : FB_Sensor_RD; //
+pinSensor : FB_Sensor_RD; //
+safetyPermit : BOOL; //安全条件
+hmiCache : BOOL; //
+autoCache : BOOL; //
+isTimeout : BOOL; //
+camInHomePos : BOOL; //插针凸轮轴在原点位置
+camNo : INT; //
+sendNo : INT; //
+timeoutTimer : TON; //超时 
+activat : BOOL; //
+TerminalAlarmDelay : TON; //
+CoverAlarmDelay : TON; //
+END_VAR
+
+VAR CONSTANT
+HOME 	     : INT :=1 ; // 原点位置
+FEED 		 : INT :=2 ; // 送端子位置
+RETREAT    	 : INT :=3 ; // 退端子位置
+PRE      	 : INT :=4 ; // 预送端子
+CIRCLE       : INT :=2 ; // 转一圈位置
+STATUS_ALARM : INT :=1 ; // 状态Alarm
+STATUS_BUSY  : INT :=2 ; // 状态Busy
+STATUS_READY : INT :=3 ; // 状态Ready
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SetUp();
+Alarm();
+General();]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{8b0805aa-bfef-4dfa-8ce1-64d97fcdc527}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------------------Alarm-------------------------------------------------------//
+ //报警
+IF	machine.reset THEN
+	vari.timeoutAlarm:=FALSE;
+	vari.lackTerminalAlarm:=FALSE;
+	vari.CoverAlarm:=FALSE;
+END_IF;
+
+//对端子超时报警
+timeoutTimer(IN:= vari.busy,
+			 PT:= data.timeout);
+IF	timeoutTimer.Q THEN ;
+	vari.timeoutAlarm:=TRUE;
+END_IF;
+
+(*TerminalAlarmDelay(In:=Station.running AND NOT vari.terminalSensor.input 
+								AND Station.flow[1].actStep=UINT#10 AND NOT Machine.dryRun 
+								AND NOT vari.disable,PT:=T#1S);*)
+CoverAlarmDelay(In:=Station.running AND NOT vari.coverSensor.input 
+							AND NOT Machine.dryRun AND NOT vari.disable,PT:=T#1S);
+IF Station.running AND NOT vari.terminalSensor.input 
+	AND Station.flow[1].actStep=UINT#10 AND NOT Machine.dryRun 
+	AND NOT vari.disable THEN 
+	vari.lackTerminalAlarm:=TRUE;
+END_IF;	
+IF CoverAlarmDelay.Q THEN 
+	vari.CoverAlarm:=TRUE;
+END_IF;	
+
+vari.alarming := vari.timeoutAlarm OR vari.lackTerminalAlarm OR vari.CoverAlarm;
+//反馈报警中
+IF vari.alarming THEN
+	Machine.alarmCount :=machine.alarmCount+1;
+   station.report.alarming := TRUE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{693a26ed-500a-4f66-affe-e5c88cacbf18}">
+      <Implementation>
+        <ST><![CDATA[ //---------------------------------------General-----------------------------------------------------//
+//安全条件
+safetyPermit:=	machine.estop //急停
+				AND machine.safety//设备安全
+				AND machine.airOn //气压Ok
+				AND machine.allDoorClosed;//安全门关闭
+				
+//对端子可动作			
+vari.ready:=	safetyPermit
+				AND vari.permit 	//动作条件
+				AND vari.coverSensor.isOn 	//盖板在位
+				AND vari.terminalSensor.isOn	//尾料感应器
+				AND axis[sendNo].ready//送端子伺服就绪
+				AND (axis[camNo].ready OR NOT vari.camAxisEnable);//插针凸轮轴准备就绪
+				
+vari.forbidIcon:= NOT vari.ready OR NOT machine.manualMode;				
+camInHomePos:=axis[camNo].inPos[HOME] OR NOT vari.camAxisEnable;
+
+
+
+//----------------------------------------------------------------------------------------------------//
+vari.manual:=	(hmiCache AND NOT vari.hmi)    //HMI下降沿
+					AND machine.manualMode //手动模式
+					AND vari.ready;//对端子可动作
+					
+//vari.auto:=machine.start        //设备启动
+//				AND machine.autoMode //自动模式
+//				AND vari.ready//对端子可动作
+//				AND machine.initDone //设备初始化完成
+//				AND NOT vari.done//对端子未完成
+//				AND NOT vari.busy//不在对端子中
+//				AND NOT machine.dryRun //设备不在空跑中
+//				AND NOT station.alarming; //工站不在报警中
+
+IF	axis[sendNo].jogBackwardsHmi//送端子轴jog
+	OR axis[sendNo].jogForwardHmi//送端子轴jog
+	OR (axis[sendNo].moveHmi AND (axis[sendNo].movehmiNo = FEED OR axis[sendNo].movehmiNo = RETREAT)) 
+	OR station.initing 
+	//OR  NOT vari.permit
+	OR vari.alarming
+THEN
+	vari.busy:=FALSE;
+	vari.done:=FALSE;	//复位对端子完成信号
+ELSIF vari.manual  
+	OR (NOT autoCache AND vari.auto) AND  camInHomePos//插针凸轮轴在原点位置
+THEN
+	vari.busy:=TRUE;//对端子中
+END_IF;
+
+
+IF vari.busy THEN
+	CASE vari.flowStep OF
+ 		0://流程首步
+				vari.done:=FALSE;
+				vari.flowStep:=vari.flowStep+1;
+				
+ 		1://送端子原点
+			IF  axis[sendNo].inPos[HOME] THEN
+				vari.flowStep:=vari.flowStep+1;
+			ELSE
+				axis[sendNo].moveAutoNo:=HOME;
+			END_IF;
+			
+ 		2://端子检测
+ 			IF vari.pinSensor.isOn THEN
+				vari.flowStep:=3;
+			ELSIF vari.pinSensor.isOff THEN
+				vari.flowStep:=5;
+			END_IF;
+			
+ 		3://退端子
+ 			axis[sendNo].moveAutoNo:=RETREAT;
+			IF axis[sendNo].busy THEN
+				vari.flowStep:=vari.flowStep+1;
+			END_IF;
+			
+ 		4://等待退端子
+ 			IF 	NOT axis[sendNo].busy 
+				AND  axis[sendNo].inPos[HOME]
+			THEN
+				vari.flowStep:=2;
+			END_IF;
+
+ 		5://进端子
+		 	axis[sendNo].moveAutoNo:=FEED;
+			IF axis[sendNo].busy THEN
+				vari.flowStep:=vari.flowStep+1;
+			END_IF;
+			
+  		6://等待进端子
+			IF 	NOT axis[sendNo].Busy 
+				AND  axis[sendNo].inPos[HOME]
+			THEN
+				vari.flowStep:=vari.flowStep+1;
+			END_IF;
+			
+  		7://端子检测
+		 	IF vari.pinSensor.isOn THEN
+				vari.flowStep:=8;
+			ELSIF vari.pinSensor.isOff THEN
+				vari.flowStep:=5;
+			END_IF;
+			
+		8://预送端子
+ 			axis[sendNo].moveAutoNo:=PRE;
+			IF axis[sendNo].busy THEN
+				vari.flowStep:=vari.flowStep+1;
+			END_IF;
+			
+  		9://等待送端子轴到位
+			IF 	NOT axis[sendNo].busy 
+				//AND  axis[sendNo].inPos[HOME]
+				AND NOT axis[sendNo].error
+			THEN
+				IF vari.camAxisEnable AND vari.cutEnable THEN
+					vari.flowStep:=10;
+				ELSE
+					vari.flowStep:=12;
+				END_IF;
+			END_IF;
+			
+ 		10://裁切动作
+ 			axis[camNo].moveAutoNo:=CIRCLE;
+			IF axis[camNo].busy THEN
+				vari.flowStep:=vari.flowStep+1;
+			END_IF;
+			
+ 		11://等待裁切动作
+ 			IF	NOT axis[camNo].busy  
+				AND axis[camNo].inPos[HOME]
+			THEN
+ 				vari.flowStep:=12;
+			END_IF;
+
+		12://进端子
+		 	axis[sendNo].moveAutoNo:=FEED;
+			IF axis[sendNo].busy THEN
+				vari.flowStep:=vari.flowStep+1;
+			END_IF;
+			
+  		13://等待进端子
+			IF 	NOT axis[sendNo].Busy 
+				AND  axis[sendNo].inPos[HOME]
+			THEN
+				IF vari.camAxisEnable AND vari.cutEnable THEN
+					vari.flowStep:=vari.flowStep+1;
+				ELSE
+					vari.flowStep:=16;
+				END_IF;	
+			END_IF;			
+			
+ 		14://裁切动作
+ 			axis[camNo].moveAutoNo:=CIRCLE;
+			IF axis[camNo].busy THEN
+				vari.flowStep:=vari.flowStep+1;
+			END_IF;
+			
+ 		15://等待裁切动作
+ 			IF	NOT axis[camNo].busy  
+				AND axis[camNo].inPos[HOME]
+			THEN
+ 				vari.flowStep:=16;
+			END_IF;			
+
+ 		16://进端子
+		 	axis[sendNo].moveAutoNo:=FEED;
+			IF axis[sendNo].busy THEN
+				vari.flowStep:=vari.flowStep+1;
+			END_IF;
+			
+  		17://等待进端子
+			IF 	NOT axis[sendNo].Busy 
+				AND  axis[sendNo].inPos[HOME]
+			THEN
+				IF vari.camAxisEnable AND vari.cutEnable THEN
+					vari.flowStep:=vari.flowStep+1;
+				ELSE
+					vari.flowStep:=20;
+				END_IF;	
+			END_IF;			
+			
+ 		18://裁切动作
+ 			axis[camNo].moveAutoNo:=CIRCLE;
+			IF axis[camNo].busy THEN
+				vari.flowStep:=vari.flowStep+1;
+			END_IF;
+			
+ 		19://等待裁切动作
+ 			IF	NOT axis[camNo].busy  
+				AND axis[camNo].inPos[HOME]
+			THEN
+ 				vari.flowStep:=20;
+			END_IF;	
+			
+ 		20://对端子完成
+ 			vari.done:=TRUE;
+			vari.flowStep:=0;
+		    vari.busy:=FALSE;
+
+	END_CASE;
+ELSE
+	vari.flowStep:=0;
+END_IF;
+
+  //状态
+  IF vari.alarming THEN
+    vari.status := STATUS_ALARM;
+  ELSIF vari.busy THEN
+    vari.status := STATUS_BUSY;
+  ELSIF vari.ready THEN
+    vari.status := STATUS_READY;
+  ELSE
+    vari.status := 0;
+  END_IF;
+
+hmiCache :=vari.hmi;
+autoCache :=vari.auto;
+vari.auto:=FALSE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{daf23b72-f209-4774-9b73-3a0654e7b411}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------------SetUp-----------------------------------------//
+  
+IF NOT activat THEN
+  activat:=TRUE;
+  // 判断型号
+  vari.permit:=TRUE;
+END_IF;
+
+terminalSensor(machine:=machine,
+			   station:=station,
+			   vari:=vari.terminalSensor,
+			   data:=data.terminalSensor
+			   );
+coverSensor(machine:=machine,
+			station:=station,
+			vari:=vari.coverSensor,
+			data:=data.coverSensor
+			);
+pinSensor(machine:=machine,
+		  station:=station,
+		  vari:=vari.pinSensor,
+		  data:=data.pinSensor
+		  );
+camNo:=vari.camAxisNo;
+sendNo:=vari.sendAxisNo;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_Terminal2_RD">
+      <LineId Id="9" Count="0" />
+      <LineId Id="54" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_Terminal2_RD.Alarm">
+      <LineId Id="2" Count="8" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="15" Count="22" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Terminal2_RD.General">
+      <LineId Id="2" Count="133" />
+      <LineId Id="159" Count="62" />
+      <LineId Id="139" Count="19" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Terminal2_RD.SetUp">
+      <LineId Id="2" Count="8" />
+      <LineId Id="26" Count="2" />
+      <LineId Id="14" Count="11" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

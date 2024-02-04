@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_UpdateInsertHmi_RD" Id="{38995dd1-0233-4834-8548-fbd83a456b6b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_UpdateInsertHmi_RD
+VAR_IN_OUT
+hmi : UDT_InsertHmi_RD; //
+vari : ARRAY[*] OF UDT_InsertVar_RD; //
+data : ARRAY[*] OF UDT_InsertData_RD; //
+number : INT; //编号
+END_VAR
+VAR
+selectPageValueCache : INT; //
+index : INT; //
+turnPages : FB_TurnPages_RD; //
+activated : Bool; //
+posNum : INT; //
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF number >0 THEN	
+	posNum:=vari[number].maxCount;
+  
+	IF hmi.number[0] <> number 
+		OR selectPageValueCache  <> hmi.turnPages.value
+	THEN
+		hmi.number[0]	:= number;
+		selectPageValueCache  := hmi.turnPages.value;	
+		hmi.selectPinNo:=vari[number].selectPinNo;
+		hmi.camSpeed:=data[number].camSpeed;
+		FOR index:=1  TO 8 DO			
+			IF hmi.turnPages.value + index <= PosNum THEN
+				hmi.number [index]:=hmi.turnPages.value + index;
+				hmi.enable[index]:= data[number].enable[ hmi.turnPages.value + index];
+				hmi.xPosition[index]:= data[number].x.Position[ hmi.turnPages.value + index];
+				hmi.yPosition[index]:= data[number].y.Position[ hmi.turnPages.value + index];
+				hmi.zPosition[index]:= data[number].z.Position[ hmi.turnPages.value + index];
+				hmi.send1Position[index]:= data[number].send1.Position[ hmi.turnPages.value + index];
+				hmi.send2Position[index]:= data[number].send2.Position[ hmi.turnPages.value + index];	
+				hmi.send3Position[index]:= data[number].send3.Position[ hmi.turnPages.value + index];	
+				hmi.send4Position[index]:= data[number].send4.Position[ hmi.turnPages.value + index];	
+				hmi.xOffset[index]:= data[number].x.offset[ hmi.turnPages.value + index];
+				hmi.yOffset[index]:= data[number].y.offset[ hmi.turnPages.value + index];
+				hmi.zOffset[index]:= data[number].z.offset[ hmi.turnPages.value + index];			
+				
+				hmi.dsplay[index]:=TRUE;
+			ELSE
+				hmi.number [index]:=0;
+				hmi.dsplay[index]:=FALSE;
+			END_IF;
+			
+		END_FOR;		
+	ELSE
+		IF NOT vari[number].nextPinHmi AND hmi.nextPinHmi THEN
+			hmi.selectPinNo:=hmi.selectPinNo +1;
+		ELSIF NOT vari[number].previousPinHmi AND hmi.previousPinHmi THEN
+			hmi.selectPinNo:=hmi.selectPinNo -1;
+		END_IF;
+ 		IF vari[number].selectPinNo<> hmi.selectPinNo  THEN			
+			//vari[number].selectPinNo:=GetSimilarInArray(hmi.selectPinNo,vari[number].pinNo);
+			//hmi.selectPinNo:=vari[number].selectPinNo;
+			vari[number].selectPinNo:= hmi.selectPinNo;	
+		END_IF;
+		vari[number].nextPinHmi:=hmi.nextPinHmi;
+		vari[number].previousPinHmi:=hmi.previousPinHmi;		
+		vari[number].transferMoveHmi:=hmi.transferMoveHmi;		
+		vari[number].camNextHmi:=hmi.camNextHmi;		
+		vari[number].send1PrevPinHmi:=hmi.send1PrevPinHmi;		
+		vari[number].send1NextPinHmi:=hmi.send1NextPinHmi;		
+		vari[number].send2PrevPinHmi:=hmi.send2PrevPinHmi;		
+		vari[number].send2NextPinHmi:=hmi.send2NextPinHmi;		
+		vari[number].send3PrevPinHmi:=hmi.send3PrevPinHmi;		
+		vari[number].send3NextPinHmi:=hmi.send3NextPinHmi;				
+		vari[number].send4PrevPinHmi:=hmi.send4PrevPinHmi;		
+		vari[number].send4NextPinHmi:=hmi.send4NextPinHmi;				
+		data[number].camSpeed:=hmi.camSpeed;
+		hmi.send1Enable :=vari[number].send1.enable;
+		hmi.send2Enable :=vari[number].send2.enable;
+		hmi.send3Enable :=vari[number].send3.enable;
+		hmi.send4Enable :=vari[number].send4.enable;
+		
+		hmi.actPinNo :=vari[number].actPinNo;
+		hmi.count :=vari[number].count;
+		hmi.setCount :=vari[number].setCount;
+		hmi.camActPos :=vari[number].cam.actPos;
+		hmi.xActPos :=vari[number].x.actPos;
+		hmi.yActPos :=vari[number].y.actPos;
+		hmi.zActPos :=vari[number].z.actPos;
+		hmi.send1ActPos :=vari[number].send1.actPos;
+		hmi.send2ActPos :=vari[number].send2.actPos;
+		hmi.camSynStatus :=vari[number].cam.synStatus;
+		hmi.xSynStatus :=vari[number].x.synStatus;
+		hmi.ySynStatus :=vari[number].y.synStatus;
+		hmi.zSynStatus :=vari[number].z.synStatus;
+		hmi.send1SynStatus :=vari[number].send1.synStatus;
+		hmi.send2SynStatus :=vari[number].send2.synStatus;
+		FOR index:=1  TO 8 DO
+			IF hmi.turnPages.value + index <= PosNum THEN
+				IF hmi.send1Position[index] <> 0.0 THEN//送端子1设置值时送端子2\3\4清零
+					hmi.send2Position[index]:=0.0;
+					hmi.send3Position[index]:=0.0;
+					hmi.send4Position[index]:=0.0;
+				ELSIF hmi.send2Position[index] <> 0.0 THEN
+					hmi.send3Position[index]:=0.0;
+					hmi.send4Position[index]:=0.0;
+				ELSIF hmi.send3Position[index] <> 0.0 THEN
+					hmi.send4Position[index]:=0.0;					
+				END_IF;	
+				data[number].enable[ hmi.turnPages.value + index]:=hmi.enable[index];
+				data[number].x.Position[ hmi.turnPages.value + index]:=hmi.xPosition[index];
+				data[number].y.Position[ hmi.turnPages.value + index]:=hmi.yPosition[index];
+				data[number].z.Position[ hmi.turnPages.value + index]:=hmi.zPosition[index];
+				data[number].send1.Position[ hmi.turnPages.value + index]:=hmi.send1Position[index];
+				data[number].send2.Position[ hmi.turnPages.value + index]:=hmi.send2Position[index];
+				data[number].send3.Position[ hmi.turnPages.value + index]:=hmi.send3Position[index];
+				data[number].send4.Position[ hmi.turnPages.value + index]:=hmi.send4Position[index];
+				data[number].x.offset[ hmi.turnPages.value + index]:=hmi.xOffset[index];
+				data[number].y.offset[ hmi.turnPages.value + index]:=hmi.yOffset[index];
+				data[number].z.offset[ hmi.turnPages.value + index]:=hmi.zOffset[index];
+			
+				hmi.dsplay[index]:=TRUE;
+			ELSE
+				hmi.number [index]:=0;
+				hmi.dsplay[index]:=FALSE;
+			END_IF;
+		END_FOR;	
+		hmi.turnPages.minValue := 0;
+     	hmi.turnPages.maxValue :=	posNum -1;
+      	hmi.turnPages.increment := 8;		
+		turnPages(IN:=hmi.turnPages);
+
+	END_IF;
+ELSE
+	hmi.number[0]:=0;
+END_IF;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_UpdateInsertHmi_RD">
+      <LineId Id="23" Count="113" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

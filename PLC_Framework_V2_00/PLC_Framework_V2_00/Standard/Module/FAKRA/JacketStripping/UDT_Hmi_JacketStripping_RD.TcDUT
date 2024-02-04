@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Hmi_JacketStripping_RD" Id="{138c102c-d14a-48ac-85d9-f569190a025b}">
+    <Declaration><![CDATA[TYPE UDT_Hmi_JacketStripping_RD :
+STRUCT
+  
+gripCyl : UDT_CylinderHmi_RD;
+jackCyl :UDT_CylinderHmi_RD;
+fixCyl  :UDT_CylinderHmi_RD;
+stepFixCyl:UDT_CylinderHmi_RD; 
+blow    :UDT_CylinderHmi_RD;
+
+rotateAxis : UDT_AxisHmi_RD; 
+cutAxis : UDT_AxisHmi_RD; 
+transferAxis : UDT_AxisHmi_RD;
+
+station : UDT_StationHmi_RD;
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

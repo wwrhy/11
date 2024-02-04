@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ENUM_ExecState" Id="{c51fe7bc-01d8-471a-b2d0-9762db9c7cea}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'strict'}
+TYPE ENUM_ExecState :
+(
+	NOT_READY := 1,
+  READY :=2,
+  RUNNING :=3,
+  DONE :=4,
+  CANCEL :=5,
+  INIT := 6,
+  ERROR :=7
+
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

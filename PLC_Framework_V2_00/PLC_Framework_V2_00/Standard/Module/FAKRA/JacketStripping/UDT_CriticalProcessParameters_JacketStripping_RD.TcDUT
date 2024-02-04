@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_CriticalProcessParameters_JacketStripping_RD" Id="{f377f830-cc04-4f50-8a0f-25734a85cac8}">
+    <Declaration><![CDATA[TYPE UDT_CriticalProcessParameters_JacketStripping_RD :
+STRUCT
+  
+  blowTime :UDINT;
+  firstCutTime :UDINT;
+  firstOpenTime :UDINT;
+  SecondCutTime :UDINT;
+  secondOpenTime:UDINT;
+  secondCutEnable	:BOOL;
+  thirdCutTime	:UDINT;
+  thirdOpenTime	:UDINT;
+  thirdCutEnable	:BOOL;
+  fourthCutTime	:UDINT;
+  fourthOpenTime:	UDINT;
+  fourthCutEnable	:BOOL;
+  fifthCutTime	:UDINT;
+  fifthOpenTime	:UDINT;
+  fifthCutEnable	:BOOL;
+  override :INT;
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

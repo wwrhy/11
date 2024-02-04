@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_BadVar_RD" Id="{418fff17-65d1-4d83-ac84-39ed3ef2d7f6}">
+    <Declaration><![CDATA[TYPE UDT_BadVar_RD :
+STRUCT
+badExecute : BOOL; // 不良触发
+goodExecute : Bool; // 良品触发
+empty : Bool; // 清空连续不良计数和不良计次列表
+continuousAlarm : Bool; // 连续不良报警
+cumulativeAlarm : Bool; // 累计不良报警
+badRatio : Real; // 不良率
+goodIncrements : Int; // 良品增量，每次增加的数量
+badIncrements : Int; // 不良增量，每次增加的数量
+continuous : DInt; // 当前连续不良计数
+num : DInt; // 不良计次
+lastIndex : DINT ; // 数组索引
+machineNo : UINT; // 不良所属机器号
+stationNo : UINT; // 不良所属工站号
+badNumList : ARRAY[0..10] OF DINT; // 不良计次列表
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

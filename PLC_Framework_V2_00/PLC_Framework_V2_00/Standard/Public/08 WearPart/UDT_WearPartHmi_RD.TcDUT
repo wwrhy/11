@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_WearPartHmi_RD" Id="{fe914f8f-116f-463e-bd7f-a9615c1b6ca0}">
+    <Declaration><![CDATA[TYPE UDT_WearPartHmi_RD :
+STRUCT
+  actUsage : DINT; // 当前使用量
+  maxUsage : DInt; // 最大使用量
+  tipRate : Real; // 提示比例
+  recordsTime : ARRAY[0..9] OF TIMESTRUCT; // 记录时间
+  recordsUsage : ARRAY[0..9] OF DINT; // 记录用量
+  clearHmi : BOOL; //清零Hmi
+  clearForbidIcon : Bool; //清零禁止图标
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

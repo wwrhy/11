@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_RackFeederVar_RD" Id="{8ff63b62-ecec-4e0c-a485-4c8f2ef86fdf}">
+    <Declaration><![CDATA[TYPE UDT_RackFeederVar_RD :
+STRUCT
+input : UDT_RackFeederInput_RD; //
+output : UDT_RackFeederOutput_RD; //
+ready : BOOL; // 准备就绪
+alarming : BOOL; // 报警中
+manualTip : BOOL; // 手动提示
+tip : BOOL; // 一般提示
+feedHmi : BOOL; // 放料马达HMI
+feedManual : BOOL; // 放料马达Manual
+feedAllow : BOOL; // 放料马达允许操作
+feedForbidIcon : BOOL; // 放料马达禁止图标
+rollHmi : BOOL; // 卷纸马达HMI
+rollManual : BOOL; // 卷纸马达Manual
+rollAllow : BOOL; // 卷纸马达允许操作
+rollForbidIcon : BOOL; // 卷纸马达禁止图标
+display : BOOL; // 显示
+disabled : BOOL; // 不启用，料号配方里未用到该部品
+tail : BOOL; // 尾料模式，缺料时不提示
+timeoutAlarm : BOOL; // 放料超时报警
+breakAlarm : BOOL; // 纸带断裂报警
+scatterAlarm : BOOL; // 散料报警
+stationNo : Int; // 所属工站编号
+serialNo : Int; // HMI显示序号
+breakLabel : String[10]; // 纸带断裂检测标签
+scatterLabel : String[10]; // 散料检测标签
+fullLabel : String[10]; // 满料检测标签
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

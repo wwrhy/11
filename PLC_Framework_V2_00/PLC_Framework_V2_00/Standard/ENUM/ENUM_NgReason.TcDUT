@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ENUM_NgReason" Id="{c2ad2835-2fad-4d38-a258-6249a7c461c6}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'strict'}
+TYPE ENUM_NgReason :
+(
+	CrimpNoCable :=1,
+	CrimpNg,
+	CrimpInterrupted,
+	LastReason
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

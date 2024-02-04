@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FUN_AryBitCount_RD" Id="{fd858496-4482-4ac4-aa76-d101a0e862b0}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION FUN_AryBitCount_RD : UINT
+VAR_IN_OUT
+ IN : ARRAY[*] OF BOOL;
+END_VAR
+VAR  
+  index : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FUN_AryBitCount_RD:=0;
+FOR index:=0 TO SIZEOF(IN)-1 DO
+	IF IN[index] THEN
+    FUN_AryBitCount_RD := FUN_AryBitCount_RD +1 ;
+	END_IF;	
+END_FOR;]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_AryBitCount_RD">
+      <LineId Id="73" Count="4" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

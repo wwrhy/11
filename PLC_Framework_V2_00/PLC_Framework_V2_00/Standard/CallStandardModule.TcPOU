@@ -1,0 +1,175 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="CallStandardModule" Id="{1664a42f-793f-4d6d-a6d0-c126c64a8f3c}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM CallStandardModule
+VAR
+  fbTest  : FB_JacketStripping_RD;
+  fbtest2 : FB_BraidFlaring_RD;
+  fbtest3 : FB_Crimping_RD; 
+  
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbTest(
+	JacketStripping:= JS, 
+	JacketStrippingData:= JSData, 
+  
+	homeValve_blow:= , 
+	workValve_blow:= , 
+  
+	homeSensor_gripCyl:= , 
+	workSensor_gripCyl:= , 
+	homeValve_gripCyl:= , 
+	workValve_gripCyl:= , 
+	homeLabel_gripCyl:= 'I010100', 
+	workLabel_gripCyl:= 'I010101', 
+  
+	homeSensor_jackCyl:= , 
+	workSensor_jackCyl:= , 
+	homeValve_jackCyl:= , 
+	workValve_jackCyl:= , 
+	homeLabel_jackCyl:= 'I010102', 
+	workLabel_jackCyl:= 'I010103', 
+  
+	homeSensor_fixCyl:= , 
+	workSensor_fixCyl:= , 
+	homeValve_fixCyl:= , 
+	workValve_fixCyl:= , 
+	homeLabel_fixCyl:= 'I010104', 
+	workLabel_fixCyl:= 'I010105', 
+  
+	homeSensor_stepFixCyl:= , 
+	workSensor_stepFixCyl:= , 
+	homeValve_stepFixCyl:= , 
+	workValve_stepFixCyl:= , 
+	homeLabel_stepFixCyl:= 'I010106', 
+	workLabel_stepFixCyl:= 'I010107');
+
+  fbtest2(
+	BraidFlaring:= BF, 
+	BraidFlaringData:= BFData, 
+	HomeSensor_gripCyl:= , 
+	WorkSensor_gripCyl:= , 
+	HomeValve_gripCyl:= , 
+	WorkValve_gripCyl:= , 
+	HomeLabel_gripCyl:= , 
+	WorkLabel_gripCyl:= , 
+	HomeSensor_jackCyl:= , 
+	WorkSensor_jackCyl:= , 
+	HomeValve_jackCyl:= , 
+	WorkValve_jackCyl:= , 
+	HomeLabel_jackCyl:= , 
+	WorkLabel_jackCyl:= , 
+	HomeSensor_pushCyl:= , 
+	WorkSensor_pushCyl:= , 
+	HomeValve_pushCyl:= , 
+	WorkValve_pushCyl:= , 
+	HomeLabel_pushCyl:= , 
+	WorkLabel_pushCyl:= , 
+	HomeValve_blow:= , 
+	WorkValve_blow:= , 
+	HomeValve_vacuum:= , 
+	WorkValve_vacuum:= , 
+	pushRodInPos:= , 
+	HomeSensor_fixCyl:= , 
+	WorkSensor_fixCyl:= , 
+	HomeValve_fixCyl:= , 
+	WorkValve_fixCyl:= , 
+	HomeLabel_fixCyl:= , 
+	WorkLabel_fixCyl:= , 
+	HomeSensor_stepFixCyl:= , 
+	WorkSensor_stepFixCyl:= , 
+	HomeValve_stepFixCyl:= , 
+	WorkValve_stepFixCyl:= , 
+	HomeLabel_stepFixCyl:= , 
+	WorkLabel_stepFixCyl:= );
+	
+fbtest3(
+	Crimping:= CP, 
+	CrimpingData:= CPData, 
+	HomeSensor_gripCyl:= , 
+	WorkSensor_gripCyl:= , 
+	HomeValve_gripCyl:= , 
+	WorkValve_gripCyl:= , 
+	HomeLabel_gripCyl:= , 
+	WorkLabel_gripCyl:= , 
+	HomeSensor_jack1Cyl:= , 
+	WorkSensor_jack1Cyl:= , 
+	HomeValve_jack1Cyl:= , 
+	WorkValve_jack1Cyl:= , 
+	HomeLabel_jack1Cyl:= , 
+	WorkLabel_jack1Cyl:= , 
+	HomeSensor_jack2Cyl:= , 
+	WorkSensor_jack2Cyl:= , 
+	HomeValve_jack2Cyl:= , 
+	WorkValve_jack2Cyl:= , 
+	HomeLabel_jack2Cyl:= , 
+	WorkLabel_jack2Cyl:= , 
+	HomeSensor_cutCyl:= , 
+	WorkSensor_cutCyl:= , 
+	HomeValve_cutCyl:= , 
+	WorkValve_cutCyl:= , 
+	HomeLabel_cutCyl:= , 
+	WorkLabel_cutCyl:= , 
+	HomeSensor_feedCyl:= , 
+	WorkSensor_feedCyl:= , 
+	HomeValve_feedCyl:= , 
+	WorkValve_feedCyl:= , 
+	HomeLabel_feedCyl:= , 
+	WorkLabel_feedCyl:= , 
+	HomeSensor_changeCyl:= , 
+	WorkSensor_changeCyl:= , 
+	HomeValve_changeCyl:= , 
+	WorkValve_changeCyl:= , 
+	HomeLabel_changeCyl:= , 
+	WorkLabel_changeCyl:= , 
+	HomeSensor_carrierHold1Cyl:= , 
+	WorkSensor_carrierHold1Cyl:= , 
+	HomeValve_carrierHold1Cyl:= , 
+	WorkValve_carrierHold1Cyl:= , 
+	HomeLabel_carrierHold1Cyl:= , 
+	WorkLabel_carrierHold1Cyl:= , 
+	HomeSensor_carrierHold2Cyl:= , 
+	WorkSensor_carrierHold2Cyl:= , 
+	HomeValve_carrierHold2Cyl:= , 
+	WorkValve_carrierHold2Cyl:= , 
+	HomeLabel_carrierHold2Cyl:= , 
+	WorkLabel_carrierHold2Cyl:= , 
+	HomeSensor_jack3Cyl:= , 
+	WorkSensor_jack3Cyl:= , 
+	HomeValve_jack3Cyl:= , 
+	WorkValve_jack3Cyl:= , 
+	HomeLabel_jack3Cyl:= , 
+	WorkLabel_jack3Cyl:= , 
+	HomeValve_blow:= , 
+	WorkValve_blow:= , 
+	cableCheckSensor:= , 
+	terminalCheckSensor:= , 
+	terminalReiveCheckSensor:= , 
+	crimpHomeCheckSensor:= , 
+	oesReady:= , 
+	oesOK:= , 
+	HomeSensor_fixCyl:= , 
+	WorkSensor_fixCyl:= , 
+	HomeValve_fixCyl:= , 
+	WorkValve_fixCyl:= , 
+	HomeLabel_fixCyl:= , 
+	WorkLabel_fixCyl:= , 
+	HomeSensor_stepFixCyl:= , 
+	WorkSensor_stepFixCyl:= , 
+	HomeValve_stepFixCyl:= , 
+	WorkValve_stepFixCyl:= , 
+	HomeLabel_stepFixCyl:= , 
+	WorkLabel_stepFixCyl:= );
+  
+  
+ ]]></ST>
+    </Implementation>
+    <LineIds Name="CallStandardModule">
+      <LineId Id="6" Count="149" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="161" Count="1" />
+      <LineId Id="173" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_ProduceData_RD" Id="{79454ec6-7744-492c-bf71-d24f70fb5d5c}">
+    <Declaration><![CDATA[TYPE UDT_ProduceData_RD :
+STRUCT
+  goodValue : DINT; // 良品数量
+badValue : DInt; // 不良品数量
+totalValue : DInt; // 总产品数量
+cumulativeValue : DInt; // 累计生产数量
+yieldRatio : Real; // 良品率
+badRatio : Real; // 不良率
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

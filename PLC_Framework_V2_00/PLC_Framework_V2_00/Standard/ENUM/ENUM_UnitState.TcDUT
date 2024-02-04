@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ENUM_UnitState" Id="{8699ea60-09fc-4379-8ea8-50b536b47ef7}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'strict'}
+TYPE ENUM_UnitState :
+(
+  
+	DISABLED := 1,
+  OPERATIONAL :=2,
+  STANDBY :=3,
+  UNKNOWN :=4
+
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

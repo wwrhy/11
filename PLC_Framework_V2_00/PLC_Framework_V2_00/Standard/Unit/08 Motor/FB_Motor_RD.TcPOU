@@ -1,0 +1,390 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Motor_RD" Id="{95d6445d-0d9b-41da-b6ef-7f2581e0e66a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Motor_RD
+VAR_IN_OUT
+machine   : UDT_Machine_RD;
+station   : UDT_Station_RD;
+vari      : UDT_MotorVar_RD;
+data      : UDT_MotorData_RD;
+END_VAR
+VAR
+forwardAllow : BOOL; // 正转允许
+reversalAllow : Bool; // 反转允许
+safetyPermit : Bool; // 安全条件
+resetCache : Bool; // 复位缓存
+forwardHmiCache : Bool; // 正转Hmi缓存
+reverseHmiCache : Bool; // 反转Hmi缓存
+veeredTimer : TON; // 正反转切换延时器
+veeredTimer2 : TON; // 正反转切换延时器
+startTimer : TON; // 启动延时器
+forwardStopTimer : TON; // 正转停止延时器
+reversalStopTimer : TON; // 反转停止延时器
+runMonitorTimer : TON; // 运行监控延时器
+forwardMode : Bool; // 正转模式
+reversalMode : Bool; // 反转模式
+pushAlarmNo : UInt; //
+pushManualTipNo : UInt; //
+pushAutoTipNo : UInt; //
+activated : BOOL; //
+
+END_VAR
+
+VAR CONSTANT
+OFF_STATE : UINT:=0; // OFF状态
+ON_STATE : UINT:=1; // ON状态
+INOPERABLE_STATE : UINT:=2; // 不可操作状态
+ENABLE_RUN_MONITOR : UINT:=1; // 启用运行监控
+INVERTER_ALARM : UINT:=1; // 变频器报警
+NOT_FEEDBACK_ALARM : UINT:=2; // 无运行反馈报警
+AUTO_TIP : UINT:=3; // 手动操作中自动提示
+NO_FORWARD_PERMIT : UINT:=4; // 正转动作条件不满足
+NO_REVERSAL_PERMIT : UINT:=5; // 反转动作条件不满足
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//------------------------Description header 
+  //================================================================================== 
+  // Harmontromics / (C) Copyright (2021) 
+  //----------------------------------------------------------------------------------
+  // Title:               Motor Control
+  // Comment/Function:    普通交流电机的正向/反向控制，运行监控以及错误报警
+  // Library/Family:      瀚川标准库
+  // Author:              David.Wong
+  // Target System:       无
+  // Engineering:         TIA Portal (V15.1)
+  // Restrictions:        无
+  // Requirements:        无
+  //----------------------------------------------------------------------------------
+  // Change log table:
+  // Version     | Date       | Expert in charge | Changes applied
+  //-------------|------------|------------------|------------------------------------
+  // 001.000.000 | 2021-12-11 | David.Wong       | 首次发布的版本
+  // 001.000.001 | 2021-12-24 | David.Wong       | 增加启动-停止延迟
+  // 001.001.001 | 2022-4-29  | David.Wong       | 增加运行监控和错误报警          
+  // 002.000.001 | 2023-6-9   | David.Wong       | 增加启动完成延时
+  //             |            |                  |
+  //================================================================================== 
+SetUp();
+Alarm();
+General();
+Manual();
+Auto();
+ManualTip();
+AutoTip();
+Status();
+Output();
+Cache();]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{1ee43a9e-921e-4603-a191-319123de36d5}">
+      <Implementation>
+        <ST><![CDATA[//------------------------Alarm------------------------//
+
+//报警复位
+IF NOT resetCache AND machine.reset THEN
+  vari.inverterAlarm := FALSE;
+  vari.runningAlarm := FALSE;
+END_IF;
+
+//变频器复位
+vari.outputErrorReset := vari.inputError AND machine.reset;
+
+//变频器错误
+IF vari.inputError THEN
+  vari.inverterAlarm := TRUE;
+END_IF;
+
+//运行反馈错误
+IF vari.monitorMode = ENABLE_RUN_MONITOR THEN
+  runMonitorTimer(IN := (vari.outputReversal OR vari.outputForward) XOR vari.inputRunning,		  				
+			PT := T#30S,
+			Q=>	);
+  IF runMonitorTimer.Q THEN
+    vari.runningAlarm := TRUE;
+  END_IF;
+ELSE
+  vari.inputRunning := vari.outputReversal OR vari.outputForward;
+END_IF;
+
+
+//报警中
+vari.alarming := vari.inverterAlarm OR vari.runningAlarm;
+//反馈上级报警中
+IF vari.alarming THEN
+  station.report.alarming := TRUE;
+  machine.alarmCount := machine.alarmCount +1;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Auto" Id="{008a5750-e65c-4814-8714-43e51d9bdf78}">
+      <Implementation>
+        <ST><![CDATA[//------------------------Auto------------------------//
+  
+  // 启动和停止延时
+  	startTimer(IN := vari.outputForward OR vari.outputReversal,		
+			PT := DINT_TO_TIME(data.startTime),
+			Q=>	);
+  IF startTimer.Q AND NOT vari.alarming THEN
+    vari.inForward := vari.outputForward;
+    vari.inReversal := vari.outputReversal;
+  ELSE
+    vari.inForward := FALSE;
+    vari.inReversal := FALSE;
+  END_IF;
+	forwardStopTimer(IN := vari.forwardManual = vari.forwardAuto,			
+			PT := DINT_TO_TIME(data.stopTime),
+			Q=>);
+	reversalStopTimer(IN := vari.reversalManual = vari.reversalAuto,
+		PT := DINT_TO_TIME(data.stopTime) ,
+		Q=>);]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="AutoTip" Id="{1247aa1a-60b1-42d7-8528-3d149790b22f}">
+      <Implementation>
+        <ST><![CDATA[//------------------------AutoTip------------------------//
+  
+//自动提示
+vari.autoTip := vari.forwardManual OR vari.reversalManual;
+IF vari.autoTip
+  AND (station.autoTipTrigger OR machine.autoTipTrigger)
+THEN
+  pushAutoTipNo := AUTO_TIP;
+ELSE
+  pushAutoTipNo := 0;
+END_IF;
+
+//反馈工站自动提示
+IF vari.autoTip THEN
+  station.report.autoTip := TRUE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Cache" Id="{c45cd588-5629-4266-a961-55f137ff2744}">
+      <Implementation>
+        <ST><![CDATA[//------------------------Cache------------------------//
+  
+resetCache := machine.reset;
+forwardHmiCache := vari.forwardHmi;
+reverseHmiCache := vari.reversalHmi;
+vari.init := FALSE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{43220dbd-02b0-4e98-8d57-45f489157b13}">
+      <Implementation>
+        <ST><![CDATA[//------------------------General ------------------------//
+  
+//安全条件
+safetyPermit := machine.eStop
+AND machine.safety
+AND machine.allDoorClosed;
+
+//正反转模式
+forwardMode := vari.turnMode = 1 OR vari.turnMode = 3;
+reversalMode := vari.turnMode = 2 OR vari.turnMode = 3;
+
+//正转允许操作
+IF safetyPermit
+  AND NOT vari.alarming
+THEN
+  forwardAllow := forwardMode AND vari.forwardPermit;
+  reversalAllow := reversalMode AND vari.reversalPermit;
+ELSE
+  forwardAllow := FALSE;
+  reversalAllow := FALSE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Manual" Id="{ab099f9b-1bd7-4dc0-8f6f-8b55174068d4}">
+      <Implementation>
+        <ST><![CDATA[//------------------------Manual------------------------//
+  
+IF machine.manualMode
+  AND NOT vari.init
+THEN
+  vari.forwardForbidIcon := forwardMode AND NOT forwardAllow;
+  vari.reversalForbidIcon := reversalMode AND NOT reversalAllow;
+  //正转手动操作
+  IF forwardAllow THEN
+    IF forwardHmiCache AND NOT vari.forwardHmi THEN
+      vari.forwardManual := NOT vari.forwardManual;
+      vari.reversalManual := FALSE;
+    END_IF;
+  ELSE
+    vari.forwardManual := FALSE;
+  END_IF;
+  
+  //反转手动操作
+  IF reversalAllow THEN
+    IF reverseHmiCache AND NOT vari.reversalHmi THEN
+      vari.reversalManual := NOT vari.reversalManual;
+      vari.forwardManual := FALSE;
+    END_IF;
+  ELSE
+    vari.reversalManual := FALSE;
+  END_IF;
+  
+ELSE
+  vari.forwardManual := FALSE;
+  vari.reversalManual := FALSE;
+  vari.forwardForbidIcon := forwardMode;
+  vari.reversalForbidIcon := reversalMode;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ManualTip" Id="{e712b4fd-d807-4456-8bef-fa0b43f08e3b}">
+      <Implementation>
+        <ST><![CDATA[//------------------------ManualTip------------------------//
+  
+IF machine.tipReset THEN
+  vari.forwardManualTip := FALSE;
+  vari.reversalManualTip := FALSE;
+ELSIF vari.forwardHmi AND forwardMode
+  OR vari.reversalHmi AND reversalMode
+THEN
+  machine.presetManualTips[0] := NOT machine.eStop;     //急停中,无法操作
+  machine.presetManualTips[1] := NOT machine.safety;    //安全条件不满足,无法操作
+  machine.presetManualTips[2] := NOT machine.allDoorClosed;  //安全门未锁好,无法操作
+  machine.presetManualTips[4] := NOT machine.manualMode;//不在手动模式,无法操作
+  
+  IF safetyPermit AND machine.manualMode THEN
+    IF NOT vari.forwardPermit AND vari.forwardHmi THEN
+      vari.forwardManualTip := TRUE;//正转条件不满足，用于置位外部提示信息用
+    ELSIF NOT vari.reversalPermit AND vari.reversalHmi THEN
+      vari.reversalManualTip := TRUE;//反转条件不满足，用于置位外部提示信息用
+    END_IF;
+  END_IF;
+  
+END_IF;
+
+//反馈工站手动提示
+IF vari.forwardManualTip
+  OR vari.reversalManualTip
+THEN
+  station.report.manualTip := TRUE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Output" Id="{a960b954-1887-42b7-b562-ad896a021cf6}">
+      <Implementation>
+        <ST><![CDATA[//------------------------Output  ------------------------//
+	veeredTimer(IN := NOT vari.outputReversal,
+		  PT := T#5S,
+		  Q=>);
+  	veeredTimer2(IN := NOT vari.outputReversal,
+		  PT := T#5S,
+		  Q=>);
+vari.outputForward := veeredTimer.Q
+AND (
+(vari.forwardManual XOR vari.forwardAuto)
+OR (vari.outputForward AND NOT forwardStopTimer.Q)
+);
+
+vari.outputReversal := veeredTimer2.Q
+AND (
+(vari.reversalManual OR vari.reversalAuto)
+OR (vari.outputReversal AND NOT reversalStopTimer.Q)
+);]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{7b4e6856-856a-42eb-b67a-ac77dc791ddf}">
+      <Implementation>
+        <ST><![CDATA[//------------------------SetUp------------------------//
+  
+IF NOT activated THEN
+  activated:=TRUE;
+  // 赋初始值
+vari.forwardPermit		:=TRUE;
+vari.reversalPermit		:=TRUE;
+vari.turnMode				:=1;
+
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Status" Id="{3101ef8e-234c-4d79-a7c6-bc67e9894828}">
+      <Implementation>
+        <ST><![CDATA[//------------------------Status------------------------//
+  
+//正转钮指示状态
+IF forwardMode THEN
+  IF vari.forwardManual THEN
+    vari.forwardHmiState := ON_STATE;
+  ELSE
+    vari.forwardHmiState := OFF_STATE;
+  END_IF;
+ELSE
+  vari.forwardHmiState := INOPERABLE_STATE;
+END_IF;
+
+//反转钮指示状态
+IF reversalMode THEN
+  IF vari.reversalManual THEN
+    vari.reversalHmiState := ON_STATE;
+  ELSE
+    vari.reversalHmiState := OFF_STATE;
+  END_IF;
+ELSE
+  vari.reversalHmiState := INOPERABLE_STATE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_Motor_RD">
+      <LineId Id="114" Count="20" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="65" Count="4" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="71" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_Motor_RD.Alarm">
+      <LineId Id="2" Count="19" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="25" Count="13" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Motor_RD.Auto">
+      <LineId Id="2" Count="4" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="10" Count="8" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="25" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Motor_RD.AutoTip">
+      <LineId Id="2" Count="14" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Motor_RD.Cache">
+      <LineId Id="2" Count="4" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Motor_RD.General">
+      <LineId Id="2" Count="19" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Motor_RD.Manual">
+      <LineId Id="2" Count="31" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Motor_RD.ManualTip">
+      <LineId Id="2" Count="27" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Motor_RD.Output">
+      <LineId Id="2" Count="2" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="8" Count="1" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="13" Count="9" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Motor_RD.SetUp">
+      <LineId Id="2" Count="8" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Motor_RD.Status">
+      <LineId Id="2" Count="21" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

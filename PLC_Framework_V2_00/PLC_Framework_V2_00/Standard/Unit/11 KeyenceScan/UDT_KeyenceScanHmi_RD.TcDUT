@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_KeyenceScanHmi_RD" Id="{758b32ce-23f1-4db5-be72-e673191c91dc}">
+    <Declaration><![CDATA[TYPE UDT_KeyenceScanHmi_RD :
+STRUCT
+triggerHmi           : BOOL; // 触发Hmi
+triggerManual        : BOOL; // 触发Manual
+triggerForbidIcon    : BOOL; // 触发禁止图标
+ready                : BOOL; // 准备就绪
+busy                 : BOOL; // 流程控制中
+done                 : BOOL; // 完成
+display              : BOOL; // 显示
+disabled             : BOOL; // 屏蔽
+alarming             : BOOL; // 报警中
+subDisplay           : WORD; // 子页面显示
+resultData           : STRING[128]; // 扫码结果数据
+readResultCode       : INT; // 读取动作错误代码
+generalErrorCode     : INT; // 一般错误代码
+scanGrade            : INT; // 扫码等级
+result               : INT; // 结果寄存器 1:Pass  2:Fail 3:Timeout
+status               : UINT; //7
+sensorSeries         : STRING[10]; // 传感器系列, 范围：N-L20,SR-1000X,SR-2000X,SR-LR1
+number               : INT; //编号
+evaluationGrade      : INT; // 评价等级下限 4:A  3:B  2:C  1:D  0:F
+evaluationMode       : INT; // 评价等级方式 0:不评估  1:ISO/IEC15415  2:ISO/IEC TR 29158
+timeout              : DINT; // 超时设置
+END_STRUCT 
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

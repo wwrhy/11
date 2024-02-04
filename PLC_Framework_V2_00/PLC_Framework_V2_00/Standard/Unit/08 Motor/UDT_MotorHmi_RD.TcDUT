@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_MotorHmi_RD" Id="{3ff3a2af-b1fb-4917-9bda-456c5c11931b}">
+    <Declaration><![CDATA[TYPE UDT_MotorHmi_RD :
+STRUCT
+inputRunning          : BOOL;//运行监控输入
+inputError            : BOOL;// 错误输入
+outputForward         : BOOL;// 正转输出
+outputReversal        : BOOL;// 反转输出
+outputErrorReset      : BOOL;// 错误复位输出
+forwardHmi            : BOOL;// 正转HMI
+forwardForbidIcon     : BOOL;// 正转禁止图标
+reversalHmi           : BOOL;// 反转HMI
+reversalForbidIcon    : BOOL;// 反转禁止图标
+display               : BOOL;// 显示
+forwardHmiState       : INT;// 正转Hmi状态
+reversalHmiState      : INT;// 反转Hmi状态
+number                : INT;// 编号
+startTime             : DINT;// 启动延时
+stopTime              : DINT;// 停止延时
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_AxisHmi_RD" Id="{958fe0b0-371f-43cb-9a32-121ea063b53a}">
+    <Declaration><![CDATA[TYPE UDT_AxisHmi_RD :
+STRUCT
+powerhmi : BOOL; // 伺服Onhmi
+powerForbidIcon : Bool; // 伺服On禁止图标
+isPowerOn : Bool; // 伺服On状态
+halthmi : BOOL; // 伺服暂停hmi
+resethmi : BOOL;//伺服复位hmi
+jogForwardhmi : Bool; // 伺服JOG+_hmi
+jogForwardForbidIcon : Bool; // 伺服JOG+禁止图标
+jogBackwardshmi : Bool; // 伺服JOG-hmi
+jogBackwardsForbidIcon : BOOL; // 伺服JOG-禁止图标
+jogDistance :REAL;//伺服JOG步进量
+homehmi : Bool; // 伺服回原点hmi
+homeForbidIcon : Bool; // 伺服回原点禁止图标
+homeDisplay : Bool; // 伺服回原点按钮可见
+homeDone : Bool; // 伺服回原点完成
+brakehmi : Bool; // 伺服刹车hmi
+brakeForbidIcon : Bool; // 伺服刹车禁止图标
+brake : Bool; // 伺服刹车输出
+movehmi : Bool; // 定位启动hmi
+moveForbidIcon : BOOL; // 定位启动禁止图标
+movehmiNo : UINT; // 手动定位编号
+inPosNo : UINT; // 伺服到位编号
+status : UINT; // 伺服状态
+driverErrID : DWORD; // 伺服驱动器错误代码
+ncErrID :DWORD;// 伺服NC错误代码
+warnID : DWORD; // 伺服警告代码
+posUnit : STRING[6]; // 位置单位
+veloUnit : String[8]; // 速度单位
+accDecUnit : WSTRING; // 加/减速度单位
+actPos : REAL; // 当前坐标
+actVelo : Real; // 当前速度
+actTorque : Real; // 当前转矩
+targetDistance :REAL;//伺服目标距离
+targetVelocity :REAL;//伺服目标速度
+posTeach :BOOL;//伺服位置示教
+
+display : Bool; // 画面显示
+selectDisplay : Bool; // 位置选择窗口显示
+number : INT; // 部件编号
+textListNo : Int; // 文本列表编号
+movePosNum : Int; // 定位数量
+subDisplay : Int; // 子画面显示
+selectPageValue : ARRAY[0..8] OF INT; // 位置选择页值
+turnPages : UDT_TurnPages_RD; //
+
+autoVelo : Real; // 自动速度
+manualVelo : Real; // 手动速度
+jogVelo : Real; // JOG速度
+acceleration : Real; // 加速度
+deceleration : Real; // 减速度
+movePos : ARRAY[0..8] OF REAL; // 定位坐标
+
+lsp : BOOL; // 伺服正极限
+lsn : Bool; // 伺服负极限
+dog : BOOL; // 伺服原点感应
+
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

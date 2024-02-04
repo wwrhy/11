@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Sensor_RD" Id="{1d3155bc-7a97-4318-9b75-e3ec6f08ce33}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Sensor_RD
+VAR_IN_OUT
+machine : UDT_Machine_RD; //
+station : UDT_Station_RD; //
+vari : UDT_SensorVar_RD; //
+data : UDT_SensorData_RD; //
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+inputCache : BOOL; //
+checkCache : Bool; //
+resetCache : Bool; //
+onTimer : TON; //
+offTimer : TON; //
+flickerTimer : TON; //
+firstCall    : BOOL :=TRUE;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SetUp();
+Delay();
+Alarm();]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{74689bcd-d8fd-47cf-9eb5-ecda3ddb9f74}">
+      <Implementation>
+        <ST><![CDATA[//-------------------------------Alarm--------------------------//
+  
+//复位报警并计数清零
+IF NOT resetCache AND machine.reset THEN
+  IF vari.unchangeError THEN
+    vari.count := 0;
+    vari.unchangeError := FALSE;
+  END_IF;
+  vari.flickerError := FALSE;
+END_IF;
+resetCache := machine.reset;
+  
+vari.alarming := vari.unchangeError
+OR vari.flickerError;
+
+//反馈上一级报警中
+IF vari.alarming THEN
+  station.report.alarming := TRUE;
+  machine.alarmCount := machine.alarmCount +1;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Delay" Id="{953d9b58-4a10-4187-931a-74613c84c75a}">
+      <Implementation>
+        <ST><![CDATA[//-----------------------------------Delay--------------------------//
+//屏蔽传感器时,ON OFF都输出
+IF NOT data.disabled THEN
+  onTimer(IN := vari.input,
+           PT :=UDINT_TO_TIME(data.onTime),
+           Q => vari.isOn);
+  offTimer(IN := NOT vari.input,
+            PT := UDINT_TO_TIME(data.offTime),
+            Q => vari.isOff);
+  IF inputCache <> vari.input OR data.setCount = 0 THEN//输入有变化或设置值0清空计数
+    vari.count := 0;
+  ELSIF NOT checkCache AND vari.check THEN    //check上升沿计数+1
+    vari.count :=vari.count + 1;
+  ELSIF checkCache AND NOT vari.check       //check下降沿且计数计数值大于等于设定值时报警
+    AND vari.count >= data.setCount
+  THEN
+    vari.unchangeError := TRUE;
+  END_IF;
+  
+  //超过On、Off延时之和2倍时间都没到位报警传感器闪烁异常
+  data.flickerTime := MAX(data.flickerTime,(data.onTime + data.offTime) * 2);
+  flickerTimer(IN := NOT vari.isOn AND NOT vari.isOff,
+               PT := UDINT_TO_TIME(data.flickerTime)
+			   );
+  
+  inputCache := vari.input;
+  checkCache := vari.check;
+ELSE
+  vari.isOn := TRUE;
+  vari.isOff := TRUE;
+  vari.count := 0;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{7f153cb7-ea9c-4dca-b143-4310b6c2cf8e}">
+      <Implementation>
+        <ST><![CDATA[//开机或切换语言后执行一个扫描周期
+//------------------------------------ SetUp--------------------------//
+  IF firstCall THEN
+    // 显示在HMI上面
+    vari.display := TRUE;
+	firstCall :=FALSE;
+  END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_Sensor_RD">
+      <LineId Id="9" Count="0" />
+      <LineId Id="21" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_Sensor_RD.Alarm">
+      <LineId Id="2" Count="18" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Sensor_RD.Delay">
+      <LineId Id="2" Count="17" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="21" Count="4" />
+      <LineId Id="29" Count="6" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Sensor_RD.SetUp">
+      <LineId Id="2" Count="5" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

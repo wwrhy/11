@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Hmi_RD" Id="{c5b43a18-9a98-4d5e-9556-7eb7a5e0a850}">
+    <Declaration><![CDATA[TYPE UDT_Hmi_RD :
+STRUCT
+changeDisplay : BOOL; // 切换机器按钮显示
+nextPage : Bool; // 下一页按钮
+prevPage : Bool; // 上一页按钮
+nextPageDisplay : Bool; // 下一页按钮显示
+prevPageDisplay : Bool; // 上一页按钮显示
+nextStation : Bool; // 下一工站按钮
+prevStation : Bool; // 上一工站按钮
+nextStationDisplay : Bool; // 下一工站按钮显示
+prevStationDisplay : Bool; // 上一工站按钮显示
+requestControl : Bool; // hmi请求控制权
+haveControl : Bool; // hmi拥有控制权
+noControl : Bool; // hmi无控制权
+selectMachineConfirm : Bool; // 选择机器编号确认
+selectMachineTip : Bool; // 不能切换机器编号提示
+requestCancel : Bool; // hmi请求控制权取消
+requestConfirm : Bool; // hmi请求控制权确认
+requestPopup : Bool; // hmi请求控制权弹窗
+selectMachineNo : UINT; // 选择机器编号
+machineNo : UINT; // 当前机器编号
+stationNo : UINT; // 当前工站编号
+stationIndex : UINT; // 当前工站索引下标
+inputIndex : UINT; // IO检查Input索引
+outputIndex : UINT; // IO检查Output索引
+hmiNo : UINT; // hmi编号
+hmiType : UINT; // hmi型号 0: TP700/900 1:TP1200/1500 2:TP1900 3:TP2200
+language : UINT; // 语言选择
+stationListValue : ARRAY[0..8] OF UINT; // 工站选择页值
+stationListDisplay : BOOL; // 工站选择页显示
+toManualPageClick : BOOL; //
+toParameterPageClick : BOOL; //
+toStationPageClick : BOOL; //
+inManualPage : BOOL; //
+inParameterPage : BOOL; //
+inStationPage : BOOL; //
+inOtherPage : BOOL; //
+mainListDisplay : BOOL; //
+statisticsListDisplay : BOOL; //
+dummyCheckListDisplay : BOOL; //
+ioCheckListDisplay : BOOL; //
+helpListDisplay : BOOL; //
+mainListShow : Int; //
+statisticsListShow : UINT; //
+dummyCheckListShow : UINT; //
+ioCheckListShow : UINT; //
+helpListShow : UINT; //
+writePlcClockConfirm : BOOL; // 写入PLC时钟确认
+writePlcClock : ARRAY[0..6] OF UINT; // 写入PLC时钟
+readPlcClock : ARRAY[0..6] OF UINT; // 当前PLC时钟
+leftSidebar : UDT_LeftSidebar_RD; // 左侧边栏
+rightSidebar : UDT_RightSidebar_RD; // 右侧边栏
+actPageNo : UINT; // 当前画面编号
+pageUnitNo : ARRAY[0..8] OF UINT; // 当前画面显示部件编号
+hmiControlWord : ARRAY[0..4] OF UINT; // hmi控制字
+hmiPopupWord : ARRAY[0..3] OF UINT; // hmi弹窗控制字
+machineName : STRING[20]; // 机器名称
+canConnectMachine : Array[0..4] of Bool; // 可以连接机器
+includingStationNum : Int; // 下属工站数量
+includingStationIndex : ARRAY[0..50] OF UINT; // 下属工站索引下标
+button : UDT_HmiButton_RD; // 按钮控制
+machineHmi : UDT_MachineHmi_RD; //
+stationHmi : UDT_StationHmi_RD; //
+cycleTimeHmi : UDT_CycleTimeHmi_RD; //
+cylinderHmi : ARRAY[1..8] OF UDT_CylinderHmi_RD; //
+axisHmi : ARRAY[1..2] OF UDT_AxisHmi_RD; //
+sensorHmi : ARRAY[1..8] OF UDT_SensorHmi_RD; //
+motorHmi : ARRAY[1..8] OF UDT_MotorHmi_RD; //
+delayHmi : ARRAY[1..8] OF UDT_DelayHmi_RD; //
+valveHmi : ARRAY[1..8] OF UDT_ValveHmi_RD; //
+rackFeederHmi : ARRAY[1..4] OF UDT_RackFeederHmi_RD; //
+//bowlFeederHmi : ARRAY[1..2] OF UDT_BowlFeederHmi_RD; //
+keyenceScanHmi : ARRAY[1..2] OF UDT_KeyenceScanHmi_RD; //
+TerminalHmi : ARRAY[1..2] OF UDT_TerminalHmi_RD; //
+produceHmi : UDT_ProduceHmi_RD; //
+oeeHmi : UDT_OeeHmi_RD; //
+//insertHmi : UDT_InsertHmi_RD; //
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

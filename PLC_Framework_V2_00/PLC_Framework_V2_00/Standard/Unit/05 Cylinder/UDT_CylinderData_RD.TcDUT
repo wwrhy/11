@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_CylinderData_RD" Id="{0f556d62-6ca7-438b-b575-5c1365bb157d}">
+    <Declaration><![CDATA[TYPE UDT_CylinderData_RD :
+STRUCT
+homeTime : UDINT; // 原点到位延时
+workTime : UDINT; // 动点到位延时
+alarmTime : UDINT; // 报警延时
+homeSensorDisabled : Array[0..3] of Bool; // 原点传感器屏蔽
+workSensorDisabled : Array[0..3] of Bool; // 动点传感器屏蔽
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

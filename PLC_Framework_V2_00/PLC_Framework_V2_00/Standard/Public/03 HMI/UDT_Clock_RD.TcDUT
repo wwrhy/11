@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Clock_RD" Id="{5d455b01-d09b-46ce-ad2e-eec07984b2e4}">
+    <Declaration><![CDATA[TYPE UDT_Clock_RD :
+STRUCT
+c1ms : BOOL; // 1ms时钟周期
+c10ms : Bool; // 10ms时钟周期
+c20ms : Bool; // 20ms时钟周期
+c100ms : Bool; // 100ms时钟周期
+c200ms : Bool; // 200ms时钟周期
+c1s : Bool; // 1s时钟周期
+c1min : Bool; // 1min时钟周期
+p1ms : Bool; // 1ms时钟脉冲
+p10ms : Bool; // 10ms时钟脉冲
+p20ms : Bool; // 20ms时钟脉冲
+p100ms : Bool; // 100ms时钟脉冲
+p200ms : Bool; // 200ms时钟脉冲
+p1s : Bool; // 1s时钟脉冲
+p1min : Bool; // 1min时钟脉冲
+p1hour : Bool; // 1hour时钟脉冲
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

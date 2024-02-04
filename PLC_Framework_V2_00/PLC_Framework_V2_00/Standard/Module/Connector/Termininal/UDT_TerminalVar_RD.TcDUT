@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_TerminalVar_RD" Id="{e4e28a44-e0ec-4f8d-9e4c-d9c4dacab9ea}">
+    <Declaration><![CDATA[TYPE UDT_TerminalVar_RD :
+STRUCT
+terminalSensor       : UDT_SensorVar_RD; //端子有无感应
+coverSensor          : UDT_SensorVar_RD; //盖板感应
+pinSensor            : UDT_SensorVar_RD; //对Pin感应
+disable              : BOOL; //屏蔽
+hmi                  : BOOL; //对端子Hmi
+manual               : BOOL; //对端子手动执行
+auto                 : BOOL; //对端子自动执行
+forbidIcon           : BOOL; //禁止图标
+camAxisEnable        : BOOL; //插针凸轮轴启用
+cutEnable            : BOOL; //裁切端子启用
+running              : BOOL; //对端子运行中
+ready                : BOOL; //对端子准备就绪
+busy                 : BOOL; //对端子中
+permit               : BOOL; //对端子条件
+allow                : BOOL; //对端子可动作
+done                 : BOOL; //对端子完成
+faile                : BOOL; //对端子失败
+timeoutAlarm         : BOOL; //对端子超时报警
+lackTerminalAlarm    : BOOL; //缺端子报警
+coverAlarm           : BOOL; //盖板未检测到报警
+lackTerminalAutoTip  : BOOL; //缺端子自动提示
+coverAutoTip         : BOOL; //盖板未检测到自动提示
+alarming             : BOOL; //报警中
+manualTip            : BOOL; //手动提示
+autoTip              : BOOL; //自动提示
+flowStep             : UINT; //流程步
+status               : UINT; //状态
+camAxisNo            : UINT; //凸轮轴
+sendAxisNo           : UINT; //送端子轴
+stationNo            : UINT; //所属工站编号
+serialNo             : UINT; //HMI显示序号
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

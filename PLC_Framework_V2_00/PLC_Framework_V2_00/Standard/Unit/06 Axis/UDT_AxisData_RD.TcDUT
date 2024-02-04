@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_AxisData_RD" Id="{3158c9f4-c503-4ad1-b113-11bef2317205}">
+    <Declaration><![CDATA[TYPE UDT_AxisData_RD :
+STRUCT
+homeDisplay : BOOL; // 伺服回原点按钮可见
+autoVelo : Real; // 自动速度
+manualVelo : Real; // 手动速度
+jogVelo : REAL; // JOG速度
+jogDistance :REAL;//伺服JOG步进量
+acceleration : Real; // 加速度
+deceleration : Real; // 减速度
+movePos : Array[0..31] of Real; // 定位坐标
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

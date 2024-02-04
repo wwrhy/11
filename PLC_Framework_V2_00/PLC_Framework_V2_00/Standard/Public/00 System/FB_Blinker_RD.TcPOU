@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Blinker_RD" Id="{af2dfb15-ef1c-4ed4-acf7-63a146640b48}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Blinker_RD
+VAR_INPUT
+	OnTime							: TIME;					//On时长
+	OffTime				   		: TIME;					//Off时长
+END_VAR
+
+VAR_OUTPUT
+	clock							: BOOL;					//
+	R_Plus						: BOOL;					//脉冲上升沿
+	F_Plus						: BOOL;					//脉冲下降沿
+END_VAR
+
+VAR
+	{attribute 'hide'}
+	tonOff						: TON;					//Off计时器
+	{attribute 'hide'}
+	tonOn						: TON;					//On计时器
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[tonOff(IN:=NOT clock, PT:=OffTime, Q=>R_Plus );
+tonOn(IN:=clock, PT:=OnTime, Q=>F_Plus );
+
+IF R_Plus OR F_Plus THEN
+	clock:= NOT clock;
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Blinker_RD">
+      <LineId Id="160" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="131" Count="2" />
+      <LineId Id="90" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

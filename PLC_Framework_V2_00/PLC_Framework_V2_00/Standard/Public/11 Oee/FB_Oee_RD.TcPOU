@@ -1,0 +1,271 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Oee_RD" Id="{8d7cad94-a209-4c67-a178-2e6aa3fcc8bf}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Oee_RD
+VAR_INPUT
+localClock : DATE_AND_TIME; //
+END_VAR
+VAR_OUTPUT
+END_VAR
+
+VAR_IN_OUT
+vari : UDT_OeeVar_RD; //
+data : UDT_OeeData_RD; //
+lastData : UDT_OeeData_RD; //
+END_VAR
+
+VAR
+startCache : BOOL; //
+endCache : Bool; //
+clearCache : Bool; //
+failureCache : Bool; //
+goodValueCache : DInt; //
+badValueCache : DInt; //
+secondCache : DATE_AND_TIME; //
+nTimer		: UDINT;//计时器，单位100ns，除于10000后单位ms
+IdealProducts : DInt; //
+emptyData : UDT_OeeData_RD; //
+CurTaskInfo	: PlcTaskSystemInfo;//当前任务信息
+failureR_Trig   : R_TRIG;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Cache();
+Count();
+Refresh();
+StartEnd();
+Timer();]]></ST>
+    </Implementation>
+    <Action Name="Cache" Id="{1b4a7b68-f307-4f23-981e-debbed93612b}">
+      <Implementation>
+        <ST><![CDATA[//----------------------Cache--------------------//
+failureR_Trig(CLK:=vari.keep AND NOT vari.scheduledDown AND vari.alarming);
+
+goodValueCache := vari.goodValue;
+badValueCache := vari.badValue;
+secondCache := localClock;
+failureCache := vari.keep AND NOT vari.scheduledDown AND vari.alarming;
+startCache := vari.start;
+endCache := vari.end;
+clearCache := vari.clear;
+vari.start := FALSE;
+vari.end := FALSE;
+vari.clear := FALSE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Count" Id="{f7ed32b5-5b8d-45fe-a0a1-ace6a63e6e9b}">
+      <Implementation>
+        <ST><![CDATA[ //----------------------Count--------------------//
+ //OEE统计开始/结束
+IF vari.keep OR vari.end THEN
+	
+    //良品数量增加时，OEE统计会对增加部分累计加
+    IF vari.goodValue > goodValueCache THEN
+      data.goodValue 	:= data.goodValue + (vari.goodValue - goodValueCache);
+      data.totalValue	 	:= data.totalValue +(vari.goodValue - goodValueCache);
+    END_IF;
+    //不良品数量增加时，OEE统计会对增加部分累计加
+    IF vari.badValue > badValueCache THEN
+      data.badValue 	:= data.badValue + (vari.badValue - badValueCache);
+      data.totalValue 	:= data.totalValue + (vari.badValue - badValueCache);
+    END_IF;
+    
+    //产生故障上升沿增加1次
+    IF failureR_Trig.Q THEN
+      data.failureCount := data.failureCount +1;
+    END_IF;
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Refresh" Id="{58dc0ebf-74ad-4d25-b549-d62a2cf985fc}">
+      <Implementation>
+        <ST><![CDATA[//----------------------Refresh--------------------//
+//OEE统计开始/结束
+IF vari.keep OR vari.end THEN
+	//每秒钟运行一次
+    IF TRUE THEN
+      FUN_TimeToDate_RD(InOut:=data.totalTime);
+	  FUN_TimeToDate_RD(InOut:=data.productiveTime);
+	  FUN_TimeToDate_RD(InOut:=data.downTime);
+	  FUN_TimeToDate_RD(InOut:=data.runtime);
+	  FUN_TimeToDate_RD(InOut:=data.standbyTime);
+	  FUN_TimeToDate_RD(InOut:=data.failureTime);
+	
+      
+      //时间利用率
+      IF data.productiveTime.timeValue > 0 THEN
+        data.availability :=  LREAL_TO_REAL(UDINT_TO_LREAL(data.runtime.timeValue)/ UDINT_TO_LREAL(data.productiveTime.timeValue)) * 100;
+      ELSE
+        data.availability := 0.0;
+      END_IF
+      
+      //性能
+      IF vari.idealCycleTime > T#0MS THEN
+        IdealProducts := UDINT_TO_DINT(data.runtime.timeValue) / TIME_TO_DINT(vari.idealCycleTime);
+        IF IdealProducts > 0 THEN
+          data.performance := DINT_TO_REAL(data.totalValue)  / DINT_TO_REAL(IdealProducts)* 100.0;
+        ELSE
+          data.performance := 0.0;
+        END_IF
+      ELSE
+        IdealProducts := 0;
+        data.performance := 0.0;
+      END_IF
+      
+      //质量
+      IF data.totalValue > 0 THEN
+        data.quality := 100.0 * DINT_TO_REAL(data.goodValue) / DINT_TO_REAL(data.totalValue);
+      ELSE
+        data.quality := 0.0;
+      END_IF
+      
+      //OEE
+      data.oee := (data.availability * data.performance * data.quality) / 10000.0;
+      
+    END_IF
+  
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="StartEnd" Id="{3225c5d6-b319-4669-89a5-8f5fc7afb752}">
+      <Implementation>
+        <ST><![CDATA[//----------------------Start End--------------------//
+  
+//OEE统计开始/结束
+IF NOT startCache AND vari.start THEN
+  IF NOT vari.keep THEN
+    data := emptyData;  //清空数据
+    data.startTime := localClock; //开始时刻
+    data.startTimeDisplay := TRUE;
+    vari.keep := TRUE;
+  END_IF
+  vari.scheduledDown := FALSE; //复位计划停机
+ELSIF NOT endCache AND vari.end THEN
+  IF vari.keep THEN
+    data.endTime := localClock; //结束时刻
+    data.endTimeDisplay := TRUE;
+    lastData := data; //数据存入上一次数据中
+    vari.keep := FALSE;
+  END_IF
+END_IF
+  
+
+
+//清空数据
+IF NOT vari.keep
+  AND NOT clearCache
+  AND  vari.clear
+THEN
+  data := emptyData;
+END_IF
+ ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Timer" Id="{0b34fdcc-5ce7-4cde-bcd8-ff8bbe8bedee}">
+      <Implementation>
+        <ST><![CDATA[//----------------------Timer--------------------//
+//OEE统计开始/结束
+IF vari.keep OR vari.end THEN
+	nTimer:=nTimer
+		+ MAX(CurTaskInfo.CycleTime, CurTaskInfo.LastExecTime);
+END_IF
+IF nTimer >= 10000000 THEN
+	IF vari.keep
+	THEN
+		data.totalTime.timeValue:= data.totalTime.timeValue+1;
+	END_IF
+	
+	IF vari.keep AND vari.scheduledDown
+	THEN
+		data.downTime.timeValue:= data.downTime.timeValue+1;
+	END_IF
+	
+	IF vari.keep AND NOT vari.scheduledDown
+	THEN
+		data.productiveTime.timeValue:= data.productiveTime.timeValue+1;
+	END_IF
+	
+	IF vari.keep AND NOT vari.scheduledDown AND vari.running
+	THEN
+		data.runtime.timeValue:= data.runtime.timeValue+1;
+	END_IF
+	
+	IF vari.keep AND NOT vari.scheduledDown AND NOT vari.running AND NOT vari.alarming
+	THEN
+		data.standbyTime.timeValue:= data.standbyTime.timeValue+1;
+	END_IF
+	
+	IF vari.keep AND NOT vari.scheduledDown AND vari.alarming
+	THEN
+		data.failureTime.timeValue:= data.failureTime.timeValue+1;
+	END_IF
+	nTimer:=nTimer - 10000000;
+END_IF
+]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_Oee_RD">
+      <LineId Id="9" Count="0" />
+      <LineId Id="42" Count="3" />
+    </LineIds>
+    <LineIds Name="FB_Oee_RD.Cache">
+      <LineId Id="1" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="3" Count="8" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Oee_RD.Count">
+      <LineId Id="1" Count="0" />
+      <LineId Id="3" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="8" Count="13" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="22" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Oee_RD.Refresh">
+      <LineId Id="3" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="6" Count="2" />
+      <LineId Id="53" Count="4" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="15" Count="2" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="19" Count="28" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Oee_RD.StartEnd">
+      <LineId Id="2" Count="29" />
+    </LineIds>
+    <LineIds Name="FB_Oee_RD.Timer">
+      <LineId Id="1" Count="0" />
+      <LineId Id="3" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="36" Count="1" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="40" Count="1" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="48" Count="2" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="53" Count="2" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="58" Count="2" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="63" Count="2" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="68" Count="2" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

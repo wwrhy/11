@@ -1,0 +1,131 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_AxisVar_RD" Id="{64ddfdc1-e4d5-4097-a2ce-641a4139773c}">
+    <Declaration><![CDATA[TYPE UDT_AxisVar_RD :
+STRUCT
+powerhmi : BOOL; // 伺服Onhmi
+powerManual : Bool; // 伺服OnManual
+powerAuto : Bool; // 伺服OnAuto
+powerInit : Bool; // 伺服OnInit
+powerAllow : Bool; // 伺服On允许操作
+powerForbidIcon : Bool; // 伺服On禁止图标
+isPowerOn : Bool; // 伺服On状态
+notPowerOnAutoTip : Bool; // 伺服未On自动提示
+halthmi : BOOL; // 伺服暂停hmi
+resethmi : BOOL;//伺服复位hmi
+haltManual : Bool; // 伺服暂停Manual
+haltAuto : Bool; // 伺服暂停Auto
+jogForwardhmi : Bool; // 伺服JOG+_hmi
+jogForwardAllow : Bool; // 伺服JOG+允许操作
+jogForwardForbidIcon : Bool; // 伺服JOG+禁止图标
+jogForwardAuto : Bool; // 伺服JOG+_Auto
+jogForwardPermit : Bool; // 伺服JOG+_条件
+jogBackwardshmi : Bool; // 伺服JOG-hmi
+jogBackwardsAllow : Bool; // 伺服JOG-允许操作
+jogBackwardsForbidIcon : Bool; // 伺服JOG-禁止图标
+jogBackwardsAuto : Bool; // 伺服JOG-Auto
+jogBackwardsPermit : BOOL; // 伺服JOG-条件
+homehmi : BOOL; // 伺服回原点hmi
+homeManual : Bool; // 伺服回原点Manual
+homeAllow : Bool; // 伺服回原点允许操作
+homeForbidIcon : Bool; // 伺服回原点禁止图标
+homeDisplay : Bool; // 伺服回原点按钮可见
+homeDone : Bool; // 伺服回原点完成
+homeInit : Bool; // 伺服回原点Init
+homing : Bool; // 伺服回原点中
+homePermit : Bool; // 伺服回原点条件
+notHomeAutoTip : Bool; // 伺服未回原点自动提示
+brakeEnable : Bool; // 伺服刹车启用
+brakehmi : Bool; // 伺服刹车hmi
+brakeAllow : Bool; // 伺服刹车允许操作
+brakeForbidIcon : Bool; // 伺服刹车禁止图标
+brakeManual : Bool; // 伺服刹车Manual
+brake : Bool; // 伺服刹车输出
+brakeForced : Bool; // 伺服刹车强制打开输出
+movehmi : Bool; // 定位启动hmi
+moveAllow : Bool; // 定位启动允许操作
+moveForbidIcon : Bool; // 定位启动禁止图标
+ready : Bool; // 伺服准备就绪
+busy : Bool; // 伺服忙
+error : Bool; // 伺服错误
+alarming : Bool; // 伺服报警中
+warning : Bool; // 伺服警告
+timeout : Bool; // 定位超时报警
+manualTip : Bool; // 手动提示
+autoTip : Bool; // 自动提示
+movePermit : Bool; // 定位总条件
+eStoppedReInit : Bool; // 急停时是否需要重新初始化
+lsp : Bool; // 伺服正极限
+lsn : Bool; // 伺服负极限
+dog : Bool; // 伺服原点感应
+display : Bool; // 画面显示
+autoReturning : Bool; // 自动回位中
+autoReturnAllow : Bool; // 自动回位已激活待启动
+autoReturnPermit : Bool; // 自动回位条件(大范围回位)
+autoReturnEnable : Bool; // 自动回位启用
+notPowerOnManualTip : Bool; // 未使能不能操作
+unableBrakeManualTip : Bool; // 已使能不能操作刹车
+unablePowerOnManualTip : Bool; // 刹车已打开不能操作使能
+autoReturnScope : Real; // 自动回位范围，在范围内不判断定位条件
+homeMode : UINT; // 回原点模式
+brakeState : UINT; // 伺服刹车状态
+inPosTime : Time; // 到位延时
+inPosScope : Real; // 到位范围
+actPos : Real; // 当前坐标
+actVelo : Real; // 当前速度
+actTorque : Real; // 当前转矩
+differentVelo : Real; // 自定义速度
+driverErrID : DWORD; // 伺服驱动器错误代码
+ncErrID :DWORD;// 伺服NC错误代码
+warnID : DWord; // 伺服警告代码
+modulo : UDT_ModuloProperty_RD; // 模长轴控制
+notMovePermitManualTip : UINT; // 定位条件不满足手动提示
+notInPosAutoTip : UINT; // 伺服不在位自动提示
+movehmiNo : UINT; // 手动定位编号
+moveAutoNo : UINT; // 自动定位编号
+moveAutoNoCache : UINT; // 自动定位编号暂存
+status : UINT; // 伺服状态
+movePosNum : UINT; // 定位数量
+stationNo : UINT; // 工站编号
+serialNo : UINT; // 在工站内的序号
+subDisplay : Word; // 子画面显示
+axis : AXIS_REF; // 轴引用
+posUnit : String[6]; // 位置单位
+veloUnit : String[8]; // 速度单位
+accDecUnit : WSTRING; // 加/减速度单位
+name : Array[0..3] of String[30]; // 伺服名称
+absOrRel : Array[0..31] of Bool; // 绝对/相对定位
+inPos : Array[0..31] of Bool; // 定位到位
+movePermits : ARRAY[0..31] OF BOOL; // 定位条件
+
+
+velocityHmi     : BOOL; // 伺服速度模式hmi
+velocityAuto    : BOOL; // 伺服速度模式Auto
+VelocityAllow   : BOOL; // 伺服速度允许操作
+VelocityPermit   : BOOL; // 伺服速度动作条件
+velocityBusy		: BOOL;	//伺服速度模式Busy
+velocityError		: BOOL;	//伺服速度模式Error
+velocityErrorID	: UDINT;	//伺服速度模式ErrorID
+inVelocity	    : BOOL;	 //速度到达
+velocity		    : REAL;	//轴速度模式速度
+ 
+stophmi : BOOL; // 伺服停止hmi
+stopManual : BOOL; // 伺服停止Manual
+stopAuto : BOOL; // 伺服停止Auto
+
+additiveAuto : BOOL;
+additiveDistance : REAL;
+additiveVelo : REAL;
+
+inPosNo : UINT; // 伺服到位编号
+targetDistance :REAL;//伺服目标距离
+targetVelocity :REAL;//伺服目标速度
+posTeach :BOOL;//伺服位置示教
+Override : INT; // 速度百分比
+
+ 
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

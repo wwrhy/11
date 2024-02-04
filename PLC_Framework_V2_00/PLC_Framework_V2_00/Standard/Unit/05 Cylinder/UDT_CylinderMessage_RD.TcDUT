@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_CylinderMessage_RD" Id="{be447156-e736-44b4-a4ed-80e62d3b3eda}">
+    <Declaration><![CDATA[TYPE UDT_CylinderMessage_RD :
+STRUCT
+inManualOperationAutoTip : BOOL; //
+noHomePermitManualTip : Bool; //
+noWorkPermitManualTip : Bool; //
+homeSensorOffAlarm : Array[0..3] of Bool; //
+workSensorOffAlarm : Array[0..3] of Bool; //
+homeSensorOnAlarm : Array[0..3] of Bool; //
+workSensorOnAlarm : Array[0..3] of Bool; //
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Terminal_RD" Id="{588f4226-2be7-4551-9502-76f2b9a2500e}">
+    <Declaration><![CDATA[TYPE UDT_Terminal_RD :
+STRUCT
+send1Finish     : BOOL; //上进端子完成
+send2Finish     : BOOL; //下进端子完成
+send1Auto       : BOOL; //上进端子自动
+send2Auto       : BOOL; //下进端子自动
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

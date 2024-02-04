@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_KeyenceScanVar_RD" Id="{ae9d6b84-3f3f-4774-8c55-2f7a8911ee0a}">
+    <Declaration><![CDATA[TYPE UDT_KeyenceScanVar_RD :
+STRUCT
+triggerHmi          : BOOL; // 触发Hmi
+triggerManual       : BOOL; // 触发Manual
+triggerAuto         : BOOL; // 触发Auto
+triggerAllow        : BOOL; // 触发允许操作
+triggerForbidIcon   : BOOL; // 触发禁止图标
+ready               : BOOL; // 准备就绪
+busy                : BOOL; // 流程控制中
+done                : BOOL; // 完成
+disabled            : BOOL; // 屏蔽
+alarming            : BOOL; // 报警中
+readTimeoutDisabled : BOOL; // 读取超时报警屏蔽
+subDisplay          : WORD; // 子页面显示
+readTimeoutAlarm    : BOOL; // 超时报警
+readError           : BOOL; // 读取动作错误
+generalError        : BOOL; // 一般错误
+resultData          : STRING[128]; // 扫码结果数据
+readResultCode      : UINT; // 读取动作错误代码
+generalErrorCode    : UINT; // 一般错误代码
+scanGrade           : UINT; // 扫码等级
+result              : UINT; // 结果寄存器 1:Pass  2:Fail 3:Timeout
+status              : UINT; // 状态
+sensorSeries        : STRING[10]; // 传感器系列, 范围：N-L20,SR-1000X,SR-2000X,SR-LR1
+stationNo           : UINT; // 所属工站编号
+serialNo            : UINT; // HMI显示序号
+input               : ARRAY[0..85] OF WORD; // 输入字
+output              : ARRAY[0..37] OF WORD; // 输出字
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

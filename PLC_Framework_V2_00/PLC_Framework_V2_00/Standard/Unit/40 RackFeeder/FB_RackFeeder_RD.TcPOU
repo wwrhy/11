@@ -1,0 +1,281 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_RackFeeder_RD" Id="{dabe7362-77ca-4329-b7e4-bb987cea5686}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_RackFeeder_RD
+VAR_IN_OUT
+  
+machine :UDT_Machine_RD;
+station :UDT_Station_RD;
+Vari : UDT_RackFeederVar_RD;
+data :UDT_RackFeederData_RD;
+
+END_VAR
+
+VAR
+  activated : BOOL; //
+safetyPermit : BOOL; // 安全条件
+auto : Bool; // 自动执行
+statrTimer : TON; // 放料启动定时器
+stopTimer : TON; // 放料停止定时器
+timeoutTimer : TON; // 放料超时定时器
+rollCountTimer : TON; // 卷纸转圈定时器
+rollCount : Int; // 卷纸转圈计数
+breakCache : Bool; // 纸带断裂检测缓存
+rollHmiCache : Bool; // 卷纸HMI缓存
+feedStart : Bool; //
+rollStart : BOOL; //
+
+END_VAR
+
+VAR CONSTANT
+TIMEOUT : UINT:=1; //
+SCATTER : UINT:=3; //
+TAIL : UINT:=4; //
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SetUp();
+Alarm();
+General();
+Manual();
+Delay();
+RackTail();
+ManualTip();
+Output();
+Cache();
+]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{2f680382-c377-4c3a-b04f-389640e4ad08}">
+      <Implementation>
+        <ST><![CDATA[
+
+//-------------------Alarm-----------------------//
+
+  IF machine.reset THEN
+    vari.timeoutAlarm := FALSE;
+    vari.scatterAlarm := FALSE;
+    IF vari.breakAlarm THEN
+      rollCount := 0;
+      vari.breakAlarm := FALSE;
+    END_IF;
+  END_IF;
+  //放料超时报警
+  timeoutTimer(IN := statrTimer.Q AND auto,
+                PT := data.timeout);
+  IF timeoutTimer.Q THEN
+    vari.timeoutAlarm := TRUE;
+  END_IF;
+  //散料报警
+  IF vari.input.scatter THEN
+    vari.scatterAlarm := TRUE;
+  END_IF;
+  //纸带断裂报警
+  IF data.rollLimit > 0 THEN//设置上限小于1不启用报警
+    rollCountTimer(IN := auto AND NOT rollCountTimer.Q,
+                    PT := T#10s); //10s重置计数
+    IF rollCountTimer.Q THEN //定时清零
+      rollCount := 0;
+    END_IF;
+    IF NOT breakCache AND vari.input.break
+      AND auto
+      AND NOT feedStart
+    THEN
+      rollCount := rollCount +1;
+    END_IF;
+    IF rollCount >= data.rollLimit THEN
+      vari.breakAlarm := TRUE;
+    END_IF;
+  END_IF;
+  //工站报警中
+  vari.alarming := vari.timeoutAlarm OR vari.scatterAlarm OR vari.breakAlarm;
+  //反馈工站报警
+  IF vari.alarming THEN
+    machine.alarmCount := machine.alarmCount +1;
+    station.report.alarming := true;
+  END_IF;
+  
+//------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Cache" Id="{eceef282-7572-4de4-8042-ff2b7e501c52}">
+      <Implementation>
+        <ST><![CDATA[
+
+
+
+
+//-------------------Cache-----------------------//
+  rollHmiCache := vari.rollHmi;
+  breakCache := vari.input.break;
+//------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Delay" Id="{5622256e-6fbc-4329-b559-9b04823a2e34}">
+      <Implementation>
+        <ST><![CDATA[
+//-------------------Delay-----------------------//
+  //放料启动延时
+  statrTimer(IN := auto AND NOT vari.input.full,
+              PT := data.startTime);
+  
+  //放料停止延时
+  stopTimer(IN := NOT statrTimer.IN,
+             PT := data.stopTime);
+  
+//------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{7d67466b-8bdc-4965-b41b-96d185e37234}">
+      <Implementation>
+        <ST><![CDATA[//-------------------General-----------------------//
+  
+  vari.ready := NOT vari.alarming;
+  auto := vari.ready
+  AND station.running
+  AND NOT vari.tail
+  AND NOT vari.disabled;
+  
+//------------------------------------------------//
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Manual" Id="{8ddc3cc8-680d-47a0-8399-a92da3323fd7}">
+      <Implementation>
+        <ST><![CDATA[//-------------------Manual-----------------------//
+  //手动操作
+  IF machine.eStop
+    AND machine.manualMode
+    AND NOT auto
+  THEN
+    vari.feedForbidIcon := FALSE;
+    vari.rollForbidIcon := feedStart;
+    vari.feedManual := (vari.feedHmi OR vari.input.feedButton);
+    IF NOT feedStart THEN//放料马达启动时复位卷纸马达手动
+      IF rollHmiCache AND NOT vari.rollHmi THEN
+        vari.rollManual := NOT vari.rollManual;
+      END_IF;
+    ELSE
+      vari.rollManual := FALSE;
+    END_IF;
+  ELSE
+    vari.feedForbidIcon := TRUE;
+    vari.rollForbidIcon := TRUE;
+    vari.feedManual := FALSE;
+    vari.rollManual := FALSE;
+  END_IF;
+  
+//------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ManualTip" Id="{9cc689b8-5911-4875-9c15-3c5eca392152}">
+      <Implementation>
+        <ST><![CDATA[
+//-------------------ManualTip-----------------------//
+  //整机手动提示           
+  IF vari.feedHmi OR vari.input.feedButton OR vari.rollHmi THEN
+    machine.presetManualTips[0] := NOT machine.eStop;     //急停中,无法操作
+    machine.presetManualTips[4] := NOT machine.manualMode;//不在手动模式,无法操作
+  END_IF;
+//------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Output" Id="{6ca80c23-adda-4c0b-9602-286e4c95cd6f}">
+      <Implementation>
+        <ST><![CDATA[
+//-------------------Output-----------------------//
+  
+  //放料马达输出
+  feedStart := vari.feedManual
+  OR statrTimer.Q
+  OR (NOT vari.feedManual AND feedStart AND NOT stopTimer.Q);
+  
+  //卷纸马达输出
+  rollStart := vari.rollManual
+  OR auto
+  OR feedStart;
+  
+  vari.output.feedStart := feedStart;
+  vari.output.rollStart := rollStart;
+  
+//------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="RackTail" Id="{c021bc33-e770-40e8-9f2c-ab9f34f1a44c}">
+      <Implementation>
+        <ST><![CDATA[//-------------------Tail-----------------------//
+  
+  //满料或屏蔽时关闭尾料模式
+  IF vari.input.full OR vari.disabled THEN
+    vari.tail := FALSE;
+  END_IF;
+  
+//------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{24e22cc9-7f98-4c22-a9bc-eeeea26c996c}">
+      <Implementation>
+        <ST><![CDATA[//-------------------SetUp-----------------------//
+  
+  IF NOT activated THEN
+	  activated:=TRUE;
+	  vari.stationNo:=0;
+	  
+	;
+  END_IF;
+    
+  
+  
+//------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_RackFeeder_RD">
+      <LineId Id="9" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="86" Count="1" />
+      <LineId Id="83" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_RackFeeder_RD.Alarm">
+      <LineId Id="2" Count="46" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RackFeeder_RD.Cache">
+      <LineId Id="2" Count="7" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RackFeeder_RD.Delay">
+      <LineId Id="2" Count="9" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RackFeeder_RD.General">
+      <LineId Id="2" Count="8" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RackFeeder_RD.Manual">
+      <LineId Id="2" Count="22" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RackFeeder_RD.ManualTip">
+      <LineId Id="2" Count="6" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RackFeeder_RD.Output">
+      <LineId Id="2" Count="15" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RackFeeder_RD.RackTail">
+      <LineId Id="2" Count="6" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_RackFeeder_RD.SetUp">
+      <LineId Id="2" Count="6" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="11" Count="1" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

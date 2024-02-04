@@ -1,0 +1,348 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Produce" Id="{e0ce8653-3508-466f-8980-793c38216dc6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Produce
+VAR_IN_OUT
+machine : UDT_Machine_RD; //
+stations : ARRAY[*] OF UDT_Station_RD; //
+vari : UDT_ProduceVar_RD; //
+data : UDT_ProduceData_RD; //
+badVar : ARRAY[*] OF UDT_BadVar_RD; //
+badData : ARRAY[*] OF UDT_BadData_RD; //
+lastProduce : UDT_ProduceDataRecord_RD; //
+END_VAR
+
+VAR
+goodExecuteCache : ARRAY[0..99] OF BOOL; // 不良触发缓存
+activated : Bool; //
+badExecuteCache : Array[0..99] of Bool; // 缓存不良数量
+badList : Array[0..99] of Int; // 不良排序列表
+maxValue : DInt; //
+minValue : DInt; //
+badTypeNum : Int; // 报警推送
+pushAlarmNo : UInt; // 清零定时器
+clearTimer : TON; // 设定定时器
+resetCache : Bool; //
+index : DInt; //
+index1 : DInt; //
+temp : DInt; //
+totalBad : DInt; //
+badMax : DInt; //
+No : INT; //
+test  : ARRAY[0..5] OF DINT;
+lastIndex : DINT := 1;
+index3 : INT;
+numListPOINT : POINTER TO DINT;
+END_VAR
+
+VAR CONSTANT
+MAX_CONTINUOUS : INT :=99; // 最大连续不良报警数量
+MAX_CUMULATIVE : INT:=10; // 最大累计不良报警数量n
+MAX_CUMULATIVE_RANGE : INT:=999; // 最大累计不良计算范围
+MAX_ALARM : INT:=5; // 最大报警同时推送数量
+MAX_BAD_NUM : INT:=30; // 最大不良类型数量
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SetUp();
+]]></ST>
+    </Implementation>
+    <Action Name="SetUp" Id="{6bdcc7f2-24f4-4716-8873-9debddd61515}">
+      <Implementation>
+        <ST><![CDATA[//---------------------------Description header 
+  //================================================================================== 
+  // Harmontromics / (C) Copyright (2021) 
+  //----------------------------------------------------------------------------------
+  // Title:               Produce
+  // Comment/Function:    产量统计，OK统计，分类NG数，分类NG比例（由大到小显示）
+  // Library/Family:      (that the source is dedicated to)
+  // Author:              David.Wong
+  // Target System: 
+  // Engineering:         TIA Portal (V15.1)
+  // Restrictions:        (OB types, etc.)
+  // Requirements:        (hardware, technological package, etc.) 
+  //----------------------------------------------------------------------------------
+  // Change log table:
+  // Version     | Date       | Expert in charge | Changes applied
+  //-------------|------------|------------------|------------------------------------
+  // 001.000.000 | 2021-12-11 | David.Wong       | First released version
+  // 001.000.001 | 2022-11-8  | David.Wong       | 增加上下翻页按钮的显示/隐藏
+  // 001.001.000 | 2023-3-18  | David.Wong       | 在bad内增加stationNo变量，使报警可以归属工站         
+  // 001.001.001 | 2024-1-17  | Sunny.Gao        | 使用指针的方式进行寻址，lastIndex初始赋值1
+  //================================================================================== 
+
+
+//---------------------------SetUp -----------------------------//
+
+	IF NOT activated THEN
+		activated:=TRUE;
+		vari.goodIncrements:=1;
+		FOR index := 1 TO UPPER_BOUND(badVar,1) DO
+			badVar[index].goodIncrements:=1;
+			badVar[index].badIncrements:=1;
+      badVar[index].lastIndex:=1;
+		END_FOR;
+	END_IF;
+	//分类不良品种类数
+	badTypeNum := 0;
+	FOR index := 1 TO UPPER_BOUND(badVar,1)  DO
+		badList[index] := 0;
+		IF badVar[index].stationNo > 0 THEN
+			 badVar[index].machineNo := stations[badVar[index].stationNo].machineNo;
+		END_IF;
+		IF badVar[index].machineNo = machine.machineNo THEN
+			badTypeNum := badTypeNum + 1;
+			badList[badTypeNum] := DINT_TO_INT(index);
+		END_IF;
+	END_FOR;
+	vari.badTypeNum 	:= badTypeNum;
+	vari.badList				:=badList;
+
+	
+
+
+
+//---------------------------General-----------------------------//
+  
+  //数据清零
+  clearTimer(IN := vari.allClearHmi,
+              PT := t#1S);
+  IF clearTimer.Q THEN
+    vari.allClearAuto := TRUE;
+  END_IF;
+  IF vari.allClearAuto THEN
+    vari.allClearAuto := FALSE;
+    //清零前先保存历史数据
+    IF data.totalValue > 0 THEN
+      lastProduce.totalValue := data.totalValue;
+      lastProduce.goodValue := data.goodValue;
+      lastProduce.badValue := data.badValue;
+      lastProduce.yieldRatio := data.yieldRatio;
+      lastProduce.badRatio := data.badRatio;
+    END_IF;
+    //清零机器产量数据
+    data.totalValue := 0;
+    data.goodValue := 0;
+    data.badValue := 0;
+    data.yieldRatio := 0.0;
+    data.badRatio := 0.0;
+    //清零归属机器的所有不良品数据
+    FOR index := 0 TO badTypeNum DO
+      No := badList[index];
+      badVar[No].empty := TRUE;
+    END_FOR;
+  END_IF;
+
+//---------------------------Good Statistic-----------------------------//
+  
+  IF NOT goodExecuteCache[0] AND vari.goodExecute THEN
+    data.goodValue := data.goodValue + vari.goodIncrements;
+    data.cumulativeValue := data.cumulativeValue + vari.goodIncrements;
+  END_IF;
+  goodExecuteCache[0] := vari.goodExecute;
+  vari.goodExecute := FALSE;
+  
+
+
+//---------------------------Bad Statistic-----------------------------//
+  
+  IF badTypeNum > 0 THEN
+    
+    //---------------------------Count-----------------------------//
+      
+      FOR index := 1 TO badTypeNum DO
+        
+        //获取当前不良品编号
+        No := badList[index];
+        
+        //不良报警复位并清除队列或计数
+        IF NOT resetCache AND machine.reset THEN
+          IF badVar[No].cumulativeAlarm THEN
+            badVar[No].cumulativeAlarm := FALSE;
+            badVar[No].num := 0;
+            badVar[No].lastIndex := 1;
+            FOR index1 := 1 TO badData[No].cumulative DO
+              //badVar[No].badNumList[index1] := 0;
+            numListPOINT := ADR(badVar[No].badNumList[0])+index1*SIZEOF(DINT);
+            numListPOINT^ := 0;
+            END_FOR;
+          END_IF;
+          IF badVar[No].continuousAlarm THEN
+            badVar[No].continuousAlarm := FALSE;
+            badVar[No].continuous := 0;
+          END_IF;
+        END_IF;
+        
+        //清空连续不良计数和不良计次列表
+        IF badVar[No].empty THEN
+          badVar[No].empty := FALSE;
+          badData[No].quantity := 0;
+          badVar[No].badRatio := 0.0;
+          badVar[No].continuous := 0;
+          badVar[No].num := 0;
+          badVar[No].lastIndex := 1;
+          FOR index1 := 0 TO MAX_CUMULATIVE DO
+            //badVar[No].badNumList[index1] := 0;
+            numListPOINT := ADR(badVar[No].badNumList[0])+index1*SIZEOF(DINT);
+            numListPOINT^ := 0;
+          END_FOR;
+        END_IF;
+        
+        //分类不良触发计数
+        IF NOT badExecuteCache[No] AND badVar[No].badExecute THEN//不良品计数
+          badData[No].quantity := badData[No].quantity + badVar[No].badIncrements;
+          data.cumulativeValue := data.cumulativeValue + badVar[No].badIncrements;
+          //累计不良计数
+          IF badData[No].cumulative > 0
+            AND badData[No].cumulative <= badData[No].cumulativeRange
+          THEN
+            //不良增量数是多少就循环多少次
+            FOR index1 := 1 TO MAX( badVar[No].badIncrements, 1) DO
+              badVar[No].num := badVar[No].num + 1;
+              //badVar[No].badNumList[badVar[No].lastIndex] := badVar[No].num;
+              numListPOINT := ADR(badVar[No].badNumList[0])+badVar[No].lastIndex*SIZEOF(DINT);
+              numListPOINT^ := badVar[No].num;
+              //数组索引达到最大值后从1开始
+              IF badVar[No].lastIndex < badData[No].cumulative THEN
+                badVar[No].lastIndex := badVar[No].lastIndex + 1;
+              ELSE
+                badVar[No].lastIndex := 1;
+              END_IF;
+            END_FOR;
+            //获取不良计数最大和最小值
+            maxValue := 0;
+            minValue := 2147483647;
+            FOR index1 := 1 TO badData[No].cumulative DO
+              numListPOINT := ADR(badVar[No].badNumList[0])+index1*SIZEOF(DINT);
+              IF numListPOINT^ > maxValue THEN
+                maxValue := numListPOINT^;
+              END_IF;
+              IF numListPOINT^ < minValue THEN
+                minValue := numListPOINT^;
+              END_IF;        
+              (*IF badVar[No].badNumList[index1] > maxValue THEN
+                maxValue := badVar[No].badNumList[index1];
+              END_IF;
+              IF badVar[No].badNumList[index1] < minValue THEN
+                minValue := badVar[No].badNumList[index1];
+              END_IF;*)
+            END_FOR;
+            badVar[No].cumulativeAlarm := minValue > 0 AND maxValue - minValue < badData[No].cumulativeRange;
+          ELSIF badVar[No].num <> 0 THEN
+            //累计不良计数设置为0，清空累计不良计数
+            badVar[No].num := 0;
+            badVar[No].lastIndex := 1;
+            FOR index1 := 0 TO MAX_CUMULATIVE DO
+              badVar[No].badNumList[index1] := 0;
+            END_FOR;
+          END_IF;
+          
+          //连续不良计数
+          IF badData[No].continuous > 0 THEN
+            badVar[No].continuous := badVar[No].continuous + badVar[No].badIncrements;
+            badVar[No].continuousAlarm := badVar[No].continuous >= badData[No].continuous;
+          END_IF;
+          
+        ELSIF NOT goodExecuteCache[No] AND badVar[No].goodExecute THEN//良品信号
+          badVar[No].continuous := 0;
+          badVar[No].num := badVar[No].num + badVar[No].goodIncrements;
+        END_IF;
+        
+        //复位计数触发
+        goodExecuteCache[No] := badVar[No].goodExecute;
+        badExecuteCache[No] := badVar[No].badExecute;
+        badVar[No].goodExecute := FALSE;
+        badVar[No].badExecute := FALSE;
+        
+      END_FOR;
+      
+    //---------------------------Bad-------------------//
+              //总不良数
+        totalBad := 0;
+        badMax := 0;
+        FOR index := 1 TO badTypeNum DO
+          No := badList[index];
+          totalBad :=  totalBad + badData[No].quantity;//总不良 = 分类不量[1] + 分类不量[2] + 分类不量[3] + ..........
+          IF badData[No].quantity > badMax THEN
+            badMax := badData[No].quantity;//分类不良中最大数
+          END_IF;
+        END_FOR;
+        data.badValue := totalBad;
+		vari.badMax 	:= totalBad;
+        //总产量 = 良品产量 + 不良品产量
+        data.totalValue := data.goodValue + data.badValue;
+        //总良率&不良率
+        IF data.totalValue > 0 THEN
+          data.yieldRatio := DINT_TO_REAL(data.goodValue * 100) / DINT_TO_REAL(data.totalValue);
+          data.badRatio := 100.0 - data.yieldRatio;
+        ELSE
+          data.yieldRatio := 0.0;
+          data.badRatio := 0.0;
+        END_IF;
+        // 当前不良分类数量多少
+        FOR index := 1 TO badTypeNum DO
+          No := badList[index];
+          //分类不良率方式
+          IF badData[No].quantity > 0 THEN
+            IF vari.percentMode = 0 AND data.totalValue > 0 THEN
+              // n/总产量的分类不良率
+              badVar[No].badRatio := DINT_TO_REAL(badData[No].quantity * 100) / DINT_TO_REAL(data.totalValue);
+            ELSIF vari.percentMode = 1 AND data.badValue > 0 THEN
+              // n/不良总数的分类不良率
+              badVar[No].badRatio := DINT_TO_REAL(badData[No].quantity * 100) / DINT_TO_REAL(data.badValue);
+            ELSE
+              badVar[No].badRatio := 0.0;
+            END_IF;
+          ELSE
+            badVar[No].badRatio := 0.0;
+          END_IF;
+        END_FOR; 
+    
+    //---------------------------Alarm-----------------------//      
+
+        //获取报警状态并置位对应机器报警或工站报警，同时把报警编号存入缓存列表中
+        FOR index := 1 TO badTypeNum DO
+          No := badList[index];
+          IF badVar[No].cumulativeAlarm OR badVar[No].continuousAlarm THEN
+            IF badVar[No].stationNo > 0 THEN
+              stations[badVar[No].stationNo].report.alarming := TRUE;  //置位工站报警
+            ELSE
+              machine.report.alarming := TRUE;  //置位机器报警
+            END_IF;
+          END_IF;          
+        END_FOR;
+    
+  END_IF;
+  
+
+
+
+//---------------------------Cache 
+  resetCache := machine.reset;
+]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_Produce">
+      <LineId Id="9" Count="0" />
+      <LineId Id="15" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Produce.SetUp">
+      <LineId Id="587" Count="30" />
+      <LineId Id="860" Count="0" />
+      <LineId Id="618" Count="81" />
+      <LineId Id="858" Count="1" />
+      <LineId Id="700" Count="17" />
+      <LineId Id="843" Count="1" />
+      <LineId Id="718" Count="14" />
+      <LineId Id="845" Count="1" />
+      <LineId Id="733" Count="10" />
+      <LineId Id="847" Count="0" />
+      <LineId Id="854" Count="1" />
+      <LineId Id="848" Count="0" />
+      <LineId Id="856" Count="1" />
+      <LineId Id="849" Count="0" />
+      <LineId Id="744" Count="98" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

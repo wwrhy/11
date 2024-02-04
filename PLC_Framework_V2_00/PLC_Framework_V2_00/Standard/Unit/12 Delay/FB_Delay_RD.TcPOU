@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Delay_RD" Id="{e3f3a63c-e401-4aba-a419-99dec9547976}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Delay_RD
+VAR_IN_OUT
+machine : UDT_Machine_RD; //
+station : UDT_Station_RD; //
+vari : UDT_DelayVar_RD; //
+data : UDT_DelayData_RD; //
+END_VAR
+VAR_OUTPUT
+END_VAR
+
+VAR
+timer1    : TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[timer1(IN := vari.input AND vari.actTime <= data.setTime,
+	         PT := data.setTime,
+	         ET => vari.actTime,
+	         Q => vari.isOn);
+IF vari.isOn OR vari.actTime > data.setTime THEN
+  vari.input := FALSE;
+END_IF;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Delay_RD">
+      <LineId Id="18" Count="5" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

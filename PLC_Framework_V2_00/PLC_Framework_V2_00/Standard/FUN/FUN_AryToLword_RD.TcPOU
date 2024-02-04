@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FUN_AryToLword_RD" Id="{144348d5-a930-4fee-8530-aaa94a15e854}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION FUN_AryToLword_RD : LWORD
+VAR_IN_OUT
+ IN : ARRAY[*] OF BOOL;
+END_VAR
+VAR
+    index : INT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FUN_AryToLword_RD.0 := IN[0];
+FUN_AryToLword_RD.1 := IN[1];
+FUN_AryToLword_RD.2 := IN[2];
+FUN_AryToLword_RD.3 := IN[3];
+FUN_AryToLword_RD.4 := IN[4];
+FUN_AryToLword_RD.5 := IN[5];
+FUN_AryToLword_RD.6 := IN[6];
+FUN_AryToLword_RD.7 := IN[7];
+FUN_AryToLword_RD.8 := IN[8];
+FUN_AryToLword_RD.9 := IN[9];
+FUN_AryToLword_RD.10 := IN[10];
+FUN_AryToLword_RD.11 := IN[11];
+FUN_AryToLword_RD.12 := IN[12];
+FUN_AryToLword_RD.13 := IN[13];
+FUN_AryToLword_RD.14 := IN[14];
+FUN_AryToLword_RD.15 := IN[15];
+FUN_AryToLword_RD.16 := IN[16];
+FUN_AryToLword_RD.17 := IN[17];
+FUN_AryToLword_RD.18 := IN[18];
+FUN_AryToLword_RD.19 := IN[19];
+FUN_AryToLword_RD.20 := IN[20];
+FUN_AryToLword_RD.21 := IN[21];
+FUN_AryToLword_RD.22 := IN[22];
+FUN_AryToLword_RD.23 := IN[23];
+FUN_AryToLword_RD.24 := IN[24];
+FUN_AryToLword_RD.25 := IN[25];
+FUN_AryToLword_RD.26 := IN[26];
+FUN_AryToLword_RD.27 := IN[27];
+FUN_AryToLword_RD.28 := IN[28];
+FUN_AryToLword_RD.29 := IN[29];
+FUN_AryToLword_RD.30 := IN[30];
+FUN_AryToLword_RD.31 := IN[31];
+FUN_AryToLword_RD.32 := IN[32];
+FUN_AryToLword_RD.33 := IN[33];
+FUN_AryToLword_RD.34 := IN[34];
+FUN_AryToLword_RD.35 := IN[35];
+FUN_AryToLword_RD.36 := IN[36];
+FUN_AryToLword_RD.37 := IN[37];
+FUN_AryToLword_RD.38 := IN[38];
+FUN_AryToLword_RD.39 := IN[39];
+FUN_AryToLword_RD.40 := IN[40];
+FUN_AryToLword_RD.41 := IN[41];
+FUN_AryToLword_RD.42 := IN[42];
+FUN_AryToLword_RD.43 := IN[43];
+FUN_AryToLword_RD.44 := IN[44];
+FUN_AryToLword_RD.45 := IN[45];
+FUN_AryToLword_RD.46 := IN[46];
+FUN_AryToLword_RD.47 := IN[47];
+FUN_AryToLword_RD.48 := IN[48];
+FUN_AryToLword_RD.49 := IN[49];
+FUN_AryToLword_RD.50 := IN[50];
+FUN_AryToLword_RD.51 := IN[51];
+FUN_AryToLword_RD.52 := IN[52];
+FUN_AryToLword_RD.53 := IN[53];
+FUN_AryToLword_RD.54 := IN[54];
+FUN_AryToLword_RD.55 := IN[55];
+FUN_AryToLword_RD.56 := IN[56];
+FUN_AryToLword_RD.57 := IN[57];
+FUN_AryToLword_RD.58 := IN[58];
+FUN_AryToLword_RD.59 := IN[59];
+FUN_AryToLword_RD.60 := IN[60];
+FUN_AryToLword_RD.61 := IN[61];
+FUN_AryToLword_RD.62 := IN[62];
+FUN_AryToLword_RD.63 := IN[63];
+]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_AryToLword_RD">
+      <LineId Id="111" Count="63" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

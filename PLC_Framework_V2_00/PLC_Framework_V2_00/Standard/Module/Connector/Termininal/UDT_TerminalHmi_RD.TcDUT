@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_TerminalHmi_RD" Id="{d9b24aff-eeaa-4a73-930a-efd89215e0e0}">
+    <Declaration><![CDATA[TYPE UDT_TerminalHmi_RD :
+STRUCT
+terminalSensor    : UDT_SensorHmi_RD; //端子有无感应
+coverSensor       : UDT_SensorHmi_RD; //盖板感应
+pinSensor         : UDT_SensorHmi_RD; //对Pin感应
+hmi               : BOOL; //对端子Hmi
+manual            : BOOL; //对端子手动执行
+forbidIcon        : BOOL; //禁止图标
+display           : BOOL; //显示
+ready             : BOOL; //对端子准备就绪
+busy              : BOOL; //对端子中
+done              : BOOL; //对端子完成
+subDisplay        : BOOL; //子画面显示
+number            : INT; //编号
+flowStep          : INT; //流程步
+status            : INT; //状态
+timeout           : DINT; //对端子超时
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

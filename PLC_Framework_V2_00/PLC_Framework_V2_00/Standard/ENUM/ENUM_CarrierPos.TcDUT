@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ENUM_CarrierPos" Id="{a55ef211-4820-49b5-99d1-239944ccc67c}">
+    <Declaration><![CDATA[TYPE ENUM_CarrierPos :
+(
+	Left 	:= 1,
+	Right 	:= 2
+)UINT;
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

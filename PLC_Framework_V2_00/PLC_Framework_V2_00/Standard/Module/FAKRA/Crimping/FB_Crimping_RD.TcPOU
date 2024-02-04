@@ -1,0 +1,1982 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Crimping_RD" Id="{b2ee36b3-ac91-4ba1-be5f-1f50e2ba7544}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Crimping_RD
+
+VAR_IN_OUT
+  Crimping : UDT_Crimping_RD;
+  CrimpingData : UDT_Data_Crimping_RD;
+END_VAR
+
+VAR_INPUT
+	//Crimping 模组接口
+  HomeSensor_gripCyl : BOOL;
+  WorkSensor_gripCyl : BOOL;
+  HomeValve_gripCyl : BOOL;
+  WorkValve_gripCyl : BOOL;
+  HomeLabel_gripCyl : STRING[10];
+  WorkLabel_gripCyl : STRING[10];
+   
+  HomeSensor_jack1Cyl : BOOL;
+  WorkSensor_jack1Cyl : BOOL;
+  HomeValve_jack1Cyl : BOOL;
+  WorkValve_jack1Cyl : BOOL;
+  HomeLabel_jack1Cyl : STRING[10];
+  WorkLabel_jack1Cyl : STRING[10];
+  
+  HomeSensor_jack2Cyl : BOOL;
+  WorkSensor_jack2Cyl : BOOL;
+  HomeValve_jack2Cyl : BOOL;
+  WorkValve_jack2Cyl : BOOL;
+  HomeLabel_jack2Cyl : STRING[10];
+  WorkLabel_jack2Cyl : STRING[10];
+  
+  HomeSensor_cutCyl : BOOL;
+  WorkSensor_cutCyl : BOOL;
+  HomeValve_cutCyl : BOOL;
+  WorkValve_cutCyl : BOOL;
+  HomeLabel_cutCyl : STRING[10];
+  WorkLabel_cutCyl : STRING[10];
+    
+  HomeSensor_feedCyl : BOOL;
+  WorkSensor_feedCyl : BOOL;
+  HomeValve_feedCyl : BOOL;
+  WorkValve_feedCyl : BOOL;
+  HomeLabel_feedCyl : STRING[10];
+  WorkLabel_feedCyl : STRING[10];
+  
+  HomeSensor_changeCyl : BOOL;
+  WorkSensor_changeCyl : BOOL;
+  HomeValve_changeCyl : BOOL;
+  WorkValve_changeCyl : BOOL;
+  HomeLabel_changeCyl : STRING[10];
+  WorkLabel_changeCyl : STRING[10];
+  
+  HomeSensor_carrierHold1Cyl : BOOL;
+  WorkSensor_carrierHold1Cyl : BOOL;
+  HomeValve_carrierHold1Cyl : BOOL;
+  WorkValve_carrierHold1Cyl : BOOL;
+  HomeLabel_carrierHold1Cyl : STRING[10];
+  WorkLabel_carrierHold1Cyl : STRING[10];
+  
+  HomeSensor_carrierHold2Cyl : BOOL;
+  WorkSensor_carrierHold2Cyl : BOOL;
+  HomeValve_carrierHold2Cyl : BOOL;
+  WorkValve_carrierHold2Cyl : BOOL;
+  HomeLabel_carrierHold2Cyl : STRING[10];
+  WorkLabel_carrierHold2Cyl : STRING[10];
+  
+  HomeSensor_jack3Cyl : BOOL;
+  WorkSensor_jack3Cyl : BOOL;
+  HomeValve_jack3Cyl : BOOL;
+  WorkValve_jack3Cyl : BOOL;
+  HomeLabel_jack3Cyl : STRING[10];
+  WorkLabel_jack3Cyl : STRING[10];
+  
+  HomeValve_blow : BOOL;
+  WorkValve_blow : BOOL;
+  
+  cableCheckSensor            : BOOL;
+  terminalCheckSensor         : BOOL;
+  terminalReiveCheckSensor    : BOOL;
+  crimpHomeCheckSensor        : BOOL;
+  oesReady                    : BOOL;
+  oesOK                       : BOOL;
+  
+  //GS 传送线接口
+  HomeSensor_fixCyl : BOOL;
+  WorkSensor_fixCyl : BOOL;
+  HomeValve_fixCyl : BOOL;
+  WorkValve_fixCyl : BOOL;
+  HomeLabel_fixCyl : STRING[10];
+  WorkLabel_fixCyl : STRING[10];
+  
+  HomeSensor_stepFixCyl : BOOL;
+  WorkSensor_stepFixCyl : BOOL;
+  HomeValve_stepFixCyl : BOOL;
+  WorkValve_stepFixCyl : BOOL;
+  HomeLabel_stepFixCyl : STRING[10];
+  WorkLabel_stepFixCyl : STRING[10];
+END_VAR
+
+VAR  
+  machine      		: UDT_Machine_RD;
+  station      		: UDT_Station_RD;
+  
+  gripCyl	   		  :UDT_CylinderVar_RD;
+  jack1Cyl   		  :UDT_CylinderVar_RD;
+  jack2Cyl   		  :UDT_CylinderVar_RD;
+  cutCyl       		:UDT_CylinderVar_RD;
+  feedCyl      		:UDT_CylinderVar_RD;
+  changeCyl    		:UDT_CylinderVar_RD;
+  fixCyl       		:UDT_CylinderVar_RD;
+  stepFixCyl    	:UDT_CylinderVar_RD;
+  carrierHold1Cyl :UDT_CylinderVar_RD;
+  carrierHold2Cyl :UDT_CylinderVar_RD;
+  jack3Cyl   		  :UDT_CylinderVar_RD; 
+  blow            :UDT_CylinderVar_RD;
+  
+  transferAxis 		: UDT_AxisVar_RD; 
+  crimpAxis 	   	: UDT_AxisVar_RD;  
+  
+  rackFeeder	  	:UDT_RackFeederVar_RD;
+  
+  bad               : ARRAY[0..ENUM_NgReason.LastReason] OF UDT_BadVar_RD;
+  produce           : UDT_ProduceVar_RD;
+  wearPart1         : UDT_WearPartVar_RD;
+  wearPart2         : UDT_WearPartVar_RD;
+  
+ 
+  fB_Crimping			: FB_Station_RD;
+  fB_gripCyl			: FB_Cylinder_RD;
+  fB_jack1Cyl			: FB_Cylinder_RD;
+  fB_jack2Cyl			: FB_Cylinder_RD;
+  fB_cutCyl				: FB_Cylinder_RD;
+  fB_feedCyl        	: FB_Cylinder_RD;
+  fB_changeCyl      	: FB_Cylinder_RD;
+  fB_fixCyl         	: FB_Cylinder_RD;  
+  fB_stepFixCyl     	: FB_Cylinder_RD; 
+  fB_carrierHold1Cyl  : FB_Cylinder_RD;  
+  fB_carrierHold2Cyl  : FB_Cylinder_RD; 
+  fB_jack3Cyl  		: FB_Cylinder_RD;  
+  fB_blow               : FB_Cylinder_RD;
+  
+  fb_transferAxis		: FB_Axis_RD;
+  fb_crimpAxis			: FB_Axis_RD;
+  
+  fb_rackFeeder         : FB_RackFeeder_RD;
+  
+  fb_produce            : FB_Produce_RD;
+  
+  toWaitTerminalStop        : TON;
+  nIndex                    : UINT;
+  
+  cableMissing				: BOOL;
+  crimpAxisNotHome			: BOOL;
+  oesNotReady				: BOOL;
+  oesOkSignalAlwaysOn		: BOOL;
+  terminalInPos				: BOOL;
+  
+  activated                 : BOOL;
+  oesOkCache                : BOOL;
+  R_oesOK                   : R_TRIG;
+  tonOn : TON;
+  tonOff :TON;
+  onePlus : BOOL;
+  mcWriteParameterPersistent	: MC_WriteParameterPersistent;	//修改NC参数功能块
+  
+  crimpingFlag              : BOOL;//压接中标记
+  
+  RunningExcept             : BOOL;//运行中除外
+END_VAR
+
+VAR CONSTANT
+  INIT :INT := 0;
+  AUTO :INT := 1;
+  AUTO2 :INT :=2;
+  
+  //TransferAxis
+  HOME_TRANS        : UINT:=1;
+  CRIMP_TRANS		: UINT:=2;
+  
+    //CrimpAxis
+  HOME_CRIMP       : UINT:=1;
+  CRIMP_CRIMP       : UINT:=2;
+
+END_VAR
+
+VAR PERSISTENT
+	terminalShiftArr			: ARRAY[1..50] OF BOOL;
+	terminalShift				: BOOL;
+	{attribute 'OPC.UA.DA' := '1'}
+	TERMINAL_POS				: UINT:=27;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SetUp();
+Command();
+General();
+Permit();
+StepInit();
+StepAuto();
+StepAutoFeed();
+Alarm();
+AutoTip();
+ManualTip();
+Tip();
+Hmi();
+]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{1046c3b0-7d49-4bdd-93d5-291fa3378a85}">
+      <Implementation>
+        <ST><![CDATA[Crimping.Message.userAlarms[0] := gripCyl.homeSensorOffAlarm[0];
+Crimping.Message.userAlarms[1] := gripCyl.homeSensorOnAlarm[0];
+Crimping.Message.userAlarms[2] := gripCyl.workSensorOffAlarm[0];
+Crimping.Message.userAlarms[3] := gripCyl.workSensorOnAlarm[0];
+
+Crimping.Message.userAlarms[4] := jack1Cyl.homeSensorOffAlarm[0];
+Crimping.Message.userAlarms[5] := jack1Cyl.homeSensorOnAlarm[0];
+Crimping.Message.userAlarms[6] := jack1Cyl.workSensorOffAlarm[0];
+Crimping.Message.userAlarms[7] := jack1Cyl.workSensorOnAlarm[0];
+
+Crimping.Message.userAlarms[8] := jack2Cyl.homeSensorOffAlarm[0];
+Crimping.Message.userAlarms[9] := jack2Cyl.homeSensorOnAlarm[0];
+Crimping.Message.userAlarms[10] := jack2Cyl.workSensorOffAlarm[0];
+Crimping.Message.userAlarms[11] := jack2Cyl.workSensorOnAlarm[0];
+
+Crimping.Message.userAlarms[12] := cutCyl.homeSensorOffAlarm[0];
+Crimping.Message.userAlarms[13] := cutCyl.homeSensorOnAlarm[0];
+Crimping.Message.userAlarms[14] := cutCyl.workSensorOffAlarm[0];
+Crimping.Message.userAlarms[15] := cutCyl.workSensorOnAlarm[0];
+
+Crimping.Message.userAlarms[16] := feedCyl.homeSensorOffAlarm[0];
+Crimping.Message.userAlarms[17] := feedCyl.homeSensorOnAlarm[0];
+Crimping.Message.userAlarms[18] := feedCyl.workSensorOffAlarm[0];
+Crimping.Message.userAlarms[19] := feedCyl.workSensorOnAlarm[0];
+
+Crimping.Message.userAlarms[20] := changeCyl.homeSensorOffAlarm[0];
+Crimping.Message.userAlarms[21] := changeCyl.homeSensorOnAlarm[0];
+Crimping.Message.userAlarms[22] := changeCyl.workSensorOffAlarm[0];
+Crimping.Message.userAlarms[23] := changeCyl.workSensorOnAlarm[0];
+
+Crimping.Message.userAlarms[24] := fixCyl.homeSensorOffAlarm[0];
+Crimping.Message.userAlarms[25] := fixCyl.homeSensorOnAlarm[0];
+Crimping.Message.userAlarms[26] := fixCyl.workSensorOffAlarm[0];
+Crimping.Message.userAlarms[27] := fixCyl.workSensorOnAlarm[0];
+
+Crimping.Message.userAlarms[28] := stepFixCyl.homeSensorOffAlarm[0];
+Crimping.Message.userAlarms[29] := stepFixCyl.homeSensorOnAlarm[0];
+Crimping.Message.userAlarms[30] := stepFixCyl.workSensorOffAlarm[0];
+Crimping.Message.userAlarms[31] := stepFixCyl.workSensorOnAlarm[0];
+
+Crimping.Message.userAlarms[32] := carrierHold1Cyl.homeSensorOffAlarm[0];
+Crimping.Message.userAlarms[33] := carrierHold1Cyl.homeSensorOnAlarm[0];
+Crimping.Message.userAlarms[34] := carrierHold1Cyl.workSensorOffAlarm[0];
+Crimping.Message.userAlarms[35] := carrierHold1Cyl.workSensorOnAlarm[0];
+
+Crimping.Message.userAlarms[36] := carrierHold2Cyl.homeSensorOffAlarm[0];
+Crimping.Message.userAlarms[37] := carrierHold2Cyl.homeSensorOnAlarm[0];
+Crimping.Message.userAlarms[38] := carrierHold2Cyl.workSensorOffAlarm[0];
+Crimping.Message.userAlarms[39] := carrierHold2Cyl.workSensorOnAlarm[0];
+
+Crimping.Message.userAlarms[40] := jack3Cyl.homeSensorOffAlarm[0];
+Crimping.Message.userAlarms[41] := jack3Cyl.homeSensorOnAlarm[0];
+Crimping.Message.userAlarms[42] := jack3Cyl.workSensorOffAlarm[0];
+Crimping.Message.userAlarms[43] := jack3Cyl.workSensorOnAlarm[0];
+
+Crimping.Message.userAlarms[44] := transferAxis.alarming;
+Crimping.Message.userAlarms[45] := crimpAxis.alarming;
+
+Crimping.Message.userAlarms[46] := rackFeeder.timeoutAlarm;
+Crimping.Message.userAlarms[47] := rackFeeder.scatterAlarm;
+Crimping.Message.userAlarms[48] := rackFeeder.breakAlarm;
+Crimping.Message.userAlarms[49] := cableMissing;
+Crimping.Message.userAlarms[50] := crimpAxisNotHome;
+Crimping.Message.userAlarms[51] := oesNotReady;
+Crimping.Message.userAlarms[52] := oesOkSignalAlwaysOn;
+
+
+Crimping.Message.presetAlarms[0] :=station.presetAlarms[0];//工站初始化超时报警
+
+
+IF machine.reset
+THEN
+	cableMissing		    :=FALSE;
+	crimpAxisNotHome		:=FALSE;
+	oesNotReady				:=FALSE;
+	oesOkSignalAlwaysOn		:=FALSE;	
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="AutoTip" Id="{b17828d4-76e5-4fe5-8c53-0f8204d8363a}">
+      <Implementation>
+        <ST><![CDATA[Crimping.Message.userAutoTips[0] := gripCyl.autoTip ;
+Crimping.Message.userAutoTips[1] := jack1Cyl.autoTip ;
+Crimping.Message.userAutoTips[2] := jack2Cyl.autoTip ;
+Crimping.Message.userAutoTips[3] := cutCyl.autoTip ;
+Crimping.Message.userAutoTips[4] := feedCyl.autoTip ;
+Crimping.Message.userAutoTips[5] := changeCyl.autoTip ;
+Crimping.Message.userAutoTips[6] := fixCyl.autoTip ;
+Crimping.Message.userAutoTips[7] := stepFixCyl.autoTip ;
+Crimping.Message.userAutoTips[8] := carrierHold1Cyl.autoTip ;
+Crimping.Message.userAutoTips[9] := carrierHold2Cyl.autoTip ;
+Crimping.Message.userAutoTips[10] := jack3Cyl.autoTip ;
+Crimping.Message.userAutoTips[11] := transferAxis.notPowerOnAutoTip;
+Crimping.Message.userAutoTips[12] := transferAxis.notHomeAutoTip;
+Crimping.Message.userAutoTips[13] := transferAxis.notInPosAutoTip =HOME_TRANS;
+Crimping.Message.userAutoTips[14] := transferAxis.notInPosAutoTip =CRIMP_TRANS;
+
+Crimping.Message.userAutoTips[15] := crimpAxis.notPowerOnAutoTip;
+Crimping.Message.userAutoTips[16] := crimpAxis.notHomeAutoTip;     // to check
+Crimping.Message.userAutoTips[17] := crimpAxis.notInPosAutoTip = HOME_CRIMP; 
+
+
+Crimping.Message.presetAutoTips[0] :=   station.presetAutoTips[0]; //工站未初始化
+Crimping.Message.presetAutoTips[1] :=   station.presetAutoTips[1];   //工站单循环中
+Crimping.Message.presetAutoTips[2] :=   station.presetAutoTips[2];   //工站运行条件不足
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Command" Id="{79dd86a2-2947-4d49-9f25-e58780118abe}">
+      <Implementation>
+        <ST><![CDATA[IF activated THEN 
+  Crimping.UnitState :=ENUM_UnitState.OPERATIONAL;
+  ELSE
+  Crimping.UnitState :=ENUM_UnitState.DISABLED;  
+END_IF
+
+
+IF  station.initDone AND  station.flow[0].actStep = 0  
+  	AND gripCyl.inHome AND jack1Cyl.inHome AND jack2Cyl.inHome AND cutCyl.inHome AND feedCyl.inHome 
+  	AND changeCyl.inHome AND fixCyl.inHome AND stepFixCyl.inHome AND carrierHold1Cyl.inHome AND carrierHold2Cyl.inHome
+  	AND jack3Cyl.inHome AND blow.inHome
+  	AND transferAxis.inPos[HOME_TRANS] AND crimpAxis.inPos[HOME_CRIMP]
+ THEN
+  Crimping.Imm.allObjectInitPos :=TRUE;
+  ELSE
+   Crimping.Imm.allObjectInitPos :=FALSE; 
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{c87816a5-8023-49a8-9a2a-3dc2c9f8b57c}">
+      <Implementation>
+        <ST><![CDATA[IF machine.reset THEN 
+  machine.tipReset := TRUE ;
+  MEMSET(destAddr:=ADR(machine.presetManualTips) , fillByte:= 0, n:=SIZEOF(machine.presetManualTips));
+ ELSE
+  machine.tipReset := FALSE ;
+END_IF
+
+IF NOT station.running
+THEN
+	blow.auto:=FALSE;
+END_IF
+
+//Interrupted
+IF station.running AND machine.eStop
+THEN
+	bad[ENUM_NgReason.CrimpInterrupted].badExecute:=TRUE;
+	bad[ENUM_NgReason.CrimpInterrupted].badIncrements:=1;
+	bad[ENUM_NgReason.CrimpInterrupted].stationNo:=station.stationNo;
+	bad[ENUM_NgReason.CrimpInterrupted].machineNo:=station.machineNo;
+END_IF
+
+
+//oes cache
+R_oesOK(CLK:=oesOK);
+IF R_oesOK.Q
+THEN
+	oesOkCache:=TRUE;
+END_IF
+
+//terminal shift
+toWaitTerminalStop(IN:=terminalShift,PT:=T#1S,Q=>,ET=>);
+IF toWaitTerminalStop.Q THEN
+	FOR nIndex:=50 TO 2 BY -1 DO
+		terminalShiftArr[nIndex]:=terminalShiftArr[nIndex-1];
+	END_FOR
+	IF terminalCheckSensor THEN
+		terminalShiftArr[1]:=TRUE;
+	END_IF
+	terminalShift:=FALSE;
+END_IF
+terminalInPos:=terminalShiftArr[TERMINAL_POS];
+
+RunningExcept:=FALSE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Hmi" Id="{a8ba8e7d-f0c4-4336-8ad4-24ee8a871a90}">
+      <Implementation>
+        <ST><![CDATA[gripCyl.homehmi:=Crimping.Hmi.gripCyl.homehmi;// 原点hmi
+Crimping.Hmi.gripCyl.homeForbidIcon:=gripCyl.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.gripCyl.homeValve:=gripCyl.homeValve;// 原点阀
+Crimping.Hmi.gripCyl.homeManual:=gripCyl.homeManual;// 原点Manual
+gripCyl.workhmi:=Crimping.Hmi.gripCyl.workhmi;// 动点hmi
+Crimping.Hmi.gripCyl.workForbidIcon:=gripCyl.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.gripCyl.workValve:=gripCyl.workValve;// 动点阀
+Crimping.Hmi.gripCyl.workManual:=gripCyl.workManual;// 动点Manual
+Crimping.Hmi.gripCyl.homeSensor[0]:=gripCyl.homeSensor[0];// 原点传感器
+Crimping.Hmi.gripCyl.workSensor[0]:=gripCyl.workSensor[0];// 动点传感器
+Crimping.Hmi.gripCyl.homeSensorLabel[0]:=gripCyl.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.gripCyl.workSensorLabel[0]:=gripCyl.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.gripCyl.toHomeActionTime:=gripCyl.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.gripCyl.toWorkActionTime:=gripCyl.toWorkActionTime;// 到动点所用时间
+
+
+jack1Cyl.homehmi:=Crimping.Hmi.jack1Cyl.homehmi;// 原点hmi
+Crimping.Hmi.jack1Cyl.homeForbidIcon:=jack1Cyl.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.jack1Cyl.homeValve:=jack1Cyl.homeValve;// 原点阀
+Crimping.Hmi.jack1Cyl.homeManual:=jack1Cyl.homeManual;// 原点Manual
+jack1Cyl.workhmi:=Crimping.Hmi.jack1Cyl.workhmi;// 动点hmi
+Crimping.Hmi.jack1Cyl.workForbidIcon:=jack1Cyl.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.jack1Cyl.workValve:=jack1Cyl.workValve;// 动点阀
+Crimping.Hmi.jack1Cyl.workManual:=jack1Cyl.workManual;// 动点Manual
+Crimping.Hmi.jack1Cyl.homeSensor[0]:=jack1Cyl.homeSensor[0];// 原点传感器
+Crimping.Hmi.jack1Cyl.workSensor[0]:=jack1Cyl.workSensor[0];// 动点传感器
+Crimping.Hmi.jack1Cyl.homeSensorLabel[0]:=jack1Cyl.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.jack1Cyl.workSensorLabel[0]:=jack1Cyl.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.jack1Cyl.toHomeActionTime:=jack1Cyl.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.jack1Cyl.toWorkActionTime:=jack1Cyl.toWorkActionTime;// 到动点所用时间
+
+
+jack2Cyl.homehmi:=Crimping.Hmi.jack2Cyl.homehmi;// 原点hmi
+Crimping.Hmi.jack2Cyl.homeForbidIcon:=jack2Cyl.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.jack2Cyl.homeValve:=jack2Cyl.homeValve;// 原点阀
+Crimping.Hmi.jack2Cyl.homeManual:=jack2Cyl.homeManual;// 原点Manual
+jack2Cyl.workhmi:=Crimping.Hmi.jack2Cyl.workhmi;// 动点hmi
+Crimping.Hmi.jack2Cyl.workForbidIcon:=jack2Cyl.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.jack2Cyl.workValve:=jack2Cyl.workValve;// 动点阀
+Crimping.Hmi.jack2Cyl.workManual:=jack2Cyl.workManual;// 动点Manual
+Crimping.Hmi.jack2Cyl.homeSensor[0]:=jack2Cyl.homeSensor[0];// 原点传感器
+Crimping.Hmi.jack2Cyl.workSensor[0]:=jack2Cyl.workSensor[0];// 动点传感器
+Crimping.Hmi.jack2Cyl.homeSensorLabel[0]:=jack2Cyl.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.jack2Cyl.workSensorLabel[0]:=jack2Cyl.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.jack2Cyl.toHomeActionTime:=jack2Cyl.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.jack2Cyl.toWorkActionTime:=jack2Cyl.toWorkActionTime;// 到动点所用时间
+
+
+cutCyl.homehmi:=Crimping.Hmi.cutCyl.homehmi;// 原点hmi
+Crimping.Hmi.cutCyl.homeForbidIcon:=cutCyl.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.cutCyl.homeValve:=cutCyl.homeValve;// 原点阀
+Crimping.Hmi.cutCyl.homeManual:=cutCyl.homeManual;// 原点Manual
+cutCyl.workhmi:=Crimping.Hmi.cutCyl.workhmi;// 动点hmi
+Crimping.Hmi.cutCyl.workForbidIcon:=cutCyl.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.cutCyl.workValve:=cutCyl.workValve;// 动点阀
+Crimping.Hmi.cutCyl.workManual:=cutCyl.workManual;// 动点Manual
+Crimping.Hmi.cutCyl.homeSensor[0]:=cutCyl.homeSensor[0];// 原点传感器
+Crimping.Hmi.cutCyl.workSensor[0]:=cutCyl.workSensor[0];// 动点传感器
+Crimping.Hmi.cutCyl.homeSensorLabel[0]:=cutCyl.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.cutCyl.workSensorLabel[0]:=cutCyl.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.cutCyl.toHomeActionTime:=cutCyl.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.cutCyl.toWorkActionTime:=cutCyl.toWorkActionTime;// 到动点所用时间
+
+
+feedCyl.homehmi:=Crimping.Hmi.feedCyl.homehmi;// 原点hmi
+Crimping.Hmi.feedCyl.homeForbidIcon:=feedCyl.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.feedCyl.homeValve:=feedCyl.homeValve;// 原点阀
+Crimping.Hmi.feedCyl.homeManual:=feedCyl.homeManual;// 原点Manual
+feedCyl.workhmi:=Crimping.Hmi.feedCyl.workhmi;// 动点hmi
+Crimping.Hmi.feedCyl.workForbidIcon:=feedCyl.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.feedCyl.workValve:=feedCyl.workValve;// 动点阀
+Crimping.Hmi.feedCyl.workManual:=feedCyl.workManual;// 动点Manual
+Crimping.Hmi.feedCyl.homeSensor[0]:=feedCyl.homeSensor[0];// 原点传感器
+Crimping.Hmi.feedCyl.workSensor[0]:=feedCyl.workSensor[0];// 动点传感器
+Crimping.Hmi.feedCyl.homeSensorLabel[0]:=feedCyl.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.feedCyl.workSensorLabel[0]:=feedCyl.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.feedCyl.toHomeActionTime:=feedCyl.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.feedCyl.toWorkActionTime:=feedCyl.toWorkActionTime;// 到动点所用时间
+
+
+changeCyl.homehmi:=Crimping.Hmi.changeCyl.homehmi;// 原点hmi
+Crimping.Hmi.changeCyl.homeForbidIcon:=changeCyl.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.changeCyl.homeValve:=changeCyl.homeValve;// 原点阀
+Crimping.Hmi.changeCyl.homeManual:=changeCyl.homeManual;// 原点Manual
+changeCyl.workhmi:=Crimping.Hmi.changeCyl.workhmi;// 动点hmi
+Crimping.Hmi.changeCyl.workForbidIcon:=changeCyl.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.changeCyl.workValve:=changeCyl.workValve;// 动点阀
+Crimping.Hmi.changeCyl.workManual:=changeCyl.workManual;// 动点Manual
+Crimping.Hmi.changeCyl.homeSensor[0]:=changeCyl.homeSensor[0];// 原点传感器
+Crimping.Hmi.changeCyl.workSensor[0]:=changeCyl.workSensor[0];// 动点传感器
+Crimping.Hmi.changeCyl.homeSensorLabel[0]:=changeCyl.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.changeCyl.workSensorLabel[0]:=changeCyl.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.changeCyl.toHomeActionTime:=changeCyl.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.changeCyl.toWorkActionTime:=changeCyl.toWorkActionTime;// 到动点所用时间
+
+
+
+fixCyl.homehmi:=Crimping.Hmi.fixCyl.homehmi;// 原点hmi
+Crimping.Hmi.fixCyl.homeForbidIcon:=fixCyl.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.fixCyl.homeValve:=fixCyl.homeValve;// 原点阀
+Crimping.Hmi.fixCyl.homeManual:=fixCyl.homeManual;// 原点Manual
+fixCyl.workhmi:=Crimping.Hmi.fixCyl.workhmi;// 动点hmi
+Crimping.Hmi.fixCyl.workForbidIcon:=fixCyl.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.fixCyl.workValve:=fixCyl.workValve;// 动点阀
+Crimping.Hmi.fixCyl.workManual:=fixCyl.workManual;// 动点Manual
+Crimping.Hmi.fixCyl.homeSensor[0]:=fixCyl.homeSensor[0];// 原点传感器
+Crimping.Hmi.fixCyl.workSensor[0]:=fixCyl.workSensor[0];// 动点传感器
+Crimping.Hmi.fixCyl.homeSensorLabel[0]:=fixCyl.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.fixCyl.workSensorLabel[0]:=fixCyl.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.fixCyl.toHomeActionTime:=fixCyl.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.fixCyl.toWorkActionTime:=fixCyl.toWorkActionTime;// 到动点所用时间
+
+
+
+stepFixCyl.homehmi:=Crimping.Hmi.stepFixCyl.homehmi;// 原点hmi
+Crimping.Hmi.stepFixCyl.homeForbidIcon:=stepFixCyl.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.stepFixCyl.homeValve:=stepFixCyl.homeValve;// 原点阀
+Crimping.Hmi.stepFixCyl.homeManual:=stepFixCyl.homeManual;// 原点Manual
+stepFixCyl.workhmi:=Crimping.Hmi.stepFixCyl.workhmi;// 动点hmi
+Crimping.Hmi.stepFixCyl.workForbidIcon:=stepFixCyl.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.stepFixCyl.workValve:=stepFixCyl.workValve;// 动点阀
+Crimping.Hmi.stepFixCyl.workManual:=stepFixCyl.workManual;// 动点Manual
+Crimping.Hmi.stepFixCyl.homeSensor[0]:=stepFixCyl.homeSensor[0];// 原点传感器
+Crimping.Hmi.stepFixCyl.workSensor[0]:=stepFixCyl.workSensor[0];// 动点传感器
+Crimping.Hmi.stepFixCyl.homeSensorLabel[0]:=stepFixCyl.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.stepFixCyl.workSensorLabel[0]:=stepFixCyl.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.stepFixCyl.toHomeActionTime:=stepFixCyl.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.stepFixCyl.toWorkActionTime:=stepFixCyl.toWorkActionTime;// 到动点所用时间
+
+
+
+carrierHold1Cyl.homehmi:=Crimping.Hmi.carrierHold1Cyl.homehmi;// 原点hmi
+Crimping.Hmi.carrierHold1Cyl.homeForbidIcon:=carrierHold1Cyl.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.carrierHold1Cyl.homeValve:=carrierHold1Cyl.homeValve;// 原点阀
+Crimping.Hmi.carrierHold1Cyl.homeManual:=carrierHold1Cyl.homeManual;// 原点Manual
+carrierHold1Cyl.workhmi:=Crimping.Hmi.carrierHold1Cyl.workhmi;// 动点hmi
+Crimping.Hmi.carrierHold1Cyl.workForbidIcon:=carrierHold1Cyl.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.carrierHold1Cyl.workValve:=carrierHold1Cyl.workValve;// 动点阀
+Crimping.Hmi.carrierHold1Cyl.workManual:=carrierHold1Cyl.workManual;// 动点Manual
+Crimping.Hmi.carrierHold1Cyl.homeSensor[0]:=carrierHold1Cyl.homeSensor[0];// 原点传感器
+Crimping.Hmi.carrierHold1Cyl.workSensor[0]:=carrierHold1Cyl.workSensor[0];// 动点传感器
+Crimping.Hmi.carrierHold1Cyl.homeSensorLabel[0]:=carrierHold1Cyl.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.carrierHold1Cyl.workSensorLabel[0]:=carrierHold1Cyl.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.carrierHold1Cyl.toHomeActionTime:=carrierHold1Cyl.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.carrierHold1Cyl.toWorkActionTime:=carrierHold1Cyl.toWorkActionTime;// 到动点所用时间
+
+
+carrierHold2Cyl.homehmi:=Crimping.Hmi.carrierHold2Cyl.homehmi;// 原点hmi
+Crimping.Hmi.carrierHold2Cyl.homeForbidIcon:=carrierHold2Cyl.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.carrierHold2Cyl.homeValve:=carrierHold2Cyl.homeValve;// 原点阀
+Crimping.Hmi.carrierHold2Cyl.homeManual:=carrierHold2Cyl.homeManual;// 原点Manual
+carrierHold2Cyl.workhmi:=Crimping.Hmi.carrierHold2Cyl.workhmi;// 动点hmi
+Crimping.Hmi.carrierHold2Cyl.workForbidIcon:=carrierHold2Cyl.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.carrierHold2Cyl.workValve:=carrierHold2Cyl.workValve;// 动点阀
+Crimping.Hmi.carrierHold2Cyl.workManual:=carrierHold2Cyl.workManual;// 动点Manual
+Crimping.Hmi.carrierHold2Cyl.homeSensor[0]:=carrierHold2Cyl.homeSensor[0];// 原点传感器
+Crimping.Hmi.carrierHold2Cyl.workSensor[0]:=carrierHold2Cyl.workSensor[0];// 动点传感器
+Crimping.Hmi.carrierHold2Cyl.homeSensorLabel[0]:=carrierHold2Cyl.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.carrierHold2Cyl.workSensorLabel[0]:=carrierHold2Cyl.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.carrierHold2Cyl.toHomeActionTime:=carrierHold2Cyl.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.carrierHold2Cyl.toWorkActionTime:=carrierHold2Cyl.toWorkActionTime;// 到动点所用时间
+
+jack3Cyl.homehmi:=Crimping.Hmi.jack3Cyl.homehmi;// 原点hmi
+Crimping.Hmi.jack3Cyl.homeForbidIcon:=jack3Cyl.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.jack3Cyl.homeValve:=jack3Cyl.homeValve;// 原点阀
+Crimping.Hmi.jack3Cyl.homeManual:=jack3Cyl.homeManual;// 原点Manual
+jack3Cyl.workhmi:=Crimping.Hmi.jack3Cyl.workhmi;// 动点hmi
+Crimping.Hmi.jack3Cyl.workForbidIcon:=jack3Cyl.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.jack3Cyl.workValve:=jack3Cyl.workValve;// 动点阀
+Crimping.Hmi.jack3Cyl.workManual:=jack3Cyl.workManual;// 动点Manual
+Crimping.Hmi.jack3Cyl.homeSensor[0]:=jack3Cyl.homeSensor[0];// 原点传感器
+Crimping.Hmi.jack3Cyl.workSensor[0]:=jack3Cyl.workSensor[0];// 动点传感器
+Crimping.Hmi.jack3Cyl.homeSensorLabel[0]:=jack3Cyl.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.jack3Cyl.workSensorLabel[0]:=jack3Cyl.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.jack3Cyl.toHomeActionTime:=jack3Cyl.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.jack3Cyl.toWorkActionTime:=jack3Cyl.toWorkActionTime;// 到动点所用时间
+
+blow.homehmi:=Crimping.Hmi.blow.homehmi;// 原点hmi
+Crimping.Hmi.blow.homeForbidIcon:=blow.homeForbidIcon;// 原点禁止图标
+Crimping.Hmi.blow.homeValve:=blow.homeValve;// 原点阀
+Crimping.Hmi.blow.homeManual:=blow.homeManual;// 原点Manual
+blow.workhmi:=Crimping.Hmi.blow.workhmi;// 动点hmi
+Crimping.Hmi.blow.workForbidIcon:=blow.workForbidIcon;// 动点禁止图标
+Crimping.Hmi.blow.workValve:=blow.workValve;// 动点阀
+Crimping.Hmi.blow.workManual:=blow.workManual;// 动点Manual
+Crimping.Hmi.blow.homeSensor[0]:=blow.homeSensor[0];// 原点传感器
+Crimping.Hmi.blow.workSensor[0]:=blow.workSensor[0];// 动点传感器
+Crimping.Hmi.blow.homeSensorLabel[0]:=blow.homeSensorLabel[0];// 原点传感器标签
+Crimping.Hmi.blow.workSensorLabel[0]:=blow.workSensorLabel[0];// 动点传感器标签
+Crimping.Hmi.blow.toHomeActionTime:=blow.toHomeActionTime;// 到原点所用时间
+Crimping.Hmi.blow.toWorkActionTime:=blow.toWorkActionTime;// 到动点所用时间
+
+
+
+crimpAxis.powerhmi:=Crimping.Hmi.crimpAxis.powerhmi;// 伺服Onhmi
+Crimping.Hmi.crimpAxis.powerForbidIcon:=crimpAxis.powerForbidIcon;// 伺服On禁止图标
+Crimping.Hmi.crimpAxis.isPowerOn:=crimpAxis.isPowerOn;// 伺服On状态
+crimpAxis.halthmi:=Crimping.Hmi.crimpAxis.halthmi;// 伺服暂停hmi
+crimpAxis.resethmi:=Crimping.Hmi.crimpAxis.resethmi;// 伺服复位hmi
+crimpAxis.jogForwardhmi:=Crimping.Hmi.crimpAxis.jogForwardhmi;// 伺服JOG+_hmi
+Crimping.Hmi.crimpAxis.jogForwardForbidIcon:=crimpAxis.jogForwardForbidIcon;// 伺服JOG+禁止图标
+crimpAxis.jogBackwardshmi:=Crimping.Hmi.crimpAxis.jogBackwardshmi;// 伺服JOG-hmi
+Crimping.Hmi.crimpAxis.jogBackwardsForbidIcon:=crimpAxis.jogBackwardsForbidIcon;// 伺服JOG-禁止图标
+crimpAxis.homehmi:=Crimping.Hmi.crimpAxis.homehmi;// 伺服回原点hmi
+Crimping.Hmi.crimpAxis.homeForbidIcon:=crimpAxis.homeForbidIcon;// 伺服回原点禁止图标
+Crimping.Hmi.crimpAxis.homeDone:=crimpAxis.homeDone;// 伺服回原点完成
+crimpAxis.brakehmi:=Crimping.Hmi.crimpAxis.brakehmi;// 伺服刹车hmi
+Crimping.Hmi.crimpAxis.brakeForbidIcon:=crimpAxis.brakeForbidIcon;// 伺服刹车禁止图标
+Crimping.Hmi.crimpAxis.brake:=crimpAxis.brake;// 伺服刹车输出
+crimpAxis.movehmi:=Crimping.Hmi.crimpAxis.movehmi;// 定位启动hmi
+Crimping.Hmi.crimpAxis.moveForbidIcon:=crimpAxis.moveForbidIcon;// 定位启动禁止图标
+crimpAxis.posTeach:=Crimping.Hmi.crimpAxis.posTeach;// 当前位置示教
+crimpAxis.movehmiNo:=Crimping.Hmi.crimpAxis.movehmiNo;// 手动定位编号
+Crimping.Hmi.crimpAxis.inPosNo:=crimpAxis.inPosNo;// 伺服到位编号
+Crimping.Hmi.crimpAxis.status:=crimpAxis.status;// 伺服状态
+Crimping.Hmi.crimpAxis.ncErrID:=crimpAxis.ncErrID;// 伺服NC错误代码
+Crimping.Hmi.crimpAxis.driverErrID:=crimpAxis.driverErrID;// 伺服驱动器代码
+Crimping.Hmi.crimpAxis.posUnit:=crimpAxis.posUnit;// 位置单位
+Crimping.Hmi.crimpAxis.veloUnit:=crimpAxis.veloUnit;// 速度单位
+Crimping.Hmi.crimpAxis.accDecUnit:=crimpAxis.accDecUnit;// 加/减速度单位
+Crimping.Hmi.crimpAxis.actPos:=crimpAxis.actPos;// 当前坐标
+Crimping.Hmi.crimpAxis.actVelo:=crimpAxis.actVelo;// 当前速度
+Crimping.Hmi.crimpAxis.actTorque:=crimpAxis.actTorque;// 当前转矩
+Crimping.Hmi.crimpAxis.lsp:=crimpAxis.lsp;// 伺服正极限
+Crimping.Hmi.crimpAxis.lsn:=crimpAxis.lsn;// 伺服负极限
+Crimping.Hmi.crimpAxis.dog:=crimpAxis.dog;// 伺服原点感应
+Crimping.Hmi.crimpAxis.targetDistance:=crimpAxis.targetDistance;// 目标距离
+Crimping.Hmi.crimpAxis.targetVelocity:=crimpAxis.targetVelocity;// 目标速度
+
+
+
+
+transferAxis.powerhmi:=Crimping.Hmi.transferAxis.powerhmi;// 伺服Onhmi
+Crimping.Hmi.transferAxis.powerForbidIcon:=transferAxis.powerForbidIcon;// 伺服On禁止图标
+Crimping.Hmi.transferAxis.isPowerOn:=transferAxis.isPowerOn;// 伺服On状态
+transferAxis.halthmi:=Crimping.Hmi.transferAxis.halthmi;// 伺服暂停hmi
+transferAxis.resethmi:=Crimping.Hmi.transferAxis.resethmi;// 伺服复位hmi
+transferAxis.jogForwardhmi:=Crimping.Hmi.transferAxis.jogForwardhmi;// 伺服JOG+_hmi
+Crimping.Hmi.transferAxis.jogForwardForbidIcon:=transferAxis.jogForwardForbidIcon;// 伺服JOG+禁止图标
+transferAxis.jogBackwardshmi:=Crimping.Hmi.transferAxis.jogBackwardshmi;// 伺服JOG-hmi
+Crimping.Hmi.transferAxis.jogBackwardsForbidIcon:=transferAxis.jogBackwardsForbidIcon;// 伺服JOG-禁止图标
+transferAxis.homehmi:=Crimping.Hmi.transferAxis.homehmi;// 伺服回原点hmi
+Crimping.Hmi.transferAxis.homeForbidIcon:=transferAxis.homeForbidIcon;// 伺服回原点禁止图标
+Crimping.Hmi.transferAxis.homeDone:=transferAxis.homeDone;// 伺服回原点完成
+transferAxis.brakehmi:=Crimping.Hmi.transferAxis.brakehmi;// 伺服刹车hmi
+Crimping.Hmi.transferAxis.brakeForbidIcon:=transferAxis.brakeForbidIcon;// 伺服刹车禁止图标
+Crimping.Hmi.transferAxis.brake:=transferAxis.brake;// 伺服刹车输出
+transferAxis.movehmi:=Crimping.Hmi.transferAxis.movehmi;// 定位启动hmi
+Crimping.Hmi.transferAxis.moveForbidIcon:=transferAxis.moveForbidIcon;// 定位启动禁止图标
+transferAxis.posTeach:=Crimping.Hmi.transferAxis.posTeach;// 当前位置示教
+transferAxis.movehmiNo:=Crimping.Hmi.transferAxis.movehmiNo;// 手动定位编号
+Crimping.Hmi.transferAxis.inPosNo:=transferAxis.inPosNo;// 伺服到位编号
+Crimping.Hmi.transferAxis.status:=transferAxis.status;// 伺服状态
+Crimping.Hmi.transferAxis.ncErrID:=transferAxis.ncErrID;// 伺服NC错误代码
+Crimping.Hmi.transferAxis.driverErrID:=transferAxis.driverErrID;// 伺服驱动器代码
+Crimping.Hmi.transferAxis.posUnit:=transferAxis.posUnit;// 位置单位
+Crimping.Hmi.transferAxis.veloUnit:=transferAxis.veloUnit;// 速度单位
+Crimping.Hmi.transferAxis.accDecUnit:=transferAxis.accDecUnit;// 加/减速度单位
+Crimping.Hmi.transferAxis.actPos:=transferAxis.actPos;// 当前坐标
+Crimping.Hmi.transferAxis.actVelo:=transferAxis.actVelo;// 当前速度
+Crimping.Hmi.transferAxis.actTorque:=transferAxis.actTorque;// 当前转矩
+Crimping.Hmi.transferAxis.lsp:=transferAxis.lsp;// 伺服正极限
+Crimping.Hmi.transferAxis.lsn:=transferAxis.lsn;// 伺服负极限
+Crimping.Hmi.transferAxis.dog:=transferAxis.dog;// 伺服原点感应
+Crimping.Hmi.transferAxis.targetDistance:=transferAxis.targetDistance;// 目标距离
+Crimping.Hmi.transferAxis.targetVelocity:=transferAxis.targetVelocity;// 目标速度
+
+
+Crimping.Hmi.rackFeeder.input.break:=rackFeeder.input.break;// 放料按钮
+Crimping.Hmi.rackFeeder.input.feedButton:=rackFeeder.input.feedButton;// 纸带断裂检测
+Crimping.Hmi.rackFeeder.input.full:=rackFeeder.input.full;// 满料检测
+Crimping.Hmi.rackFeeder.input.scatter:=rackFeeder.input.scatter;// 散料检测
+Crimping.Hmi.rackFeeder.output.feedStart:=rackFeeder.output.feedStart;// 放料马达启动
+Crimping.Hmi.rackFeeder.output.rollStart:=rackFeeder.output.rollStart;// 卷纸马达启动
+Crimping.Hmi.rackFeeder.ready:=rackFeeder.ready;// 准备就绪
+Crimping.Hmi.rackFeeder.alarming:=rackFeeder.alarming;// 报警中
+rackFeeder.feedHmi:=Crimping.Hmi.rackFeeder.feedHmi;// 放料马达HMI
+Crimping.Hmi.rackFeeder.feedManual:=rackFeeder.feedManual;// 放料马达Manual
+Crimping.Hmi.rackFeeder.feedForbidIcon:=rackFeeder.feedForbidIcon;// 放料马达禁止图标
+rackFeeder.rollHmi:=Crimping.Hmi.rackFeeder.rollHmi;// 卷纸马达HMI
+Crimping.Hmi.rackFeeder.rollManual:=rackFeeder.rollManual;// 卷纸马达Manual
+Crimping.Hmi.rackFeeder.rollForbidIcon:=rackFeeder.rollForbidIcon;// 卷纸马达禁止图标
+Crimping.Hmi.rackFeeder.display:=rackFeeder.display;// 显示
+rackFeeder.tail:=Crimping.Hmi.rackFeeder.tail;// 尾料模式，缺料时不提示
+Crimping.Hmi.rackFeeder.breakLabel:=rackFeeder.breakLabel;// 纸带断裂检测标签
+Crimping.Hmi.rackFeeder.scatterLabel:=rackFeeder.scatterLabel;// 散料检测标签
+Crimping.Hmi.rackFeeder.fullLabel:=rackFeeder.fullLabel;// 满料检测标签
+CrimpingData.rackFeeder.rollLimit:=Crimping.Hmi.rackFeeder.rollLimit;// 卷纸马达10秒内转圈数上限
+
+
+
+Station.inithmi:=Crimping.Hmi.Station.inithmi;// 工站初始化hmi
+Crimping.Hmi.Station.initForbidIcon:=Station.initForbidIcon;// 工站初始化禁止图标
+Crimping.Hmi.Station.initing:=Station.initing;// 工站初始化中
+Station.cycleRunhmi:=Crimping.Hmi.Station.cycleRunhmi;// 工站单循环hmi
+Crimping.Hmi.Station.cycleRunForbidIcon:=Station.cycleRunForbidIcon;// 工站单循环禁止图标
+Crimping.Hmi.Station.cycleRunning:=Station.cycleRunning;// 工站单循环中
+Station.jogRunhmi:=Crimping.Hmi.Station.jogRunhmi;// 工站寸动hmi
+Crimping.Hmi.Station.jogRunForbidIcon:=Station.jogRunForbidIcon;// 工站寸动禁止图标
+Crimping.Hmi.Station.jogRunning:=Station.jogRunning;// 工站寸动中
+Station.pausehmi:=Crimping.Hmi.Station.pausehmi;// 工站暂停hmi
+Station.disablehmi:=Crimping.Hmi.Station.disablehmi;// 工站屏蔽hmi
+Station.repetitionsEnable:=Crimping.Hmi.Station.repetitionsEnable;// 单循环重复动作开启
+Station.repetitionsClear:=Crimping.Hmi.Station.repetitionsClear;// 单循环重复动作计数清零
+Crimping.Hmi.Station.repetitions:=Station.repetitions;// 单循环重复动作计数
+Station.repetitionsTimes:=Crimping.Hmi.Station.repetitionsTimes;// 单循环重复动作次数设置
+Crimping.Hmi.Station.status:=Station.status;// 工站状态显示
+Crimping.Hmi.Station.cycleTime:=Station.cycleTime;// 工站周期时间
+Crimping.Hmi.Station.flow[0].actStep:=Station.flow[0].actStep;// 流程当前步号
+Crimping.Hmi.Station.flow[1].actStep:=Station.flow[1].actStep;// 流程当前步号
+
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ManualTip" Id="{71805f3e-8431-4b5c-a2c7-bad286325356}">
+      <Implementation>
+        <ST><![CDATA[ Crimping.Message.userManualTips[0] := machine.presetManualTips[0];//急停中,无法操作
+ Crimping.Message.userManualTips[1] := machine.presetManualTips[1];//安全条件不满足,无法操作
+ Crimping.Message.userManualTips[2] := machine.presetManualTips[2];//安全门未锁好,无法操作
+ Crimping.Message.userManualTips[3] := machine.presetManualTips[3];//气压不足,无法操作
+ Crimping.Message.userManualTips[4] := machine.presetManualTips[4];//不在手动模式,无法操作
+ 
+ ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Permit" Id="{674af67e-ef83-4fe7-afa3-c7e5874ebffe}">
+      <Implementation>
+        <ST><![CDATA[//Cylinder permit
+fixCyl.workPermit := Crimping.Imm.carrierInPos;
+stepFixCyl.workPermit := Crimping.Imm.carrierInPos;
+carrierHold1Cyl.workPermit:=changeCyl.inHome AND transferAxis.inPos[HOME_TRANS];
+carrierHold2Cyl.workPermit:=changeCyl.inWork AND transferAxis.inPos[HOME_TRANS];
+changeCyl.homePermit:=carrierHold1Cyl.inHome AND carrierHold2Cyl.inHome AND transferAxis.inPos[HOME_TRANS];
+changeCyl.workPermit:=carrierHold1Cyl.inHome AND carrierHold2Cyl.inHome AND transferAxis.inPos[HOME_TRANS];
+
+//Axis permit
+transferAxis.movePermit:=(changeCyl.inHome AND carrierHold2Cyl.inWork)
+				OR (changeCyl.inWork AND carrierHold1Cyl.inWork)
+				OR station.initing;
+			
+crimpAxis.movePermit:=jack2Cyl.inWork
+						OR station.initing;
+
+Crimping.Imm.carrierFree := fixCyl.inHome
+						AND stepFixCyl.inHome
+						AND jack1Cyl.inHome
+						AND transferAxis.inPos[HOME_TRANS]
+						AND ABS(crimpAxis.axis.NcToPlc.ModuloActPos - CrimpingData.crimpAxis.movePos[HOME_CRIMP])< 0.1;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{8c7a79c4-44ed-40a9-a126-f05c93c974aa}">
+      <Implementation>
+        <ST><![CDATA[fB_Crimping(machine:=Machine , station:=station );
+
+FB_gripCyl(machine:= Machine, station:= station, vari:= gripCyl, data:=CrimpingData.GripCyl );
+FB_jack1Cyl(machine:=Machine , station:=station , vari:= jack1Cyl, data:= CrimpingData.jack1Cyl);
+FB_jack2Cyl(machine:=Machine , station:=station , vari:= jack2Cyl, data:= CrimpingData.jack2Cyl);
+FB_cutCyl(machine:=Machine , station:=station , vari:= cutCyl, data:= CrimpingData.cutCyl);
+FB_feedCyl(machine:=Machine , station:=station , vari:= feedCyl, data:= CrimpingData.feedCyl);
+FB_changeCyl(machine:=Machine , station:=station , vari:= changeCyl, data:= CrimpingData.changeCyl);
+FB_carrierHold1Cyl(machine:= Machine, station:= station, vari:=carrierHold1Cyl , data:= CrimpingData.carrierHold1Cyl);
+FB_carrierHold2Cyl(machine:= Machine, station:= station, vari:=carrierHold2Cyl , data:= CrimpingData.carrierHold2Cyl);
+FB_jack3Cyl(machine:=Machine , station:=station , vari:= jack3Cyl, data:= CrimpingData.jack3Cyl);
+FB_blow(machine:=Machine , station:=station , vari:= blow, data:= CrimpingData.blow);
+
+FB_fixCyl(machine:= Machine, station:= station, vari:= fixCyl, data:=CrimpingData.FixCyl );
+FB_stepFixCyl(machine:=Machine , station:=station , vari:= stepFixCyl, data:=CrimpingData.StepFixCyl );
+
+fb_transferAxis(machine:= Machine, station:= station, vari:= transferAxis, data:= CrimpingData.TransferAxis);
+fb_crimpAxis(machine:= Machine, station:= station, vari:= crimpAxis, data:= CrimpingData.crimpAxis);
+
+fb_rackFeeder(machine:= Machine, station:= station, vari:= rackFeeder, data:= CrimpingData.rackFeeder);
+
+fb_produce(machine:= machine,station:=station,vari:=produce,data:=CrimpingData.produceData,badVar:=bad,badData:=CrimpingData.badData,lastProduce:=CrimpingData.lastProduce);
+
+//Imm
+
+ Machine.airOn := Crimping.Imm.Machine_airOn;
+ Machine.allDoorClosed:=Crimping.Imm.Machine_allDoorClosed;
+ Machine.eStop:=Crimping.Imm.Machine_eStop;
+ Machine.safety:=Crimping.Imm.Machine_safety;
+ Machine.manualMode:=Crimping.Imm.Machine_manualMode;
+ Machine.autoMode:=Crimping.Imm.Machine_autoMode;
+ Machine.reset := Crimping.Imm.Machine_reset;
+ machine.stopping := Crimping.Imm.Machine_stopping;
+ 
+ station.canRun:= Crimping.Imm.stationCanRun;
+ station.done:= Crimping.Imm.stationDone;
+ 
+gripCyl.homeSensor[0]:= HomeSensor_gripCyl ;
+gripCyl.workSensor[0]:= WorkSensor_gripCyl ;
+HomeValve_gripCyl:= gripCyl.homeValve ;
+WorkValve_gripCyl:= gripCyl.workValve ;
+gripCyl.homeSensorLabel[0] := HomeLabel_gripCyl;
+gripCyl.workSensorLabel[0] := WorkLabel_gripCyl;
+
+jack1Cyl.homeSensor[0]:= HomeSensor_jack1Cyl ;
+jack1Cyl.workSensor[0]:= WorkSensor_jack1Cyl ;
+HomeValve_jack1Cyl:= jack1Cyl.homeValve ;
+WorkValve_jack1Cyl:= jack1Cyl.workValve ;
+jack1Cyl.homeSensorLabel[0] := HomeLabel_jack1Cyl;
+jack1Cyl.workSensorLabel[0] := WorkLabel_jack1Cyl;
+
+jack2Cyl.homeSensor[0]:= HomeSensor_jack2Cyl ;
+jack2Cyl.workSensor[0]:= WorkSensor_jack2Cyl ;
+HomeValve_jack2Cyl:= jack2Cyl.homeValve ;
+WorkValve_jack2Cyl:= jack2Cyl.workValve ;
+jack2Cyl.homeSensorLabel[0] := HomeLabel_jack2Cyl;
+jack2Cyl.workSensorLabel[0] := WorkLabel_jack2Cyl;
+
+cutCyl.homeSensor[0]:= HomeSensor_cutCyl ;
+cutCyl.workSensor[0]:= WorkSensor_cutCyl ;
+HomeValve_cutCyl:= cutCyl.homeValve ;
+WorkValve_cutCyl:= cutCyl.workValve ;
+cutCyl.homeSensorLabel[0] := HomeLabel_cutCyl;
+cutCyl.workSensorLabel[0] := WorkLabel_cutCyl;
+
+feedCyl.homeSensor[0]:= HomeSensor_feedCyl ;
+feedCyl.workSensor[0]:= WorkSensor_feedCyl ;
+HomeValve_feedCyl:= feedCyl.homeValve ;
+WorkValve_feedCyl:= feedCyl.workValve ;
+feedCyl.homeSensorLabel[0] := HomeLabel_feedCyl;
+feedCyl.workSensorLabel[0] := WorkLabel_feedCyl;
+
+changeCyl.homeSensor[0]:= HomeSensor_changeCyl ;
+changeCyl.workSensor[0]:= WorkSensor_changeCyl ;
+HomeValve_changeCyl:= changeCyl.homeValve ;
+WorkValve_changeCyl:= changeCyl.workValve ;
+changeCyl.homeSensorLabel[0] := HomeLabel_changeCyl;
+changeCyl.workSensorLabel[0] := WorkLabel_changeCyl;
+
+carrierHold1Cyl.homeSensor[0]:= HomeSensor_carrierHold1Cyl ;
+carrierHold1Cyl.workSensor[0]:= WorkSensor_carrierHold1Cyl ;
+HomeValve_carrierHold1Cyl:= carrierHold1Cyl.homeValve ;
+WorkValve_carrierHold1Cyl:= carrierHold1Cyl.workValve ;
+carrierHold1Cyl.homeSensorLabel[0] := HomeLabel_carrierHold1Cyl;
+carrierHold1Cyl.workSensorLabel[0] := WorkLabel_carrierHold1Cyl;
+
+carrierHold2Cyl.homeSensor[0]:= HomeSensor_carrierHold2Cyl ;
+carrierHold2Cyl.workSensor[0]:= WorkSensor_carrierHold2Cyl ;
+HomeValve_carrierHold2Cyl:= carrierHold2Cyl.homeValve ;
+WorkValve_carrierHold2Cyl:= carrierHold2Cyl.workValve ;
+carrierHold2Cyl.homeSensorLabel[0] := HomeLabel_carrierHold2Cyl;
+carrierHold2Cyl.workSensorLabel[0] := WorkLabel_carrierHold2Cyl;
+
+jack3Cyl.homeSensor[0]:= HomeSensor_jack3Cyl;
+jack3Cyl.workSensor[0]:= WorkSensor_jack3Cyl ;
+HomeValve_jack3Cyl:= jack3Cyl.homeValve ;
+WorkValve_jack3Cyl:= jack3Cyl.workValve ;
+jack3Cyl.homeSensorLabel[0] := HomeLabel_jack3Cyl;
+jack3Cyl.workSensorLabel[0] := WorkLabel_jack3Cyl;
+
+HomeValve_blow:= blow.homeValve ;
+WorkValve_blow:= blow.workValve ;
+
+fixCyl.homeSensor[0]:= HomeSensor_fixCyl ;
+fixCyl.workSensor[0]:= WorkSensor_fixCyl ;
+HomeValve_fixCyl:= fixCyl.homeValve ;
+WorkValve_fixCyl:= fixCyl.workValve ;
+fixCyl.homeSensorLabel[0] := HomeLabel_fixCyl;
+fixCyl.workSensorLabel[0] := WorkLabel_fixCyl;
+
+stepFixCyl.homeSensor[0]:= HomeSensor_stepFixCyl ;
+stepFixCyl.workSensor[0]:= WorkSensor_stepFixCyl ;
+HomeValve_stepFixCyl:= stepFixCyl.homeValve ;
+WorkValve_stepFixCyl:= stepFixCyl.workValve ;
+stepFixCyl.homeSensorLabel[0] := HomeLabel_stepFixCyl;
+stepFixCyl.workSensorLabel[0] := WorkLabel_stepFixCyl;
+
+// Parameter 
+CrimpingData.blow.homeSensorDisabled[0]:=TRUE;
+CrimpingData.blow.workSensorDisabled[0]:=TRUE;
+
+
+crimpAxis.modulo.divisor := 2;
+crimpAxis.modulo.stepPoint :=1;
+crimpAxis.modulo.factor :=360;
+crimpAxis.modulo.mode := 2;
+crimpAxis.posUnit			:='deg';
+crimpAxis.veloUnit			:='deg/s';
+crimpAxis.accDecUnit	  :="deg/s²";
+
+transferAxis.movePosNum := 2;
+
+transferAxis.Override:=CrimpingData.CPP.override;
+crimpAxis.Override:=CrimpingData.CPP.override;
+
+tonOn(IN:= onePlus, PT:= T#2S, Q=> , ET=> );
+tonOff(IN:= NOT onePlus, PT:= T#2S, Q=> , ET=> );
+IF tonOn.Q OR tonOff.Q THEN
+  onePlus := NOT onePlus;
+END_IF
+mcWriteParameterPersistent(
+  Axis:= crimpAxis.axis, 
+  Execute:= onePlus, 
+  ParameterNumber:= 1045, 
+  Value:= 360.0, 
+  Done=> , 
+  Busy=> , 
+  Error=> , 
+  ErrorID=> );
+
+//DATA 模拟
+IF NOT activated THEN
+
+activated:=TRUE;
+
+Crimping.Imm.Machine_airOn := TRUE;
+Crimping.Imm.Machine_allDoorClosed:= TRUE;
+Crimping.Imm.Machine_eStop:= TRUE;
+Crimping.Imm.Machine_safety:= TRUE;
+Crimping.Imm.Machine_manualMode:= TRUE;
+
+Crimping.Imm.stationCanRun := TRUE;
+Crimping.Imm.carrierPos:=ENUM_CarrierPos.Left;
+Crimping.Imm.carrierInPos := TRUE;
+CrimpingData.CPP.override:=100;
+CrimpingData.TransferAxis.manualVelo:=10;
+
+CrimpingData.crimpAxis.movePos[HOME_CRIMP] := 0;
+CrimpingData.crimpAxis.movePos[CRIMP_CRIMP] := 360;
+CrimpingData.TransferAxis.movePos[HOME_TRANS] := 0;
+CrimpingData.TransferAxis.movePos[CRIMP_TRANS] := 70;
+
+CrimpingData.GripCyl.homeSensorDisabled[0] := TRUE;
+CrimpingData.GripCyl.workSensorDisabled[0] := TRUE;
+CrimpingData.jack1Cyl.homeSensorDisabled[0] := TRUE;
+CrimpingData.jack1Cyl.workSensorDisabled[0] := TRUE;
+CrimpingData.jack2Cyl.homeSensorDisabled[0] := TRUE;
+CrimpingData.jack2Cyl.workSensorDisabled[0] := TRUE;
+CrimpingData.cutCyl.homeSensorDisabled[0] := TRUE;
+CrimpingData.cutCyl.workSensorDisabled[0] := TRUE;
+CrimpingData.feedCyl.homeSensorDisabled[0] := TRUE;
+CrimpingData.feedCyl.workSensorDisabled[0] := TRUE;
+CrimpingData.changeCyl.homeSensorDisabled[0] := TRUE;
+CrimpingData.changeCyl.workSensorDisabled[0] := TRUE;
+CrimpingData.carrierHold1Cyl.homeSensorDisabled[0] := TRUE;
+CrimpingData.carrierHold1Cyl.workSensorDisabled[0] := TRUE;
+CrimpingData.carrierHold2Cyl.homeSensorDisabled[0] := TRUE;
+CrimpingData.carrierHold2Cyl.workSensorDisabled[0] := TRUE;
+CrimpingData.FixCyl.homeSensorDisabled[0] := TRUE;
+CrimpingData.FixCyl.workSensorDisabled[0] := TRUE;
+CrimpingData.StepFixCyl.homeSensorDisabled[0] := TRUE;
+CrimpingData.StepFixCyl.workSensorDisabled[0] := TRUE;
+CrimpingData.jack3Cyl.homeSensorDisabled[0] := TRUE;
+CrimpingData.jack3Cyl.workSensorDisabled[0] := TRUE;
+CrimpingData.GripCyl.homeTime := 2000;
+CrimpingData.GripCyl.workTime := 2000;
+CrimpingData.jack1Cyl.homeTime := 2000;
+CrimpingData.jack1Cyl.workTime := 2000;
+CrimpingData.jack2Cyl.homeTime := 2000;
+CrimpingData.jack2Cyl.workTime := 2000;
+CrimpingData.cutCyl.homeTime := 2000;
+CrimpingData.cutCyl.workTime := 2000;
+CrimpingData.feedCyl.homeTime := 2000;
+CrimpingData.feedCyl.workTime := 2000;
+CrimpingData.changeCyl.homeTime := 2000;
+CrimpingData.changeCyl.workTime := 2000;
+CrimpingData.carrierHold1Cyl.homeTime := 2000;
+CrimpingData.carrierHold1Cyl.workTime := 2000;
+CrimpingData.carrierHold2Cyl.homeTime := 2000;
+CrimpingData.carrierHold2Cyl.workTime := 2000;
+CrimpingData.jack3Cyl.homeTime := 2000;
+CrimpingData.jack3Cyl.workTime := 2000;
+CrimpingData.blow.homeTime := 2000;
+CrimpingData.blow.workTime := 2000;
+CrimpingData.FixCyl.homeTime := 2000;
+CrimpingData.FixCyl.workTime := 2000;
+CrimpingData.StepFixCyl.homeTime := 2000;
+CrimpingData.StepFixCyl.workTime := 2000;
+
+CrimpingData.cableCheckSensorDisabled:=TRUE;
+CrimpingData.crimpHomeCheckSensorDisabled:=TRUE;
+CrimpingData.oesDisabled:=TRUE;
+CrimpingData.terminalCheckSensorDisabled:=TRUE;
+CrimpingData.terminalReiveCheckSensorDisabled:=TRUE;
+rackFeeder.disabled:=TRUE;
+
+CrimpingData.badData[ENUM_NgReason.CrimpNoCable].continuous:=3;
+CrimpingData.badData[ENUM_NgReason.CrimpNoCable].cumulativeRange:=5;
+CrimpingData.badData[ENUM_NgReason.CrimpNoCable].cumulative:=5;
+
+END_IF
+
+
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="StepAuto" Id="{5568de89-8c02-48b0-809b-d0b6059a2cdf}">
+      <Implementation>
+        <ST><![CDATA[IF NOT station.initDone THEN
+	station.flow[AUTO].actStep:=0;
+ELSIF station.running 
+		OR RunningExcept
+THEN
+
+CASE station.flow[AUTO].actStep OF
+
+//	Home Step
+0:
+IF station.disabled
+	AND station.canRun
+  AND NOT machine.stopping
+  AND NOT station.cycleRunning
+THEN
+	station.Done:=TRUE;
+END_IF
+
+IF (station.cycleRunning
+		OR station.canRun
+			AND NOT station.Done
+			AND NOT station.Disabled
+      AND NOT machine.stopping
+	)
+	AND Crimping.Imm.carrierInPos
+THEN
+	station.flow[AUTO].actStep:=10;
+	station.cycleTimeStart:=TRUE;
+	station.cycleTimeEnd:=FALSE;
+END_IF
+
+
+//	fixCyl up
+10:
+IF Crimping.Imm.carrierPos= ENUM_CarrierPos.Left THEN
+  fixCyl.auto:= TRUE;
+  changeCyl.auto:=TRUE;
+  Crimping.Imm.carrierLeftProductState := 0;
+	IF fixCyl.inWork AND changeCyl.inWork THEN
+		station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+	END_IF
+ELSIF Crimping.Imm.carrierPos= ENUM_CarrierPos.Right THEN
+  stepFixCyl.auto:= TRUE;
+  Crimping.Imm.carrierRightProductState := 0;
+	IF stepFixCyl.inWork AND changeCyl.inHome THEN
+		station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+	END_IF
+END_IF
+
+
+//	jackCyl up
+20:
+IF Crimping.Imm.carrierPos= ENUM_CarrierPos.Left THEN
+	carrierHold1Cyl.auto:= TRUE;
+	jack1Cyl.auto:= TRUE;
+	IF jack1Cyl.inWork 
+		AND carrierHold1Cyl.inWork 
+		AND carrierHold2Cyl.inHome 
+	THEN
+		station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+	END_IF
+ELSIF Crimping.Imm.carrierPos= ENUM_CarrierPos.Right THEN
+	carrierHold2Cyl.auto:= TRUE;
+	jack1Cyl.auto:= TRUE;
+	IF jack1Cyl.inWork 
+		AND carrierHold1Cyl.inHome 
+		AND carrierHold2Cyl.inWork 
+	THEN
+		station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+	END_IF	
+END_IF
+
+//	gripCyl close
+30:
+gripCyl.auto:=TRUE;
+cutCyl.auto:=TRUE;
+jack3Cyl.auto:=TRUE;
+IF gripCyl.inWork 
+	AND cutCyl.inWork 
+	AND jack3Cyl.inWork
+THEN
+	wearPart1.countExecute:=TRUE;
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 5;
+END_IF
+
+// check crimp axis pos
+35:
+IF ABS(crimpAxis.axis.NcToPlc.ModuloActPos - CrimpingData.crimpAxis.movePos[HOME_CRIMP])<0.1
+THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 5;
+ELSE
+	crimpAxis.modulo.enable:=TRUE;
+	crimpAxis.moveAutoNo:=HOME_CRIMP;
+	IF crimpAxis.inPos[HOME_CRIMP] THEN
+		station.flow[INIT].actStep:=station.flow[INIT].actStep + 5;
+	END_IF
+END_IF
+
+//judge cable sensor
+40:
+IF (cableCheckSensor
+	OR CrimpingData.cableCheckSensorDisabled) 
+THEN
+	bad[ENUM_NgReason.CrimpNoCable].goodExecute:=TRUE;
+	bad[ENUM_NgReason.CrimpNoCable].goodIncrements:=1;
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+ELSE
+	IF Crimping.Imm.carrierPos= ENUM_CarrierPos.Left THEN
+        bad[ENUM_NgReason.CrimpNoCable].badExecute:=TRUE;
+		bad[ENUM_NgReason.CrimpNoCable].badIncrements:=1;
+		bad[ENUM_NgReason.CrimpNoCable].stationNo:=station.stationNo;
+		bad[ENUM_NgReason.CrimpNoCable].machineNo:=station.machineNo;
+//		Crimping.Imm.carrierLeftProductState:=ENUM_ProductState.Bad;	
+//		Crimping.Imm.carrierRightProductState:=ENUM_ProductState.Bad;
+	ELSIF Crimping.Imm.carrierPos= ENUM_CarrierPos.Right THEN
+        bad[ENUM_NgReason.CrimpNoCable].badExecute:=TRUE;
+		bad[ENUM_NgReason.CrimpNoCable].badIncrements:=1;
+		bad[ENUM_NgReason.CrimpNoCable].stationNo:=station.stationNo;
+		bad[ENUM_NgReason.CrimpNoCable].machineNo:=station.machineNo;
+//		Crimping.Imm.carrierLeftProductState:=ENUM_ProductState.Bad;	
+//		Crimping.Imm.carrierRightProductState:=ENUM_ProductState.Bad;
+	END_IF
+	cableMissing:=TRUE;
+	station.flow[AUTO].actStep:=100;
+END_IF
+
+
+//judge terminal in pos
+50:
+cutCyl.auto:=FALSE;
+jack3Cyl.auto:=FALSE;
+IF terminalInPos 
+	OR CrimpingData.terminalCheckSensorDisabled
+THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+ELSE
+	IF NOT terminalInPos
+		AND station.flow[AUTO2].actStep = 0
+	THEN
+		station.flow[AUTO2].actStep := 10;
+		station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 5;
+	END_IF
+END_IF
+
+//wait terminal inPos
+55:
+IF terminalInPos
+	AND station.flow[AUTO2].actStep = 0
+THEN
+	station.flow[AUTO].actStep:=50;
+END_IF
+
+//transferAxis to crimp pos
+60:
+transferAxis.moveAutoNo:=CRIMP_TRANS;
+IF transferAxis.inPos[CRIMP_TRANS]
+THEN
+	jack2Cyl.auto:=TRUE;
+END_IF
+IF transferAxis.inPos[CRIMP_TRANS]
+	AND jack2Cyl.inWork
+THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//judge oes status
+70:
+blow.auto:=TRUE; 
+IF oesReady
+	AND NOT oesOK
+	AND NOT oesOkCache
+	OR CrimpingData.oesDisabled
+THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+ELSE
+	oesNotReady:=NOT oesReady;
+	oesOkSignalAlwaysOn:=oesOK;
+END_IF
+
+
+//crimpAxis press
+80:
+crimpAxis.modulo.enable:=FALSE;
+crimpAxis.moveAutoNo:=CRIMP_CRIMP;
+crimpAxis.absOrRel[CRIMP_CRIMP]:=TRUE;
+IF crimpAxis.axis.Status.Moving
+THEN
+	crimpingFlag:=TRUE;
+END_IF
+IF crimpingFlag 
+	AND ABS(crimpAxis.axis.NcToPlc.ModuloActPos - CrimpingData.crimpAxis.movePos[HOME_CRIMP])<0.1
+	AND NOT crimpAxis.axis.Status.Moving
+THEN
+	wearPart2.countExecute:=TRUE;
+	terminalShiftArr[TERMINAL_POS]:=FALSE;
+	terminalInPos:=FALSE;
+	terminalShift:=TRUE;
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+
+//read oes result
+90:
+RunningExcept:=TRUE;
+IF oesOK
+	OR oesOkCache
+	OR CrimpingData.oesDisabled
+THEN
+//	IF Crimping.Imm.carrierPos= ENUM_CarrierPos.Left THEN
+//		Crimping.Imm.carrierLeftProductState:=ENUM_ProductState.Good;
+//	ELSIF Crimping.Imm.carrierPos= ENUM_CarrierPos.Right THEN
+//		Crimping.Imm.carrierRightProductState:=ENUM_ProductState.Good;	
+//	END_IF
+	bad[ENUM_NgReason.CrimpNg].goodExecute:=TRUE;
+	bad[ENUM_NgReason.CrimpNg].goodIncrements:=1;
+	crimpingFlag:=FALSE;
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+ELSE
+	IF Crimping.Imm.carrierPos= ENUM_CarrierPos.Left
+	THEN
+		IF Crimping.Imm.carrierLeftProductState=ENUM_ProductState.New
+		THEN
+			bad[ENUM_NgReason.CrimpNg].badExecute:=TRUE;
+			bad[ENUM_NgReason.CrimpNg].badIncrements:=1;
+			bad[ENUM_NgReason.CrimpNg].stationNo:=station.stationNo;
+			bad[ENUM_NgReason.CrimpNg].machineNo:=station.machineNo;
+			Crimping.Imm.carrierLeftProductState:=ENUM_ProductState.Bad;	
+			Crimping.Imm.carrierRightProductState:=ENUM_ProductState.Bad;			
+		END_IF
+	ELSIF Crimping.Imm.carrierPos= ENUM_CarrierPos.Right 
+	THEN
+		IF Crimping.Imm.carrierLeftProductState=ENUM_ProductState.New
+		THEN
+			bad[ENUM_NgReason.CrimpNg].badExecute:=TRUE;
+			bad[ENUM_NgReason.CrimpNg].badIncrements:=1;
+			bad[ENUM_NgReason.CrimpNg].stationNo:=station.stationNo;
+			bad[ENUM_NgReason.CrimpNg].machineNo:=station.machineNo;
+			Crimping.Imm.carrierLeftProductState:=ENUM_ProductState.Bad;	
+			Crimping.Imm.carrierRightProductState:=ENUM_ProductState.Bad;
+		END_IF
+	END_IF
+	crimpingFlag:=FALSE;
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+  
+//transferAxis home
+100:
+transferAxis.moveAutoNo:=HOME_TRANS;
+IF transferAxis.inPos[HOME_TRANS]
+THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//gripCyl open
+110:
+blow.auto:=TRUE;
+gripCyl.auto:=FALSE;
+fixCyl.auto:=FALSE;
+jack2Cyl.auto:=FALSE;
+stepFixCyl.auto:=FALSE;
+carrierHold1Cyl.auto:=FALSE;
+carrierHold2Cyl.auto:=FALSE;
+IF gripCyl.inHome
+	AND fixCyl.inHome
+	AND stepFixCyl.inHome
+	AND carrierHold1Cyl.inHome
+	AND carrierHold2Cyl.inHome
+	AND jack2Cyl.inHome
+THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//jackCyl open
+120:
+jack1Cyl.auto:=FALSE;
+IF jack1Cyl.inHome THEN
+	blow.auto:=FALSE;
+	station.flow[AUTO].actStep:=999;
+END_IF
+
+//	Single Run Finish
+999:
+blow.auto:=FALSE;
+station.cycleRunFlag:=FALSE;
+station.flow[AUTO].actStep:=0;
+station.cycleTimeStart:=FALSE;
+station.cycleTimeEnd:=TRUE;
+station.Done:=TRUE;
+END_CASE
+
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="StepAutoFeed" Id="{09591103-0baf-4ac4-8023-bcd570cd5846}">
+      <Implementation>
+        <ST><![CDATA[IF NOT station.initDone THEN
+	station.flow[AUTO2].actStep:=0;
+ELSIF station.running 
+		OR RunningExcept 
+THEN
+
+CASE station.flow[AUTO2].actStep OF
+
+//	Home Step
+0:
+
+
+//	wait shift finish
+10:
+IF NOT TerminalInPos 
+	AND NOT terminalShift
+THEN
+	station.flow[AUTO2].actStep:=station.flow[AUTO2].actStep + 10;
+ELSIF TerminalInPos THEN
+	station.flow[AUTO2].actStep:=0;
+END_IF
+
+
+//	judge if terminal or not
+20:
+IF terminalShiftArr[TERMINAL_POS] THEN
+	station.flow[AUTO2].actStep:=0;
+ELSE
+	CrimpingData.crimpAxis.movePos[10]:=LREAL_TO_REAL(crimpAxis.axis.NcToPlc.ActPos)+90.0;
+	station.flow[AUTO2].actStep:=station.flow[AUTO2].actStep + 10;
+END_IF
+
+//crimpAxis down
+30:
+crimpAxis.moveAutoNo:=10;
+IF crimpAxis.inPos[10] THEN
+	station.flow[AUTO2].actStep:=station.flow[AUTO2].actStep + 10;
+END_IF
+
+
+
+//	crimpAxis home
+40:
+crimpAxis.movePermit:=TRUE;
+crimpAxis.moveAutoNo:= HOME_CRIMP;
+IF crimpAxis.inPos[HOME_CRIMP]
+THEN
+	station.flow[AUTO2].actStep:=station.flow[AUTO2].actStep + 10;
+END_IF
+
+
+//set shift signal
+50:
+terminalShift:=TRUE;
+station.flow[AUTO2].actStep:=10;	
+
+
+END_CASE
+
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="StepInit" Id="{877febc3-7522-402d-971c-419100e4ee54}">
+      <Implementation>
+        <ST><![CDATA[IF NOT station.Initing THEN
+	station.flow[INIT].actStep:=0;
+ELSE
+
+CASE station.flow[INIT].actStep OF
+//	Home Step
+0:
+IF station.Initing
+	AND NOT station.InitDone
+THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	Axis Power
+10:
+transferAxis.powerInit:=TRUE;
+crimpAxis.powerInit:=TRUE;
+IF transferAxis.isPowerOn 
+	AND crimpAxis.isPowerOn
+THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	crimpAxis home
+20:
+crimpAxis.modulo.enable:=TRUE;
+crimpAxis.moveAutoNo:=HOME_CRIMP;
+IF crimpAxis.inPos[HOME_CRIMP] THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	transferAxis  home
+30:
+transferAxis.moveAutoNo:=HOME_TRANS;
+IF transferAxis.inPos[HOME_TRANS] THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	carrierFixCyl home
+40:
+carrierHold1Cyl.homeInit:=TRUE;
+carrierHold2Cyl.homeInit:=TRUE;
+changeCyl.homeInit:=TRUE;
+blow.homeInit:=TRUE;
+IF carrierHold1Cyl.inHome 
+	AND carrierHold2Cyl.inHome
+	AND changeCyl.inHome
+THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+
+//	fixCyl reset
+50:
+fixCyl.homeInit:=TRUE;
+stepFixCyl.homeInit:=TRUE;
+gripCyl.homeInit:=TRUE;
+jack2Cyl.homeInit:=TRUE;
+cutCyl.homeInit:=TRUE;
+jack3Cyl.homeInit:=TRUE;
+IF fixCyl.inHome
+	AND stepFixCyl.inHome
+	AND gripCyl.inHome
+	AND jack2Cyl.inHome
+	AND cutCyl.inHome
+	AND jack3Cyl.inHome
+THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+
+//	jackCyl home
+60:
+jack1Cyl.homeInit:=TRUE;
+IF jack1Cyl.inHome THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	cutCyl set
+70:
+cutCyl.auto:=TRUE;
+IF cutCyl.inWork THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	cutCyl reset
+80:
+cutCyl.auto:=FALSE;
+IF cutCyl.inHome THEN
+	station.flow[INIT].actStep:=999;
+END_IF
+
+
+//	Init Done
+999:
+station.flow[INIT].actStep:=0;
+station.InitDone:=TRUE;
+
+END_CASE
+
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Tip" Id="{75f8a3a8-ee9c-4cce-9123-1f1883accf30}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_Crimping_RD">
+      <LineId Id="29" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="30" Count="1" />
+      <LineId Id="21" Count="1" />
+      <LineId Id="441" Count="0" />
+      <LineId Id="24" Count="2" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="95" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.Alarm">
+      <LineId Id="1" Count="3" />
+      <LineId Id="6" Count="3" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="29" Count="3" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="39" Count="3" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="44" Count="3" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="49" Count="3" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="11" Count="3" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="16" Count="3" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="53" Count="3" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="58" Count="3" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="80" Count="3" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="63" Count="1" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="65" Count="4" />
+      <LineId Id="26" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="71" Count="1" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="76" Count="2" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="74" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.AutoTip">
+      <LineId Id="1" Count="0" />
+      <LineId Id="3" Count="0" />
+      <LineId Id="88" Count="3" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="4" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="5" Count="1" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="55" Count="1" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="57" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.Command">
+      <LineId Id="168" Count="8" />
+      <LineId Id="183" Count="1" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="178" Count="3" />
+      <LineId Id="86" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.General">
+      <LineId Id="2" Count="4" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="45" Count="1" />
+      <LineId Id="49" Count="2" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="29" Count="11" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="41" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.Hmi">
+      <LineId Id="840" Count="13" />
+      <LineId Id="864" Count="1" />
+      <LineId Id="1285" Count="13" />
+      <LineId Id="879" Count="0" />
+      <LineId Id="1180" Count="0" />
+      <LineId Id="1299" Count="13" />
+      <LineId Id="1179" Count="0" />
+      <LineId Id="1196" Count="0" />
+      <LineId Id="1313" Count="13" />
+      <LineId Id="1195" Count="0" />
+      <LineId Id="1211" Count="0" />
+      <LineId Id="1327" Count="13" />
+      <LineId Id="1210" Count="0" />
+      <LineId Id="1226" Count="0" />
+      <LineId Id="1341" Count="13" />
+      <LineId Id="1225" Count="0" />
+      <LineId Id="890" Count="1" />
+      <LineId Id="1355" Count="13" />
+      <LineId Id="905" Count="0" />
+      <LineId Id="916" Count="1" />
+      <LineId Id="1369" Count="13" />
+      <LineId Id="931" Count="0" />
+      <LineId Id="942" Count="1" />
+      <LineId Id="1383" Count="13" />
+      <LineId Id="957" Count="0" />
+      <LineId Id="1241" Count="0" />
+      <LineId Id="1397" Count="43" />
+      <LineId Id="1240" Count="0" />
+      <LineId Id="839" Count="0" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="1476" Count="8" />
+      <LineId Id="1486" Count="24" />
+      <LineId Id="991" Count="0" />
+      <LineId Id="1120" Count="2" />
+      <LineId Id="1441" Count="8" />
+      <LineId Id="1451" Count="24" />
+      <LineId Id="1156" Count="0" />
+      <LineId Id="1515" Count="0" />
+      <LineId Id="1258" Count="0" />
+      <LineId Id="1516" Count="5" />
+      <LineId Id="1265" Count="0" />
+      <LineId Id="1523" Count="2" />
+      <LineId Id="1527" Count="1" />
+      <LineId Id="1526" Count="0" />
+      <LineId Id="1529" Count="1" />
+      <LineId Id="1511" Count="0" />
+      <LineId Id="1532" Count="0" />
+      <LineId Id="1512" Count="2" />
+      <LineId Id="1158" Count="18" />
+      <LineId Id="1178" Count="0" />
+      <LineId Id="1177" Count="0" />
+      <LineId Id="1157" Count="0" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="30" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.ManualTip">
+      <LineId Id="2" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="12" Count="2" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.Permit">
+      <LineId Id="11" Count="0" />
+      <LineId Id="1" Count="1" />
+      <LineId Id="5" Count="1" />
+      <LineId Id="4" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="19" Count="3" />
+      <LineId Id="3" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.SetUp">
+      <LineId Id="1" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="18" Count="1" />
+      <LineId Id="242" Count="3" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="329" Count="1" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="115" Count="1" />
+      <LineId Id="328" Count="0" />
+      <LineId Id="327" Count="0" />
+      <LineId Id="383" Count="0" />
+      <LineId Id="382" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="172" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="347" Count="0" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="221" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="52" Count="2" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="259" Count="4" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="265" Count="5" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="272" Count="5" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="279" Count="5" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="55" Count="2" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="63" Count="2" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="332" Count="5" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="339" Count="1" />
+      <LineId Id="338" Count="0" />
+      <LineId Id="286" Count="12" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="349" Count="0" />
+      <LineId Id="348" Count="0" />
+      <LineId Id="351" Count="1" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="104" Count="1" />
+      <LineId Id="109" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="354" Count="1" />
+      <LineId Id="353" Count="0" />
+      <LineId Id="124" Count="1" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="356" Count="1" />
+      <LineId Id="363" Count="13" />
+      <LineId Id="362" Count="0" />
+      <LineId Id="203" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="230" Count="5" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="239" Count="0" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="359" Count="0" />
+      <LineId Id="378" Count="0" />
+      <LineId Id="380" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="381" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="183" Count="6" />
+      <LineId Id="301" Count="4" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="308" Count="2" />
+      <LineId Id="307" Count="0" />
+      <LineId Id="190" Count="3" />
+      <LineId Id="361" Count="0" />
+      <LineId Id="360" Count="0" />
+      <LineId Id="194" Count="3" />
+      <LineId Id="312" Count="0" />
+      <LineId Id="311" Count="0" />
+      <LineId Id="198" Count="1" />
+      <LineId Id="314" Count="6" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="341" Count="0" />
+      <LineId Id="346" Count="0" />
+      <LineId Id="345" Count="0" />
+      <LineId Id="200" Count="2" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="322" Count="0" />
+      <LineId Id="321" Count="0" />
+      <LineId Id="323" Count="3" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="385" Count="0" />
+      <LineId Id="384" Count="0" />
+      <LineId Id="386" Count="1" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="155" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.StepAuto">
+      <LineId Id="320" Count="2" />
+      <LineId Id="939" Count="0" />
+      <LineId Id="324" Count="7" />
+      <LineId Id="702" Count="0" />
+      <LineId Id="635" Count="0" />
+      <LineId Id="334" Count="6" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="703" Count="0" />
+      <LineId Id="344" Count="5" />
+      <LineId Id="351" Count="4" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="707" Count="0" />
+      <LineId Id="711" Count="0" />
+      <LineId Id="708" Count="0" />
+      <LineId Id="359" Count="3" />
+      <LineId Id="709" Count="1" />
+      <LineId Id="363" Count="7" />
+      <LineId Id="712" Count="1" />
+      <LineId Id="715" Count="7" />
+      <LineId Id="724" Count="6" />
+      <LineId Id="723" Count="0" />
+      <LineId Id="714" Count="0" />
+      <LineId Id="375" Count="3" />
+      <LineId Id="731" Count="0" />
+      <LineId Id="854" Count="0" />
+      <LineId Id="379" Count="0" />
+      <LineId Id="855" Count="0" />
+      <LineId Id="857" Count="0" />
+      <LineId Id="856" Count="0" />
+      <LineId Id="989" Count="0" />
+      <LineId Id="380" Count="1" />
+      <LineId Id="958" Count="0" />
+      <LineId Id="957" Count="0" />
+      <LineId Id="959" Count="2" />
+      <LineId Id="963" Count="1" />
+      <LineId Id="966" Count="3" />
+      <LineId Id="965" Count="0" />
+      <LineId Id="962" Count="0" />
+      <LineId Id="382" Count="0" />
+      <LineId Id="384" Count="0" />
+      <LineId Id="732" Count="1" />
+      <LineId Id="736" Count="1" />
+      <LineId Id="987" Count="1" />
+      <LineId Id="738" Count="2" />
+      <LineId Id="742" Count="0" />
+      <LineId Id="972" Count="2" />
+      <LineId Id="744" Count="2" />
+      <LineId Id="983" Count="0" />
+      <LineId Id="975" Count="1" />
+      <LineId Id="749" Count="0" />
+      <LineId Id="757" Count="0" />
+      <LineId Id="751" Count="0" />
+      <LineId Id="753" Count="2" />
+      <LineId Id="640" Count="1" />
+      <LineId Id="389" Count="0" />
+      <LineId Id="759" Count="2" />
+      <LineId Id="859" Count="0" />
+      <LineId Id="762" Count="0" />
+      <LineId Id="861" Count="0" />
+      <LineId Id="860" Count="0" />
+      <LineId Id="763" Count="0" />
+      <LineId Id="862" Count="2" />
+      <LineId Id="866" Count="2" />
+      <LineId Id="865" Count="0" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="869" Count="0" />
+      <LineId Id="398" Count="0" />
+      <LineId Id="870" Count="2" />
+      <LineId Id="874" Count="1" />
+      <LineId Id="873" Count="0" />
+      <LineId Id="399" Count="0" />
+      <LineId Id="764" Count="2" />
+      <LineId Id="768" Count="0" />
+      <LineId Id="770" Count="0" />
+      <LineId Id="876" Count="0" />
+      <LineId Id="406" Count="0" />
+      <LineId Id="877" Count="1" />
+      <LineId Id="880" Count="1" />
+      <LineId Id="879" Count="0" />
+      <LineId Id="408" Count="0" />
+      <LineId Id="772" Count="1" />
+      <LineId Id="884" Count="0" />
+      <LineId Id="774" Count="1" />
+      <LineId Id="901" Count="0" />
+      <LineId Id="776" Count="5" />
+      <LineId Id="415" Count="2" />
+      <LineId Id="782" Count="1" />
+      <LineId Id="956" Count="0" />
+      <LineId Id="944" Count="0" />
+      <LineId Id="955" Count="0" />
+      <LineId Id="945" Count="0" />
+      <LineId Id="948" Count="0" />
+      <LineId Id="946" Count="1" />
+      <LineId Id="943" Count="0" />
+      <LineId Id="970" Count="1" />
+      <LineId Id="949" Count="0" />
+      <LineId Id="990" Count="0" />
+      <LineId Id="952" Count="2" />
+      <LineId Id="951" Count="0" />
+      <LineId Id="950" Count="0" />
+      <LineId Id="911" Count="0" />
+      <LineId Id="424" Count="1" />
+      <LineId Id="790" Count="1" />
+      <LineId Id="912" Count="0" />
+      <LineId Id="792" Count="0" />
+      <LineId Id="900" Count="0" />
+      <LineId Id="793" Count="6" />
+      <LineId Id="985" Count="1" />
+      <LineId Id="913" Count="1" />
+      <LineId Id="800" Count="1" />
+      <LineId Id="916" Count="0" />
+      <LineId Id="923" Count="1" />
+      <LineId Id="981" Count="0" />
+      <LineId Id="977" Count="1" />
+      <LineId Id="929" Count="1" />
+      <LineId Id="926" Count="0" />
+      <LineId Id="925" Count="0" />
+      <LineId Id="807" Count="0" />
+      <LineId Id="933" Count="0" />
+      <LineId Id="931" Count="1" />
+      <LineId Id="982" Count="0" />
+      <LineId Id="979" Count="1" />
+      <LineId Id="808" Count="0" />
+      <LineId Id="811" Count="0" />
+      <LineId Id="816" Count="0" />
+      <LineId Id="934" Count="0" />
+      <LineId Id="845" Count="0" />
+      <LineId Id="936" Count="0" />
+      <LineId Id="935" Count="0" />
+      <LineId Id="815" Count="0" />
+      <LineId Id="683" Count="0" />
+      <LineId Id="817" Count="2" />
+      <LineId Id="821" Count="0" />
+      <LineId Id="823" Count="1" />
+      <LineId Id="436" Count="2" />
+      <LineId Id="825" Count="1" />
+      <LineId Id="895" Count="0" />
+      <LineId Id="827" Count="1" />
+      <LineId Id="896" Count="0" />
+      <LineId Id="829" Count="7" />
+      <LineId Id="897" Count="0" />
+      <LineId Id="837" Count="1" />
+      <LineId Id="445" Count="1" />
+      <LineId Id="839" Count="3" />
+      <LineId Id="898" Count="0" />
+      <LineId Id="843" Count="0" />
+      <LineId Id="471" Count="0" />
+      <LineId Id="624" Count="2" />
+      <LineId Id="938" Count="0" />
+      <LineId Id="627" Count="1" />
+      <LineId Id="636" Count="0" />
+      <LineId Id="631" Count="3" />
+      <LineId Id="318" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.StepAutoFeed">
+      <LineId Id="320" Count="2" />
+      <LineId Id="941" Count="0" />
+      <LineId Id="324" Count="5" />
+      <LineId Id="352" Count="1" />
+      <LineId Id="901" Count="7" />
+      <LineId Id="366" Count="2" />
+      <LineId Id="909" Count="4" />
+      <LineId Id="916" Count="0" />
+      <LineId Id="915" Count="0" />
+      <LineId Id="714" Count="0" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="917" Count="11" />
+      <LineId Id="931" Count="0" />
+      <LineId Id="942" Count="1" />
+      <LineId Id="932" Count="6" />
+      <LineId Id="632" Count="0" />
+      <LineId Id="940" Count="0" />
+      <LineId Id="939" Count="0" />
+      <LineId Id="633" Count="1" />
+      <LineId Id="318" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.StepInit">
+      <LineId Id="2" Count="0" />
+      <LineId Id="8" Count="11" />
+      <LineId Id="98" Count="7" />
+      <LineId Id="32" Count="1" />
+      <LineId Id="106" Count="1" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="108" Count="2" />
+      <LineId Id="40" Count="1" />
+      <LineId Id="111" Count="4" />
+      <LineId Id="47" Count="1" />
+      <LineId Id="116" Count="2" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="124" Count="4" />
+      <LineId Id="55" Count="2" />
+      <LineId Id="129" Count="2" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="141" Count="4" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="146" Count="1" />
+      <LineId Id="75" Count="1" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="148" Count="2" />
+      <LineId Id="152" Count="1" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="155" Count="5" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="162" Count="5" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="84" Count="3" />
+      <LineId Id="89" Count="1" />
+      <LineId Id="92" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Crimping_RD.Tip">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

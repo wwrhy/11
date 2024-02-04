@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_SensorVar_RD" Id="{66370694-2420-4d01-bfab-5d62c03f9d9f}">
+    <Declaration><![CDATA[TYPE UDT_SensorVar_RD :
+STRUCT
+input            : BOOL; // 传感器输入
+check            : BOOL; // 传感器异常检测,On开始 Off结束，外部触发
+isOn             : BOOL; // On延时输出
+isOff            : BOOL; // Off延时输出
+unchangeError    : BOOL; // 输入信号状态无变化异常报警
+flickerError     : BOOL; // 输入信号频繁闪烁异常报警
+alarming         : BOOL; // 报警中
+display          : BOOL; // 显示
+subDisplay       : BOOL; // 子画面显示
+count            : UINT; // 感应器异常计次
+stationNo        : UINT; // 所属工站编号
+serialNo         : UINT; // 在工站内的序号
+label            : STRING[10]; // 传感器标签
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

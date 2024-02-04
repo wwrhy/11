@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Flow_RD" Id="{33c77a6f-7b59-4f9a-b224-25d715bd07a1}">
+    <Declaration><![CDATA[TYPE UDT_Flow_RD :
+STRUCT
+timeoutEnable : BOOL; // 超时检测开启
+timeoutAlarm : Bool; // 超时报警输出
+timeoutException : Bool; // 超时例外输入
+uninterrupted : Bool; // 不停顿
+setTimeout : Time; // 超时时间设置
+prevStep : UInt; // 上一步号
+nextStep : UInt; // 下一步号
+actStep : UINT; // 当前步号
+name : STRING[20]; // 流程名称
+describe : STRING[60]; // 流程说明
+
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

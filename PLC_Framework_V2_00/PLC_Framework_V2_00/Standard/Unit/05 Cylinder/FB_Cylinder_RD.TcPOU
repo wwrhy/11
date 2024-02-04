@@ -1,0 +1,439 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Cylinder_RD" Id="{ea8e0593-1707-45f4-a18b-95274821923f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Cylinder_RD
+
+VAR_INPUT
+END_VAR
+
+VAR_OUTPUT
+END_VAR
+
+VAR_IN_OUT
+machine : UDT_Machine_RD; //
+station : UDT_Station_RD; //
+vari : UDT_CylinderVar_RD; //
+data : UDT_CylinderData_RD; //
+END_VAR
+
+VAR
+END_VAR
+
+VAR
+safetyPermit : BOOL; // 安全条件
+sensorOn : Array[0..3] of Bool; // 感应器On时的正常状态，由气缸数量决定
+sensorOff : Array[0..3] of Bool; // 感应器Off时的正常状态，由气缸数量决定
+index : UINT; //
+workValveCache : Bool; //
+homeValveCache : Bool; //
+workhmiCache : Bool; //
+homehmiCache : Bool; //
+resetCache : Bool; //
+toWorkActionTimer : TON; // 去动点位置定时器
+toHomeActionTimer : TON; // 去原点位置定时器
+atWorkPosTimer : TON; // 在动点位置定时器
+atHomePosTimer : TON; // 在原点位置定时器
+alarmTimer : TON; // 报警定时器
+isAlarmTime : BOOL; //FALSE
+activated : BOOL; //FALSE
+END_VAR
+
+VAR CONSTANT
+HOME_SENSOR_OFF_ALARM : UINT := 1; // 原点无信号报警  
+WORK_SENSOR_OFF_ALARM : UINT := 2; // 动点无信号报警
+HOME_SENSOR_ON_ALARM : UINT := 3; // 原点有信号报警
+WORK_SENSOR_ON_ALARM : UINT := 4; // 动点有信号报警
+IN_MANUAL : UINT := 5; // 气缸手动操作中
+NO_HOME_PERMIT : UINT := 6; // 原点动作条件不满足
+NO_WORK_PERMIT : UINT := 7; // 动点动作条件不满足
+ALARM_TIME : UINT := 1; // 报警延时2，报警延时后，感应器异常延时
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SetUp();
+General();
+Manual();
+Init();
+Output();
+Delay();
+Alarm();
+ManualTip();
+AutoTip();
+Cache();]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{289d5084-7913-4f0f-8824-7e0eddfd5942}">
+      <Implementation>
+        <ST><![CDATA[//----------------------------------Alarm-----------------------------------------//
+  
+  // 先复位报警，报警是优先于复位
+  IF NOT resetCache AND machine.reset THEN
+    vari.homeSensorOffAlarm := sensorOff;
+    vari.workSensorOffAlarm := sensorOff;
+    vari.homeSensorOnAlarm := sensorOff;
+    vari.workSensorOnAlarm := sensorOff;
+  END_IF;
+  
+  // 阀输出延时，有气压信号时才启动延时报警
+  toHomeActionTimer(
+                     IN := machine.airOn AND vari.homeValve,
+                     PT := UDINT_TO_TIME(data.alarmTime+data.homeTime)//防止到位延时设置得比报警延时还长，导致的误报警
+  );
+  toWorkActionTimer(
+                     IN := machine.airOn AND vari.workValve,
+                     PT := UDINT_TO_TIME(data.alarmTime+data.workTime) //防止到位延时设置得比报警延时还长，导致的误报警
+  );
+  
+  //  报警延时，用到位延时防止感应器抖动时无报警
+  alarmTimer(IN := toHomeActionTimer.Q AND NOT vari.inHome
+              OR toWorkActionTimer.Q AND NOT vari.inWork,
+              PT := DINT_TO_TIME(ALARM_TIME),
+			  Q=>isAlarmTime
+  );
+
+  // 报警输出
+  IF isAlarmTime THEN
+    FOR index := 0 TO vari.controlCylNum - 1 DO
+      IF vari.homeValve THEN   //判断感应器与阀的状态不对应就置位报警字，且OR报警字进行保持
+        vari.homeSensorOffAlarm[index] := vari.homeSensorOffAlarm[index] OR (vari.homeSensor[index] XOR sensorOn[index]);
+        vari.workSensorOnAlarm[index] := vari.workSensorOnAlarm[index] OR (vari.workSensor[index] AND sensorOn[index]);
+      ELSIF vari.workValve THEN
+        vari.workSensorOffAlarm[index] := vari.workSensorOffAlarm[index] OR (vari.workSensor[index] XOR sensorOn[index]);
+        vari.homeSensorOnAlarm[index] := vari.homeSensorOnAlarm[index] OR (vari.homeSensor[index] AND sensorOn[index]);
+      END_IF;
+    END_FOR;
+  END_IF;
+  
+  // 气缸报警中
+	FOR index := 0 TO vari.controlCylNum - 1 DO
+		IF  vari.homeSensorOffAlarm[index] 
+		    OR vari.workSensorOffAlarm[index] 
+			OR vari.homeSensorOnAlarm[index] 
+			OR vari.workSensorOnAlarm[index] 
+		THEN
+		  vari.alarming :=TRUE;
+		  EXIT;
+		ELSIF index= vari.controlCylNum - 1 THEN
+			  vari.alarming :=FALSE;
+	  	END_IF;
+  	END_FOR;
+  
+  //反馈报警中
+  IF vari.alarming THEN
+    machine.alarmCount := machine.alarmCount + 1;
+    station.report.alarming := TRUE;
+  END_IF;
+//-----------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="AutoTip" Id="{6c4b4e5e-e768-4443-83d9-274653a083f1}">
+      <Implementation>
+        <ST><![CDATA[//----------------------------------AutoTip-----------------------------------------//
+  
+  //自动提示
+  vari.autoTip := vari.manual;
+  
+  //反馈工站自动提示
+  IF vari.autoTip THEN
+    station.report.autoTip := TRUE;
+  END_IF;
+  
+//-----------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Cache" Id="{0183b091-9771-4072-b290-65be7f18d204}">
+      <Implementation>
+        <ST><![CDATA[//----------------------------------Cache-----------------------------------------//
+  
+  resetCache := machine.reset;
+  homehmiCache := vari.homehmi;
+  workhmiCache := vari.workhmi;
+  homeValveCache := vari.homeValve;
+  workValveCache := vari.workValve;
+  vari.homeInit := FALSE;
+  vari.workInit := FALSE;
+//-----------------------------------------------------------------------------------//
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Delay" Id="{008c2e1a-f611-49d1-be9c-9c40d0db8932}">
+      <Implementation>
+        <ST><![CDATA[//----------------------------------Delay-------------------------------------------//
+  //  原点延时
+  IF vari.homeValve THEN
+    vari.inWork := FALSE;
+    atHomePosTimer(
+                    IN := machine.airOn
+                    AND vari.homeValve
+                    AND NOT vari.workValve
+                    AND vari.homeSensor[0] = sensorOn[0]     
+					AND vari.homeSensor[1] = sensorOn[1]  
+					AND vari.homeSensor[2] = sensorOn[2]  
+					AND vari.homeSensor[3] = sensorOn[3]  //已配置的原点感应器ON
+					AND NOT vari.workSensor[0]
+					AND NOT vari.workSensor[1]
+					AND NOT vari.workSensor[2]
+                    AND NOT vari.workSensor[3],   //所有动点感应OFF
+                    PT := UDINT_TO_TIME(data.homeTime),
+                    Q => vari.inHome);
+  ELSIF vari.workValve THEN
+    // 动点延时
+    vari.inHome := FALSE;
+    atWorkPosTimer(
+                    IN := machine.airOn
+                    AND NOT vari.homeValve
+                    AND vari.workValve
+					AND NOT vari.homeSensor[0]  
+					AND NOT vari.homeSensor[1]  
+					AND NOT vari.homeSensor[2]  
+                    AND NOT vari.homeSensor[3]   //所有原点感应OFF
+                    AND vari.workSensor[0] = sensorOn[0],    //已配置的动点感应器ON
+                    PT := UDINT_TO_TIME(data.workTime),
+                    Q => vari.inWork);
+  ELSE
+    vari.inHome := FALSE;
+    vari.inWork := FALSE;
+  END_IF;
+
+  //  气缸动作用时
+  IF vari.busy THEN
+    IF vari.inHome THEN
+      vari.toHomeActionTime := TIME_TO_UDINT(toHomeActionTimer.ET);
+    END_IF;
+    IF vari.inWork THEN
+      vari.toWorkActionTime := TIME_TO_UDINT(toWorkActionTimer.ET);
+    END_IF;
+  ELSIF NOT homeValveCache AND vari.homeValve THEN
+    vari.toHomeActionTime := 0;
+  ELSIF NOT workValveCache AND vari.workValve THEN
+    vari.toWorkActionTime := 0;
+  END_IF;
+  
+  // Busy信号，阀有输出且未到位对于点就是Busy
+  vari.busy := NOT vari.alarming
+  AND (vari.homeValve AND NOT vari.workValve AND NOT vari.inHome
+  OR vari.workValve AND NOT vari.homeValve AND NOT vari.inWork);
+  
+//-----------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{21b076d3-e2ae-4818-9a6a-8a2f17f659f5}">
+      <Implementation>
+        <ST><![CDATA[//----------------------------------General-----------------------------------------//
+  
+  //安全条件
+  safetyPermit := machine.eStop
+  AND machine.safety
+  AND machine.airOn
+  AND machine.allDoorClosed;
+  
+  IF vari.controlCylNum > 0 THEN
+    // 屏蔽气缸感应器时,感应器的状态直接与电磁阀输出关联
+    FOR index := 0 TO vari.controlCylNum - 1 DO
+      IF data.homeSensorDisabled[index] THEN
+        vari.homeSensor[index] := vari.homeValve;
+      END_IF;
+      IF data.workSensorDisabled[index] THEN
+        vari.workSensor[index] := vari.workValve;
+      END_IF;
+    END_FOR;
+    	
+  END_IF;
+  
+//-----------------------------------------------------------------------------------//
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Init" Id="{bdccb1c1-d951-4ada-b4c6-ccef46b1a1bf}">
+      <Implementation>
+        <ST><![CDATA[//----------------------------------Init-----------------------------------------//
+  
+  IF safetyPermit THEN
+    IF vari.homeInit THEN
+      vari.enabled := TRUE;
+      vari.manual := FALSE;
+      vari.auto := FALSE;
+    ELSIF vari.workInit THEN
+      vari.enabled := TRUE;
+      vari.manual := FALSE;
+      vari.auto := TRUE;
+    END_IF;
+  ELSIF NOT machine.eStop AND vari.estoppedReInit THEN
+    vari.enabled := FALSE;  //  当estoppedReInit :=true时急停会断开使能
+  END_IF;
+  
+//-----------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Manual" Id="{2eb96106-dbdc-4aaf-831e-68b756a4b14a}">
+      <Implementation>
+        <ST><![CDATA[//----------------------------------Manual-----------------------------------------//
+  
+  IF safetyPermit AND machine.manualMode THEN
+    vari.homeForbidIcon := NOT vari.homePermit;//原点禁止图标
+    IF vari.homePermit AND homehmiCache AND NOT vari.homehmi THEN
+      vari.manual := vari.auto;
+      vari.enabled := TRUE;
+    END_IF;
+    vari.workForbidIcon := NOT vari.workPermit;//动点禁止图标
+    IF vari.workPermit AND workhmiCache AND NOT vari.workhmi THEN
+      vari.manual := NOT vari.auto;
+      vari.enabled := TRUE;
+    END_IF;
+  ELSE
+    vari.homeForbidIcon := TRUE;
+    vari.workForbidIcon := TRUE;
+  END_IF;
+  
+  vari.homeManual := vari.manual AND vari.auto;
+  vari.workManual := vari.manual AND NOT vari.auto;
+  
+//-----------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ManualTip" Id="{df93d6d1-9942-4b8d-8fba-03cb7d3ca00b}">
+      <Implementation>
+        <ST><![CDATA[//----------------------------------ManualTip--------------------------------------//
+  
+  IF machine.tipReset THEN
+    vari.noHomePermitManualTip := FALSE;
+    vari.noWorkPermitManualTip := FALSE;
+  ELSIF vari.homehmi OR vari.workhmi THEN
+    machine.presetManualTips[0] := NOT machine.eStop;     //急停中,无法操作
+    machine.presetManualTips[1] := NOT machine.safety;    //安全条件不满足,无法操作
+    machine.presetManualTips[2] := NOT machine.allDoorClosed;  //安全门未锁好,无法操作
+    machine.presetManualTips[3] := NOT machine.airOn;     //气压不足,无法操作
+    machine.presetManualTips[4] := NOT machine.manualMode;//不在手动模式,无法操作
+    
+    IF safetyPermit AND machine.manualMode THEN
+      IF NOT vari.homePermit AND vari.homehmi THEN
+        vari.noHomePermitManualTip := TRUE;//原点条件不满足，用于置位外部提示信息用
+      ELSIF NOT vari.workPermit AND vari.workhmi THEN
+        vari.noWorkPermitManualTip := TRUE;//动点条件不满足，用于置位外部提示信息用
+      END_IF;
+    END_IF;
+    
+  END_IF;
+  
+  //反馈工站手动提示
+  IF vari.noHomePermitManualTip
+    OR vari.noWorkPermitManualTip
+  THEN
+    station.report.manualTip := TRUE;
+  END_IF;
+  
+//-----------------------------------------------------------------------------------//
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Output" Id="{3e137f3e-2937-4d51-b15b-e0cfd0d34cb5}">
+      <Implementation>
+        <ST><![CDATA[//----------------------------------Output-----------------------------------------//
+  
+  //  原点阀输出
+  vari.homeValve := vari.enabled
+  AND NOT vari.release
+  AND NOT (vari.manual XOR vari.auto);
+  
+  //  动点阀输出
+  vari.workValve := vari.enabled
+  AND NOT vari.release
+  AND (vari.manual XOR vari.auto);
+  
+//-----------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{bd0ce7c6-b8dc-4e8e-954e-a8f81fae3364}">
+      <Implementation>
+        <ST><![CDATA[//----------------------------------SetUp-----------------------------------------//
+  
+  IF NOT activated THEN
+	activated:=TRUE;
+	vari.homePermit:=TRUE;
+	vari.workPermit:=TRUE;
+	vari.controlCylNum:=1;
+	vari.stationNo:=0;
+	IF data.alarmTime = 0 THEN
+		data.alarmTime :=5000;
+	END_IF;
+  END_IF;
+    //根据气缸数，确定打开时传感器的状态,最大4个气缸
+    vari.controlCylNum := LIMIT(UINT#1, vari.controlCylNum, UINT#4);
+    FOR index := 0 TO 3 DO
+      sensorOff[index] := FALSE;
+      IF index < vari.controlCylNum THEN
+        sensorOn[index] := TRUE;
+      ELSE
+        sensorOn[index] := FALSE;
+      END_IF;
+    END_FOR;
+    	
+    //画面显示
+	vari.display := vari.stationNo >0;
+
+    //气缸显示模式=气缸控制的数量
+    vari.displayCylNum := vari.controlCylNum;
+    
+    
+	
+  
+//-----------------------------------------------------------------------------------//]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_Cylinder_RD">
+      <LineId Id="69" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="67" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_Cylinder_RD.Alarm">
+      <LineId Id="2" Count="58" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Cylinder_RD.AutoTip">
+      <LineId Id="2" Count="9" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Cylinder_RD.Cache">
+      <LineId Id="299" Count="10" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Cylinder_RD.Delay">
+      <LineId Id="2" Count="55" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Cylinder_RD.General">
+      <LineId Id="2" Count="21" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Cylinder_RD.Init">
+      <LineId Id="2" Count="15" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Cylinder_RD.Manual">
+      <LineId Id="2" Count="20" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Cylinder_RD.ManualTip">
+      <LineId Id="2" Count="29" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Cylinder_RD.Output">
+      <LineId Id="2" Count="11" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Cylinder_RD.SetUp">
+      <LineId Id="2" Count="26" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="31" Count="2" />
+      <LineId Id="30" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

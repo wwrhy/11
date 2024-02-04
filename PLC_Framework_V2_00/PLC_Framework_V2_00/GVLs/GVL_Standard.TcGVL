@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL_Standard" Id="{faf0a195-549a-4fda-b4a5-ca6ccf90e7ee}">
+    <Declaration><![CDATA[VAR_GLOBAL
+
+Machine : ARRAY[1..MACHINE_NUM] OF UDT_Machine_RD; 
+Station : ARRAY[1..STATION_NUM] OF UDT_Station_RD;
+CylinderVar : ARRAY[0..CYLINDER_NUM] OF UDT_CylinderVar_RD;
+CylinderData : ARRAY[0..CYLINDER_NUM] OF UDT_CylinderData_RD;
+AxisVar : ARRAY[0..AXIS_NUM] OF UDT_AxisVar_RD; 
+AxisData : ARRAY[0..AXIS_NUM] OF UDT_AxisData_RD; 
+Estop : ARRAY[0..ESTOP_NUM] OF UDT_Estop_RD; //
+SafetyDoor : ARRAY[0..SAFETY_DOOR_NUM] OF UDT_SafetyDoor_RD; //
+SensorVar : ARRAY[0..SENSOR_NUM] OF UDT_SensorVar_RD; //
+SensorData : ARRAY[0..SENSOR_NUM] OF UDT_SensorData_RD; //
+DelayVar : ARRAY[0..DELAY_NUM] OF UDT_DelayVar_RD; //
+DelayData : ARRAY[0..DELAY_NUM] OF UDT_DelayData_RD; //
+MotorVar : ARRAY[0..MOTOR_NUM] OF UDT_MotorVar_RD; //
+MotorData : ARRAY[0..MOTOR_NUM] OF UDT_MotorData_RD; //
+ValveVar : ARRAY[0..VALVE_NUM] OF UDT_ValveVar_RD; //
+ValveData : ARRAY[0..VALVE_NUM] OF UDT_ValveData_RD; //
+
+
+ProduceVar : ARRAY[0..PRODUCE_NUM] OF UDT_produceVar_RD; 
+ProduceData : ARRAY[0..PRODUCE_NUM] OF UDT_produceData_RD; 
+ProduceDataRecord : ARRAY[0..PRODUCE_NUM] OF UDT_ProduceDataRecord_RD;
+badVar : ARRAY[0..BAD_TYPE_NUM] OF UDT_badVar_RD; 
+badData : ARRAY[0..BAD_TYPE_NUM] OF UDT_badData_RD; 
+WearPartVar : ARRAY[0..WEAR_PART_NUM] OF UDT_WearPartVar_RD; //
+WearPartData : ARRAY[0..WEAR_PART_NUM] OF UDT_WearPartData_RD; //
+
+OeeVar : ARRAY[0..OEE_NUM] OF UDT_OeeVar_RD; 
+OeeData : ARRAY[0..OEE_NUM] OF UDT_OeeData_RD; 
+OeeLastData : ARRAY[0..OEE_NUM] OF UDT_OeeData_RD;
+
+Hmi : ARRAY[1..HMI_NUM] OF UDT_Hmi_RD;
+
+System : UDT_System_RD;
+KeyenceScanVar : ARRAY[0..OEE_NUM] OF UDT_KeyenceScanVar_RD; 
+KeyenceScanData : ARRAY[0..OEE_NUM] OF UDT_KeyenceScanData_RD; 
+
+  
+END_VAR
+
+VAR_GLOBAL
+  
+fbMachine : ARRAY[1..MACHINE_NUM] OF FB_Machine_RD; //
+fbstation : ARRAY[1..STATION_NUM] OF FB_Station_RD; //
+fbCylinder : ARRAY[0..CYLINDER_NUM] OF FB_Cylinder_RD; //
+fbAxis : ARRAY[0..AXIS_NUM] OF FB_Axis_RD; 
+fbEstop : ARRAY[0..ESTOP_NUM] OF FB_Estop_RD; //
+fbSafetyDoor : ARRAY[0..SAFETY_DOOR_NUM] OF FB_SafetyDoor_RD; //
+fbSensor : ARRAY[0..SENSOR_NUM] OF FB_Sensor_RD; //
+fbDelay : ARRAY[0..DELAY_NUM] OF FB_Delay_RD; //
+fbMotor : ARRAY[0..MOTOR_NUM] OF FB_Motor_RD; //
+
+fbProduce : ARRAY[1..PRODUCE_NUM] OF FB_Produce; //
+fbWearPart : ARRAY[1..WEAR_PART_NUM] OF FB_WearPart;//
+
+fbOee : ARRAY[1..OEE_NUM] OF FB_Oee_RD; //
+fbKeyenceScan : ARRAY[0..10] OF FB_KeyenceScan_RD; //
+fbTerminal : ARRAY[0..10] OF FB_Terminal_RD; //
+fbRackFeeder : ARRAY[0..10] OF FB_RackFeeder_RD; //
+fbValve : ARRAY[0..10] OF FB_Valve_RD; //
+
+fbGetPlcClock : FB_GetPlcClock; 
+
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

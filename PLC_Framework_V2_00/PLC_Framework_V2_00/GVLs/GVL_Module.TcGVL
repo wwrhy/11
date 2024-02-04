@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL_Module" Id="{e2f64842-2b35-4ecd-bf41-f5ec4061fdc6}">
+    <Declaration><![CDATA[VAR_GLOBAL
+ {attribute 'OPC.UA.DA' := '1'}
+  JS : UDT_JacketStripping_RD;
+ {attribute 'OPC.UA.DA' := '1'}  
+  BF : UDT_BraidFlaring_RD;
+{attribute 'OPC.UA.DA' := '1'}  
+  CP : UDT_Crimping_RD;
+END_VAR
+
+VAR_GLOBAL PERSISTENT
+  {attribute 'OPC.UA.DA' := '1'}
+  JSData : UDT_Data_JacketStripping_RD;
+  {attribute 'OPC.UA.DA' := '1'}  
+  BFData : UDT_Data_BraidFlaring_RD;
+  {attribute 'OPC.UA.DA' := '1'}  
+  CPData : UDT_Data_Crimping_RD;
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

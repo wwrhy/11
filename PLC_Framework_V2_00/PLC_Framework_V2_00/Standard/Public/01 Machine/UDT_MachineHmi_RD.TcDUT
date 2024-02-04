@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_MachineHmi_RD" Id="{e8eab01f-a44c-456e-ab0a-b875d9843426}">
+    <Declaration><![CDATA[TYPE UDT_MachineHmi_RD :
+STRUCT
+eStop : BOOL; //急停
+airOn : BOOL; //气压
+allDoorClosed : BOOL; //安全门
+ready : Bool; //准备就绪
+running : Bool; //运行中
+alarming : Bool; //报警中
+paused : Bool; //暂停中
+stopping : Bool; //停止中
+tipReset : Bool; // 提示复位
+initConfirm : Bool; // 整机初始化确认
+emptyConfirm : Bool; // 清料确认
+emptyhmi : Bool; // 清料hmi
+emptying : Bool; // 清料中
+emptyDone : Bool; // 清料完成
+dummying : Bool; // 点检中
+dummyDone : Bool; // 点检完成
+dryRun : Bool; // 空跑
+startButtonLight : Bool; // 启动按钮指示灯
+stopButtonLight : Bool; // 停止按钮指示灯
+resetButtonLight : Bool; // 复位按钮指示灯
+pauseButtonLight : Bool; // 暂停按钮指示灯
+initButtonLight : Bool; // 初始化按钮指示灯
+starthmi : Bool; // 启动hmi
+stophmi : Bool; // 停止hmi
+resethmi : Bool; // 复位hmi
+pausehmi : Bool; // 暂停hmi
+inithmi : Bool; // 整机初始化hmi
+manualModehmi : Bool; // 手动模式hmi
+autoModehmi : Bool; // 自动模式hmi
+jogModehmi : Bool; // 寸动模式hmi
+setupModehmi : Bool; // 调试模式hmi
+lampTesthmi : Bool; // 指示灯测试hmi
+floodlighthmi : Bool; // 照明灯光打开hmi
+alarmTopBarDisplay : Bool; // 报警顶栏显示
+actAlarmTimes : UInt; // 当前发生报警条数
+status : UInt; // 整机状态显示
+initStatus : UInt; // 整机初始化状态显示
+mode : UInt; // 操作模式
+haveControlhmiNo : Int; // 当前拥有该机器控制权的hmi编号
+requestControlhmiNo : Int; // 请求该机器控制权的hmi编号
+requestCountdown : Int; // hmi请求控制权倒计时
+actLanguage : Int; // 当前使用语言
+mainScreenNo : Int; // 主画面编号
+popup : Int; // 触摸屏弹窗
+flow : Array[0..7] of UDT_FlowHmi_RD; // 流程
+sidebar : UDT_LeftSidebar_RD; //
+number : Int; // 机器编号
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

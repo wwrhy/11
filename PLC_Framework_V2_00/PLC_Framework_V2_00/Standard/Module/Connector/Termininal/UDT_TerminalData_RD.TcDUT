@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_TerminalData_RD" Id="{e594c747-6c2c-4d9b-94d0-3ebb311977b7}">
+    <Declaration><![CDATA[TYPE UDT_TerminalData_RD :
+STRUCT
+timeout           : TIME; //对端子超时
+terminalSensor    : UDT_SensorData_RD; //端子有无感应
+coverSensor       : UDT_SensorData_RD; //盖板感应
+pinSensor         : UDT_SensorData_RD; //对Pin感应
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

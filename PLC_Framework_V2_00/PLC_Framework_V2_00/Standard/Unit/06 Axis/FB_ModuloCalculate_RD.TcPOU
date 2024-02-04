@@ -1,0 +1,140 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ModuloCalculate_RD" Id="{3358d87f-7013-4240-8b48-afe8725d3b59}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ModuloCalculate_RD
+VAR_INPUT
+actPos : REAL; // 当前坐标
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR_IN_OUT
+
+modulo : UDT_ModuloProperty_RD; //
+calibratePos : Real; // 设置标定位置坐标
+
+END_VAR
+VAR
+calibratePosCache : REAL; //标定位置缓存
+calibrateOffsetCache : Real; //标定位置偏移缓存
+offset : Real; //偏移坐标
+actPosModAbs : Real; // 当前模长位置
+actDis : Real; //
+closestDis : Real; //
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ACT();]]></ST>
+    </Implementation>
+    <Action Name="ACT" Id="{652d9e97-651d-4e9f-8b28-c1752811b694}">
+      <Implementation>
+        <ST><![CDATA[IF modulo.factor > 0
+  AND modulo.divisor >=1
+  AND modulo.stepPoint > 0
+THEN
+  IF calibratePosCache <> calibratePos
+    OR calibrateOffsetCache <> modulo.calibrateOffset
+    OR calibratePosCache = 0.0
+  THEN
+    calibratePos :=
+    Modabs
+    (calibratePos,
+     modulo.factor
+    );
+    
+    offset := modulo.calibrateOffset +
+    LREAL_TO_REAL(Modabs(calibratePos,modulo.factor / modulo.divisor));
+    
+    calibratePosCache := calibratePos;
+    calibrateOffsetCache := modulo.calibrateOffset;
+  END_IF;
+  
+  actPosModAbs :=
+  LREAL_TO_REAL(Modabs(actPos - offset,modulo.factor));
+  
+  modulo.actPoint:= LINT_TO_INT(TRUNC(actPosModAbs * modulo.divisor / modulo.factor));
+  
+  actDis := actPosModAbs - modulo.actPoint * modulo.factor / modulo.divisor;
+  
+  IF actDis < modulo.factor / modulo.divisor / 2 THEN
+    modulo.closestPoint := modulo.actPoint;
+    closestDis := actDis;
+  ELSE
+    modulo.closestPoint := REAL_TO_INT
+    (LREAL_TO_REAL(Modabs(modulo.actPoint + 1,modulo.divisor))
+    );
+    closestDis := MIN
+    (
+     LREAL_TO_REAL(Modabs(actPosModAbs- modulo.closestPoint * modulo.factor / modulo.divisor,modulo.factor)),
+     
+     LREAL_TO_REAL(Modabs(modulo.closestPoint * modulo.factor / modulo.divisor - actPosModAbs,modulo.factor)));
+  END_IF;
+  
+  modulo.inClosestPos := ABS(closestDis)
+  <= ABS(modulo.tolerance);
+  
+  modulo.previousPoint := REAL_TO_INT
+  (LREAL_TO_REAL(Modabs(SEL(modulo.inClosestPos,modulo.actPoint,DINT_TO_INT(modulo.closestPoint - modulo.stepPoint)),modulo.divisor)));
+
+  modulo.nextPoint := REAL_TO_INT
+  (LREAL_TO_REAL(Modabs(SEL(modulo.inClosestPos,modulo.actPoint,modulo.closestPoint) + modulo.stepPoint,modulo.divisor)));
+  
+  modulo.autoPoint := REAL_TO_INT
+  (LREAL_TO_REAL(Modabs(modulo.autoPoint, modulo.divisor)));
+  
+  modulo.autoNextPoint := REAL_TO_INT
+  (LREAL_TO_REAL(Modabs(modulo.autoPoint + modulo.stepPoint,modulo.divisor)));
+  
+  modulo.closestPos := offset
+  + modulo.closestPoint * modulo.factor / modulo.divisor;
+  
+  modulo.previousPos := 
+  LREAL_TO_REAL(Modabs(offset+ modulo.previousPoint * modulo.factor / modulo.divisor,modulo.factor));
+  
+  modulo.nextPos := offset
+  + modulo.nextPoint * modulo.factor / modulo.divisor;
+  
+  modulo.autoPos := offset
+  + modulo.autoPoint * modulo.factor / modulo.divisor;
+  
+  modulo.autoNextPos := offset
+  + modulo.autoNextPoint * modulo.factor / modulo.divisor;
+  
+  modulo.inCalibratePos := ABS(actPos - calibratePos) <= modulo.tolerance
+  OR ABS(actPos - calibratePos) >= modulo.factor - modulo.tolerance;
+  
+  modulo.inAutoPos := modulo.inClosestPos
+  AND modulo.closestPoint = modulo.autoPoint;
+  modulo.inAutoNextPos := modulo.inClosestPos
+  AND modulo.closestPoint = modulo.autoNextPoint;
+ELSE
+  modulo.inClosestPos := 0;
+  modulo.inCalibratePos := 0;
+  modulo.inAutoPos := 0;
+  modulo.inAutoNextPos := 0;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_ModuloCalculate_RD">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ModuloCalculate_RD.ACT">
+      <LineId Id="2" Count="15" />
+      <LineId Id="21" Count="6" />
+      <LineId Id="31" Count="3" />
+      <LineId Id="36" Count="6" />
+      <LineId Id="46" Count="2" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="54" Count="1" />
+      <LineId Id="61" Count="6" />
+      <LineId Id="76" Count="2" />
+      <LineId Id="87" Count="2" />
+      <LineId Id="94" Count="2" />
+      <LineId Id="101" Count="5" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="111" Count="21" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

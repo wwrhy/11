@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_ValveVar_RD" Id="{27b3362f-6f11-4f3d-8d73-3153bbcab5b0}">
+    <Declaration><![CDATA[TYPE UDT_ValveVar_RD :
+STRUCT
+hmi        : BOOL; // HMI
+manual     : BOOL; // 手动执行
+allow      : BOOL; // 允许操作
+forbidIcon : BOOL; // 禁止图标
+permit     : BOOL; // 动作条件
+auto       : BOOL; // 自动执行
+init       : BOOL; // 初始化执行
+manualTip  : BOOL; // 手动提示
+autoTip    : BOOL; // 自动提示
+isOn       : BOOL; // 延时到位
+valve      : BOOL; // 阀输出
+stationNo  : UINT; // 所属工站编号
+serialNo   : UINT; // HMI显示序号
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

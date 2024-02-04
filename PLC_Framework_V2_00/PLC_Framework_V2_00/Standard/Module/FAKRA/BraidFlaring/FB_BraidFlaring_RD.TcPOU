@@ -1,0 +1,1291 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_BraidFlaring_RD" Id="{240b0672-54f8-4f58-913c-4bb79a05e525}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_BraidFlaring_RD
+
+VAR_IN_OUT
+  BraidFlaring : UDT_BraidFlaring_RD;
+  BraidFlaringData : UDT_Data_BraidFlaring_RD;
+END_VAR
+
+VAR_INPUT
+	//BraidFlaring 模组接口
+  HomeSensor_gripCyl : BOOL;
+  WorkSensor_gripCyl : BOOL;
+  HomeValve_gripCyl : BOOL;
+  WorkValve_gripCyl : BOOL;
+  HomeLabel_gripCyl : STRING[10];
+  WorkLabel_gripCyl : STRING[10];
+   
+  HomeSensor_jackCyl : BOOL;
+  WorkSensor_jackCyl : BOOL;
+  HomeValve_jackCyl : BOOL;
+  WorkValve_jackCyl : BOOL;
+  HomeLabel_jackCyl : STRING[10];
+  WorkLabel_jackCyl : STRING[10];
+  
+  HomeSensor_pushCyl : BOOL;
+  WorkSensor_pushCyl : BOOL;
+  HomeValve_pushCyl : BOOL;
+  WorkValve_pushCyl : BOOL;
+  HomeLabel_pushCyl : STRING[10];
+  WorkLabel_pushCyl : STRING[10];
+  
+  HomeValve_blow    : BOOL;
+  WorkValve_blow    : BOOL;
+  
+  HomeValve_vacuum  : BOOL;
+  WorkValve_vacuum  : BOOL;
+  
+  pushRodInPos      : BOOL;
+  
+  //GS 传送线接口
+  HomeSensor_fixCyl : BOOL;
+  WorkSensor_fixCyl : BOOL;
+  HomeValve_fixCyl : BOOL;
+  WorkValve_fixCyl : BOOL;
+  HomeLabel_fixCyl : STRING[10];
+  WorkLabel_fixCyl : STRING[10];
+  
+  HomeSensor_stepFixCyl : BOOL;
+  WorkSensor_stepFixCyl : BOOL;
+  HomeValve_stepFixCyl : BOOL;
+  WorkValve_stepFixCyl : BOOL;
+  HomeLabel_stepFixCyl : STRING[10];
+  WorkLabel_stepFixCyl : STRING[10];
+END_VAR
+
+VAR  
+  machine      		: UDT_Machine_RD;
+  station      		: UDT_Station_RD;
+  
+  gripCyl	   		:UDT_CylinderVar_RD;
+  jackCyl   		:UDT_CylinderVar_RD;
+  pushCyl   		:UDT_CylinderVar_RD;
+  fixCyl       		:UDT_CylinderVar_RD;
+  stepFixCyl    	:UDT_CylinderVar_RD; 
+  blow              :UDT_CylinderVar_RD;
+  vacuum            :UDT_CylinderVar_RD;
+  
+  transferAxis 		: UDT_AxisVar_RD; 
+  rotateAxis 		: UDT_AxisVar_RD;  
+  
+ 
+  fB_BraidFlaring		: FB_Station_RD;
+  fB_gripCyl			: FB_Cylinder_RD;
+  fB_jackCyl			: FB_Cylinder_RD;
+  fB_pushCyl			: FB_Cylinder_RD;
+  fB_fixCyl         	: FB_Cylinder_RD;  
+  fB_stepFixCyl     	: FB_Cylinder_RD; 
+  fB_blow               : FB_Cylinder_RD;
+  fB_vacuum             : FB_Cylinder_RD;
+  
+  fb_transferAxis		: FB_Axis_RD;
+  fb_rotateAxis			: FB_Axis_RD;
+  
+  activated             : BOOL;
+  
+  tonPushRodNotInPos    : TON;
+  pushRodNotInPos       : BOOL;
+  
+  RunningExcept         : BOOL;  //运行中除外
+  
+END_VAR
+
+VAR CONSTANT
+  INIT :INT := 0;
+  AUTO :INT := 1;
+  AUTO2 :INT :=2;
+  
+  //TransferAxis
+  HOME_TRANS              : UINT:=1;
+  FIRST_CLIP_TRANS        : UINT:=2;
+  SECOND_CLIP_TRANS		  : UINT:=3;
+  THIRD_CLIP_TRANS		  : UINT:=4;
+  PUSH_STRAT_TRANS        : UINT:=5;
+  PUSH_END_TRANS          : UINT:=6;
+//  CLIP_TRANS              : UINT:=7;
+  
+    //rotateAxis
+  HOME_ROTATE             : UINT:=1;
+  FIRST_CLIP_ROTATE       : UINT:=2;
+  SECOND_CLIP_ROTATE      : UINT:=3;
+  THIRD_CLIP_ROTATE 	  : UINT:=4;
+  PUSH_ROTATE             : UINT:=5; 
+//  CLIP_ROTATE             : UINT:=6; 
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SetUp();
+Command();
+General();
+Permit();
+StepInit();
+StepAuto();
+Alarm();
+AutoTip();
+ManualTip();
+Tip();
+Hmi();
+]]></ST>
+    </Implementation>
+    <Action Name="Alarm" Id="{7b786714-a51b-489f-9b77-cdbaa567eebc}">
+      <Implementation>
+        <ST><![CDATA[BraidFlaring.Message.userAlarms[0] := gripCyl.homeSensorOffAlarm[0];
+BraidFlaring.Message.userAlarms[1] := gripCyl.homeSensorOnAlarm[0];
+BraidFlaring.Message.userAlarms[2] := gripCyl.workSensorOffAlarm[0];
+BraidFlaring.Message.userAlarms[3] := gripCyl.workSensorOnAlarm[0];
+
+BraidFlaring.Message.userAlarms[4] := jackCyl.homeSensorOffAlarm[0];
+BraidFlaring.Message.userAlarms[5] := jackCyl.homeSensorOnAlarm[0];
+BraidFlaring.Message.userAlarms[6] := jackCyl.workSensorOffAlarm[0];
+BraidFlaring.Message.userAlarms[7] := jackCyl.workSensorOnAlarm[0];
+
+BraidFlaring.Message.userAlarms[8] := pushCyl.homeSensorOffAlarm[0];
+BraidFlaring.Message.userAlarms[9] := pushCyl.homeSensorOnAlarm[0];
+BraidFlaring.Message.userAlarms[10] := pushCyl.workSensorOffAlarm[0];
+BraidFlaring.Message.userAlarms[11] := pushCyl.workSensorOnAlarm[0];
+
+BraidFlaring.Message.userAlarms[12] := fixCyl.homeSensorOffAlarm[0];
+BraidFlaring.Message.userAlarms[13] := fixCyl.homeSensorOnAlarm[0];
+BraidFlaring.Message.userAlarms[14] := fixCyl.workSensorOffAlarm[0];
+BraidFlaring.Message.userAlarms[15] := fixCyl.workSensorOnAlarm[0];
+
+BraidFlaring.Message.userAlarms[16] := stepFixCyl.homeSensorOffAlarm[0];
+BraidFlaring.Message.userAlarms[17] := stepFixCyl.homeSensorOnAlarm[0];
+BraidFlaring.Message.userAlarms[18] := stepFixCyl.workSensorOffAlarm[0];
+BraidFlaring.Message.userAlarms[19] := stepFixCyl.workSensorOnAlarm[0];
+
+BraidFlaring.Message.userAlarms[20] := transferAxis.alarming;
+BraidFlaring.Message.userAlarms[21] := rotateAxis.alarming;
+
+tonPushRodNotInPos(IN:=NOT pushRodInPos,PT:=T#1S,Q=>,ET=>);
+IF tonPushRodNotInPos.Q THEN
+	pushRodNotInPos:=TRUE;
+END_IF
+
+
+BraidFlaring.Message.presetAlarms[0] :=station.presetAlarms[0];//工站初始化超时报警
+
+IF machine.reset
+THEN
+	pushRodNotInPos:=FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="AutoTip" Id="{6317f8fd-d860-4b1a-a3e9-996853426c78}">
+      <Implementation>
+        <ST><![CDATA[BraidFlaring.Message.userAutoTips[0] := gripCyl.autoTip ;
+BraidFlaring.Message.userAutoTips[1] := jackCyl.autoTip ;
+BraidFlaring.Message.userAutoTips[2] := pushCyl.autoTip ;
+BraidFlaring.Message.userAutoTips[3] := fixCyl.autoTip ;
+BraidFlaring.Message.userAutoTips[4] := stepFixCyl.autoTip ;
+
+BraidFlaring.Message.userAutoTips[5] := transferAxis.notPowerOnAutoTip;
+BraidFlaring.Message.userAutoTips[6] := transferAxis.notHomeAutoTip;
+BraidFlaring.Message.userAutoTips[7] := transferAxis.notInPosAutoTip =HOME_TRANS;
+BraidFlaring.Message.userAutoTips[8] := transferAxis.notInPosAutoTip =FIRST_CLIP_TRANS;
+BraidFlaring.Message.userAutoTips[9] := transferAxis.notInPosAutoTip =SECOND_CLIP_TRANS;
+BraidFlaring.Message.userAutoTips[10] := transferAxis.notInPosAutoTip =THIRD_CLIP_TRANS;
+BraidFlaring.Message.userAutoTips[11] := transferAxis.notInPosAutoTip =PUSH_STRAT_TRANS;
+BraidFlaring.Message.userAutoTips[12] := transferAxis.notInPosAutoTip =PUSH_END_TRANS;
+//BraidFlaring.Message.userAutoTips[13] := transferAxis.notInPosAutoTip =CLIP_TRANS;
+
+BraidFlaring.Message.userAutoTips[14] := rotateAxis.notPowerOnAutoTip;
+BraidFlaring.Message.userAutoTips[15] := rotateAxis.notHomeAutoTip;
+BraidFlaring.Message.userAutoTips[16] := rotateAxis.notInPosAutoTip = HOME_ROTATE; 
+BraidFlaring.Message.userAutoTips[17] := rotateAxis.notInPosAutoTip = FIRST_CLIP_ROTATE; 
+BraidFlaring.Message.userAutoTips[18] := rotateAxis.notInPosAutoTip = SECOND_CLIP_ROTATE; 
+BraidFlaring.Message.userAutoTips[19] := rotateAxis.notInPosAutoTip = THIRD_CLIP_ROTATE;
+BraidFlaring.Message.userAutoTips[20] := rotateAxis.notInPosAutoTip = PUSH_ROTATE;  
+//BraidFlaring.Message.userAutoTips[21] := rotateAxis.notInPosAutoTip = CLIP_ROTATE; 
+
+
+BraidFlaring.Message.presetAutoTips[0] :=   station.presetAutoTips[0]; //工站未初始化
+BraidFlaring.Message.presetAutoTips[1] :=   station.presetAutoTips[1];   //工站单循环中
+BraidFlaring.Message.presetAutoTips[2] :=   station.presetAutoTips[2];   //工站运行条件不足
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Command" Id="{b45393ee-b05d-44b9-95cc-60085676a3df}">
+      <Implementation>
+        <ST><![CDATA[IF activated THEN 
+  BraidFlaring.UnitState :=ENUM_UnitState.OPERATIONAL;
+  ELSE
+  BraidFlaring.UnitState :=ENUM_UnitState.DISABLED;  
+END_IF
+
+
+IF  station.initDone AND  station.flow[0].actStep = 0  
+  	AND gripCyl.inHome AND jackCyl.inHome AND pushCyl.inHome 
+    AND fixCyl.inHome AND stepFixCyl.inHome AND blow.inHome AND vacuum.inHome
+  	AND transferAxis.inPos[HOME_TRANS] AND rotateAxis.inPos[HOME_ROTATE]
+THEN
+  BraidFlaring.Imm.allObjectInitPos :=TRUE;
+ELSE
+   BraidFlaring.Imm.allObjectInitPos :=FALSE; 
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{b0ac70b9-d133-4db2-803d-889075aefa9a}">
+      <Implementation>
+        <ST><![CDATA[IF machine.reset THEN 
+  machine.tipReset := TRUE ;
+  MEMSET(destAddr:=ADR(machine.presetManualTips) , fillByte:= 0, n:=SIZEOF(machine.presetManualTips));
+ ELSE
+  machine.tipReset := FALSE ;
+END_IF
+
+IF NOT station.running
+THEN
+	blow.auto:=FALSE;
+	vacuum.auto:=FALSE;
+END_IF
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Hmi" Id="{de7747f3-de01-4d2f-8c80-c2164b51adab}">
+      <Implementation>
+        <ST><![CDATA[gripCyl.homehmi:=BraidFlaring.Hmi.gripCyl.homehmi;// 原点hmi
+BraidFlaring.Hmi.gripCyl.homeForbidIcon:=gripCyl.homeForbidIcon;// 原点禁止图标
+BraidFlaring.Hmi.gripCyl.homeValve:=gripCyl.homeValve;// 原点阀
+BraidFlaring.Hmi.gripCyl.homeManual:=gripCyl.homeManual;// 原点Manual
+gripCyl.workhmi:=BraidFlaring.Hmi.gripCyl.workhmi;// 动点hmi
+BraidFlaring.Hmi.gripCyl.workForbidIcon:=gripCyl.workForbidIcon;// 动点禁止图标
+BraidFlaring.Hmi.gripCyl.workValve:=gripCyl.workValve;// 动点阀
+BraidFlaring.Hmi.gripCyl.workManual:=gripCyl.workManual;// 动点Manual
+BraidFlaring.Hmi.gripCyl.homeSensor[0]:=gripCyl.homeSensor[0];// 原点传感器
+BraidFlaring.Hmi.gripCyl.workSensor[0]:=gripCyl.workSensor[0];// 动点传感器
+BraidFlaring.Hmi.gripCyl.homeSensorLabel[0]:=gripCyl.homeSensorLabel[0];// 原点传感器标签
+BraidFlaring.Hmi.gripCyl.workSensorLabel[0]:=gripCyl.workSensorLabel[0];// 动点传感器标签
+BraidFlaring.Hmi.gripCyl.toHomeActionTime:=gripCyl.toHomeActionTime;// 到原点所用时间
+BraidFlaring.Hmi.gripCyl.toWorkActionTime:=gripCyl.toWorkActionTime;// 到动点所用时间
+
+
+
+jackCyl.homehmi:=BraidFlaring.Hmi.jackCyl.homehmi;// 原点hmi
+BraidFlaring.Hmi.jackCyl.homeForbidIcon:=jackCyl.homeForbidIcon;// 原点禁止图标
+BraidFlaring.Hmi.jackCyl.homeValve:=jackCyl.homeValve;// 原点阀
+BraidFlaring.Hmi.jackCyl.homeManual:=jackCyl.homeManual;// 原点Manual
+jackCyl.workhmi:=BraidFlaring.Hmi.jackCyl.workhmi;// 动点hmi
+BraidFlaring.Hmi.jackCyl.workForbidIcon:=jackCyl.workForbidIcon;// 动点禁止图标
+BraidFlaring.Hmi.jackCyl.workValve:=jackCyl.workValve;// 动点阀
+BraidFlaring.Hmi.jackCyl.workManual:=jackCyl.workManual;// 动点Manual
+BraidFlaring.Hmi.jackCyl.homeSensor[0]:=jackCyl.homeSensor[0];// 原点传感器
+BraidFlaring.Hmi.jackCyl.workSensor[0]:=jackCyl.workSensor[0];// 动点传感器
+BraidFlaring.Hmi.jackCyl.homeSensorLabel[0]:=jackCyl.homeSensorLabel[0];// 原点传感器标签
+BraidFlaring.Hmi.jackCyl.workSensorLabel[0]:=jackCyl.workSensorLabel[0];// 动点传感器标签
+BraidFlaring.Hmi.jackCyl.toHomeActionTime:=jackCyl.toHomeActionTime;// 到原点所用时间
+BraidFlaring.Hmi.jackCyl.toWorkActionTime:=jackCyl.toWorkActionTime;// 到动点所用时间
+
+
+
+pushCyl.homehmi:=BraidFlaring.Hmi.pushCyl.homehmi;// 原点hmi
+BraidFlaring.Hmi.pushCyl.homeForbidIcon:=pushCyl.homeForbidIcon;// 原点禁止图标
+BraidFlaring.Hmi.pushCyl.homeValve:=pushCyl.homeValve;// 原点阀
+BraidFlaring.Hmi.pushCyl.homeManual:=pushCyl.homeManual;// 原点Manual
+pushCyl.workhmi:=BraidFlaring.Hmi.pushCyl.workhmi;// 动点hmi
+BraidFlaring.Hmi.pushCyl.workForbidIcon:=pushCyl.workForbidIcon;// 动点禁止图标
+BraidFlaring.Hmi.pushCyl.workValve:=pushCyl.workValve;// 动点阀
+BraidFlaring.Hmi.pushCyl.workManual:=pushCyl.workManual;// 动点Manual
+BraidFlaring.Hmi.pushCyl.homeSensor[0]:=pushCyl.homeSensor[0];// 原点传感器
+BraidFlaring.Hmi.pushCyl.workSensor[0]:=pushCyl.workSensor[0];// 动点传感器
+BraidFlaring.Hmi.pushCyl.homeSensorLabel[0]:=pushCyl.homeSensorLabel[0];// 原点传感器标签
+BraidFlaring.Hmi.pushCyl.workSensorLabel[0]:=pushCyl.workSensorLabel[0];// 动点传感器标签
+BraidFlaring.Hmi.pushCyl.toHomeActionTime:=pushCyl.toHomeActionTime;// 到原点所用时间
+BraidFlaring.Hmi.pushCyl.toWorkActionTime:=pushCyl.toWorkActionTime;// 到动点所用时间
+
+
+
+fixCyl.homehmi:=BraidFlaring.Hmi.fixCyl.homehmi;// 原点hmi
+BraidFlaring.Hmi.fixCyl.homeForbidIcon:=fixCyl.homeForbidIcon;// 原点禁止图标
+BraidFlaring.Hmi.fixCyl.homeValve:=fixCyl.homeValve;// 原点阀
+BraidFlaring.Hmi.fixCyl.homeManual:=fixCyl.homeManual;// 原点Manual
+fixCyl.workhmi:=BraidFlaring.Hmi.fixCyl.workhmi;// 动点hmi
+BraidFlaring.Hmi.fixCyl.workForbidIcon:=fixCyl.workForbidIcon;// 动点禁止图标
+BraidFlaring.Hmi.fixCyl.workValve:=fixCyl.workValve;// 动点阀
+BraidFlaring.Hmi.fixCyl.workManual:=fixCyl.workManual;// 动点Manual
+BraidFlaring.Hmi.fixCyl.homeSensor[0]:=fixCyl.homeSensor[0];// 原点传感器
+BraidFlaring.Hmi.fixCyl.workSensor[0]:=fixCyl.workSensor[0];// 动点传感器
+BraidFlaring.Hmi.fixCyl.homeSensorLabel[0]:=fixCyl.homeSensorLabel[0];// 原点传感器标签
+BraidFlaring.Hmi.fixCyl.workSensorLabel[0]:=fixCyl.workSensorLabel[0];// 动点传感器标签
+BraidFlaring.Hmi.fixCyl.toHomeActionTime:=fixCyl.toHomeActionTime;// 到原点所用时间
+BraidFlaring.Hmi.fixCyl.toWorkActionTime:=fixCyl.toWorkActionTime;// 到动点所用时间
+
+
+
+stepFixCyl.homehmi:=BraidFlaring.Hmi.stepFixCyl.homehmi;// 原点hmi
+BraidFlaring.Hmi.stepFixCyl.homeForbidIcon:=stepFixCyl.homeForbidIcon;// 原点禁止图标
+BraidFlaring.Hmi.stepFixCyl.homeValve:=stepFixCyl.homeValve;// 原点阀
+BraidFlaring.Hmi.stepFixCyl.homeManual:=stepFixCyl.homeManual;// 原点Manual
+stepFixCyl.workhmi:=BraidFlaring.Hmi.stepFixCyl.workhmi;// 动点hmi
+BraidFlaring.Hmi.stepFixCyl.workForbidIcon:=stepFixCyl.workForbidIcon;// 动点禁止图标
+BraidFlaring.Hmi.stepFixCyl.workValve:=stepFixCyl.workValve;// 动点阀
+BraidFlaring.Hmi.stepFixCyl.workManual:=stepFixCyl.workManual;// 动点Manual
+BraidFlaring.Hmi.stepFixCyl.homeSensor[0]:=stepFixCyl.homeSensor[0];// 原点传感器
+BraidFlaring.Hmi.stepFixCyl.workSensor[0]:=stepFixCyl.workSensor[0];// 动点传感器
+BraidFlaring.Hmi.stepFixCyl.homeSensorLabel[0]:=stepFixCyl.homeSensorLabel[0];// 原点传感器标签
+BraidFlaring.Hmi.stepFixCyl.workSensorLabel[0]:=stepFixCyl.workSensorLabel[0];// 动点传感器标签
+BraidFlaring.Hmi.stepFixCyl.toHomeActionTime:=stepFixCyl.toHomeActionTime;// 到原点所用时间
+BraidFlaring.Hmi.stepFixCyl.toWorkActionTime:=stepFixCyl.toWorkActionTime;// 到动点所用时间
+
+
+
+blow.homehmi:=BraidFlaring.Hmi.blow.homehmi;// 原点hmi
+BraidFlaring.Hmi.blow.homeForbidIcon:=blow.homeForbidIcon;// 原点禁止图标
+BraidFlaring.Hmi.blow.homeValve:=blow.homeValve;// 原点阀
+BraidFlaring.Hmi.blow.homeManual:=blow.homeManual;// 原点Manual
+blow.workhmi:=BraidFlaring.Hmi.blow.workhmi;// 动点hmi
+BraidFlaring.Hmi.blow.workForbidIcon:=blow.workForbidIcon;// 动点禁止图标
+BraidFlaring.Hmi.blow.workValve:=blow.workValve;// 动点阀
+BraidFlaring.Hmi.blow.workManual:=blow.workManual;// 动点Manual
+BraidFlaring.Hmi.blow.homeSensor[0]:=blow.homeSensor[0];// 原点传感器
+BraidFlaring.Hmi.blow.workSensor[0]:=blow.workSensor[0];// 动点传感器
+BraidFlaring.Hmi.blow.homeSensorLabel[0]:=blow.homeSensorLabel[0];// 原点传感器标签
+BraidFlaring.Hmi.blow.workSensorLabel[0]:=blow.workSensorLabel[0];// 动点传感器标签
+BraidFlaring.Hmi.blow.toHomeActionTime:=blow.toHomeActionTime;// 到原点所用时间
+BraidFlaring.Hmi.blow.toWorkActionTime:=blow.toWorkActionTime;// 到动点所用时间
+
+
+
+
+vacuum.homehmi:=BraidFlaring.Hmi.vacuum.homehmi;// 原点hmi
+BraidFlaring.Hmi.vacuum.homeForbidIcon:=vacuum.homeForbidIcon;// 原点禁止图标
+BraidFlaring.Hmi.vacuum.homeValve:=vacuum.homeValve;// 原点阀
+BraidFlaring.Hmi.vacuum.homeManual:=vacuum.homeManual;// 原点Manual
+vacuum.workhmi:=BraidFlaring.Hmi.vacuum.workhmi;// 动点hmi
+BraidFlaring.Hmi.vacuum.workForbidIcon:=vacuum.workForbidIcon;// 动点禁止图标
+BraidFlaring.Hmi.vacuum.workValve:=vacuum.workValve;// 动点阀
+BraidFlaring.Hmi.vacuum.workManual:=vacuum.workManual;// 动点Manual
+BraidFlaring.Hmi.vacuum.homeSensor[0]:=vacuum.homeSensor[0];// 原点传感器
+BraidFlaring.Hmi.vacuum.workSensor[0]:=vacuum.workSensor[0];// 动点传感器
+BraidFlaring.Hmi.vacuum.homeSensorLabel[0]:=vacuum.homeSensorLabel[0];// 原点传感器标签
+BraidFlaring.Hmi.vacuum.workSensorLabel[0]:=vacuum.workSensorLabel[0];// 动点传感器标签
+BraidFlaring.Hmi.vacuum.toHomeActionTime:=vacuum.toHomeActionTime;// 到原点所用时间
+BraidFlaring.Hmi.vacuum.toWorkActionTime:=vacuum.toWorkActionTime;// 到动点所用时间
+
+
+
+rotateAxis.powerhmi:=BraidFlaring.Hmi.rotateAxis.powerhmi;// 伺服Onhmi
+BraidFlaring.Hmi.rotateAxis.powerForbidIcon:=rotateAxis.powerForbidIcon;// 伺服On禁止图标
+BraidFlaring.Hmi.rotateAxis.isPowerOn:=rotateAxis.isPowerOn;// 伺服On状态
+rotateAxis.halthmi:=BraidFlaring.Hmi.rotateAxis.halthmi;// 伺服暂停hmi
+rotateAxis.resethmi:=BraidFlaring.Hmi.rotateAxis.resethmi;// 伺服复位hmi
+rotateAxis.jogForwardhmi:=BraidFlaring.Hmi.rotateAxis.jogForwardhmi;// 伺服JOG+_hmi
+BraidFlaring.Hmi.rotateAxis.jogForwardForbidIcon:=rotateAxis.jogForwardForbidIcon;// 伺服JOG+禁止图标
+rotateAxis.jogBackwardshmi:=BraidFlaring.Hmi.rotateAxis.jogBackwardshmi;// 伺服JOG-hmi
+BraidFlaring.Hmi.rotateAxis.jogBackwardsForbidIcon:=rotateAxis.jogBackwardsForbidIcon;// 伺服JOG-禁止图标
+rotateAxis.homehmi:=BraidFlaring.Hmi.rotateAxis.homehmi;// 伺服回原点hmi
+BraidFlaring.Hmi.rotateAxis.homeForbidIcon:=rotateAxis.homeForbidIcon;// 伺服回原点禁止图标
+BraidFlaring.Hmi.rotateAxis.homeDone:=rotateAxis.homeDone;// 伺服回原点完成
+rotateAxis.brakehmi:=BraidFlaring.Hmi.rotateAxis.brakehmi;// 伺服刹车hmi
+BraidFlaring.Hmi.rotateAxis.brakeForbidIcon:=rotateAxis.brakeForbidIcon;// 伺服刹车禁止图标
+BraidFlaring.Hmi.rotateAxis.brake:=rotateAxis.brake;// 伺服刹车输出
+rotateAxis.movehmi:=BraidFlaring.Hmi.rotateAxis.movehmi;// 定位启动hmi
+BraidFlaring.Hmi.rotateAxis.moveForbidIcon:=rotateAxis.moveForbidIcon;// 定位启动禁止图标
+rotateAxis.posTeach:=BraidFlaring.Hmi.rotateAxis.posTeach;// 当前位置示教
+rotateAxis.movehmiNo:=BraidFlaring.Hmi.rotateAxis.movehmiNo;// 手动定位编号
+BraidFlaring.Hmi.rotateAxis.inPosNo:=rotateAxis.inPosNo;// 伺服到位编号
+BraidFlaring.Hmi.rotateAxis.status:=rotateAxis.status;// 伺服状态
+BraidFlaring.Hmi.rotateAxis.ncErrID:=rotateAxis.ncErrID;// 伺服NC错误代码
+BraidFlaring.Hmi.rotateAxis.driverErrID:=rotateAxis.driverErrID;// 伺服驱动器代码
+BraidFlaring.Hmi.rotateAxis.posUnit:=rotateAxis.posUnit;// 位置单位
+BraidFlaring.Hmi.rotateAxis.veloUnit:=rotateAxis.veloUnit;// 速度单位
+BraidFlaring.Hmi.rotateAxis.accDecUnit:=rotateAxis.accDecUnit;// 加/减速度单位
+BraidFlaring.Hmi.rotateAxis.actPos:=rotateAxis.actPos;// 当前坐标
+BraidFlaring.Hmi.rotateAxis.actVelo:=rotateAxis.actVelo;// 当前速度
+BraidFlaring.Hmi.rotateAxis.actTorque:=rotateAxis.actTorque;// 当前转矩
+BraidFlaring.Hmi.rotateAxis.lsp:=rotateAxis.lsp;// 伺服正极限
+BraidFlaring.Hmi.rotateAxis.lsn:=rotateAxis.lsn;// 伺服负极限
+BraidFlaring.Hmi.rotateAxis.dog:=rotateAxis.dog;// 伺服原点感应
+BraidFlaring.Hmi.rotateAxis.targetDistance:=rotateAxis.targetDistance;// 目标距离
+BraidFlaring.Hmi.rotateAxis.targetVelocity:=rotateAxis.targetVelocity;// 目标速度
+
+
+
+
+
+transferAxis.powerhmi:=BraidFlaring.Hmi.transferAxis.powerhmi;// 伺服Onhmi
+BraidFlaring.Hmi.transferAxis.powerForbidIcon:=transferAxis.powerForbidIcon;// 伺服On禁止图标
+BraidFlaring.Hmi.transferAxis.isPowerOn:=transferAxis.isPowerOn;// 伺服On状态
+transferAxis.halthmi:=BraidFlaring.Hmi.transferAxis.halthmi;// 伺服暂停hmi
+transferAxis.resethmi:=BraidFlaring.Hmi.transferAxis.resethmi;// 伺服复位hmi
+transferAxis.jogForwardhmi:=BraidFlaring.Hmi.transferAxis.jogForwardhmi;// 伺服JOG+_hmi
+BraidFlaring.Hmi.transferAxis.jogForwardForbidIcon:=transferAxis.jogForwardForbidIcon;// 伺服JOG+禁止图标
+transferAxis.jogBackwardshmi:=BraidFlaring.Hmi.transferAxis.jogBackwardshmi;// 伺服JOG-hmi
+BraidFlaring.Hmi.transferAxis.jogBackwardsForbidIcon:=transferAxis.jogBackwardsForbidIcon;// 伺服JOG-禁止图标
+transferAxis.homehmi:=BraidFlaring.Hmi.transferAxis.homehmi;// 伺服回原点hmi
+BraidFlaring.Hmi.transferAxis.homeForbidIcon:=transferAxis.homeForbidIcon;// 伺服回原点禁止图标
+BraidFlaring.Hmi.transferAxis.homeDone:=transferAxis.homeDone;// 伺服回原点完成
+transferAxis.brakehmi:=BraidFlaring.Hmi.transferAxis.brakehmi;// 伺服刹车hmi
+BraidFlaring.Hmi.transferAxis.brakeForbidIcon:=transferAxis.brakeForbidIcon;// 伺服刹车禁止图标
+BraidFlaring.Hmi.transferAxis.brake:=transferAxis.brake;// 伺服刹车输出
+transferAxis.movehmi:=BraidFlaring.Hmi.transferAxis.movehmi;// 定位启动hmi
+BraidFlaring.Hmi.transferAxis.moveForbidIcon:=transferAxis.moveForbidIcon;// 定位启动禁止图标
+transferAxis.posTeach:=BraidFlaring.Hmi.transferAxis.posTeach;// 当前位置示教
+transferAxis.movehmiNo:=BraidFlaring.Hmi.transferAxis.movehmiNo;// 手动定位编号
+BraidFlaring.Hmi.transferAxis.inPosNo:=transferAxis.inPosNo;// 伺服到位编号
+BraidFlaring.Hmi.transferAxis.status:=transferAxis.status;// 伺服状态
+BraidFlaring.Hmi.transferAxis.ncErrID:=transferAxis.ncErrID;// 伺服NC错误代码
+BraidFlaring.Hmi.transferAxis.driverErrID:=transferAxis.driverErrID;// 伺服驱动器代码
+BraidFlaring.Hmi.transferAxis.posUnit:=transferAxis.posUnit;// 位置单位
+BraidFlaring.Hmi.transferAxis.veloUnit:=transferAxis.veloUnit;// 速度单位
+BraidFlaring.Hmi.transferAxis.accDecUnit:=transferAxis.accDecUnit;// 加/减速度单位
+BraidFlaring.Hmi.transferAxis.actPos:=transferAxis.actPos;// 当前坐标
+BraidFlaring.Hmi.transferAxis.actVelo:=transferAxis.actVelo;// 当前速度
+BraidFlaring.Hmi.transferAxis.actTorque:=transferAxis.actTorque;// 当前转矩
+BraidFlaring.Hmi.transferAxis.lsp:=transferAxis.lsp;// 伺服正极限
+BraidFlaring.Hmi.transferAxis.lsn:=transferAxis.lsn;// 伺服负极限
+BraidFlaring.Hmi.transferAxis.dog:=transferAxis.dog;// 伺服原点感应
+BraidFlaring.Hmi.transferAxis.targetDistance:=transferAxis.targetDistance;// 目标距离
+BraidFlaring.Hmi.transferAxis.targetVelocity:=transferAxis.targetVelocity;// 目标速度
+
+
+
+Station.inithmi:=BraidFlaring.Hmi.Station.inithmi;// 工站初始化hmi
+BraidFlaring.Hmi.Station.initForbidIcon:=Station.initForbidIcon;// 工站初始化禁止图标
+BraidFlaring.Hmi.Station.initing:=Station.initing;// 工站初始化中
+Station.cycleRunhmi:=BraidFlaring.Hmi.Station.cycleRunhmi;// 工站单循环hmi
+BraidFlaring.Hmi.Station.cycleRunForbidIcon:=Station.cycleRunForbidIcon;// 工站单循环禁止图标
+BraidFlaring.Hmi.Station.cycleRunning:=Station.cycleRunning;// 工站单循环中
+Station.jogRunhmi:=BraidFlaring.Hmi.Station.jogRunhmi;// 工站寸动hmi
+BraidFlaring.Hmi.Station.jogRunForbidIcon:=Station.jogRunForbidIcon;// 工站寸动禁止图标
+BraidFlaring.Hmi.Station.jogRunning:=Station.jogRunning;// 工站寸动中
+Station.pausehmi:=BraidFlaring.Hmi.Station.pausehmi;// 工站暂停hmi
+Station.disablehmi:=BraidFlaring.Hmi.Station.disablehmi;// 工站屏蔽hmi
+Station.repetitionsEnable:=BraidFlaring.Hmi.Station.repetitionsEnable;// 单循环重复动作开启
+Station.repetitionsClear:=BraidFlaring.Hmi.Station.repetitionsClear;// 单循环重复动作计数清零
+BraidFlaring.Hmi.Station.repetitions:=Station.repetitions;// 单循环重复动作计数
+Station.repetitionsTimes:=BraidFlaring.Hmi.Station.repetitionsTimes;// 单循环重复动作次数设置
+BraidFlaring.Hmi.Station.status:=Station.status;// 工站状态显示
+BraidFlaring.Hmi.Station.cycleTime:=Station.cycleTime;// 工站周期时间
+BraidFlaring.Hmi.Station.flow[0].actStep:=Station.flow[0].actStep;// 流程当前步号
+BraidFlaring.Hmi.Station.flow[0].name:=Station.flow[0].name;//流程名称
+BraidFlaring.Hmi.Station.flow[0].describe:=Station.flow[0].describe;//流程说明
+BraidFlaring.Hmi.Station.flow[1].actStep:=Station.flow[1].actStep;// 流程当前步号
+BraidFlaring.Hmi.Station.flow[1].name:=Station.flow[1].name;//流程名称
+BraidFlaring.Hmi.Station.flow[1].describe:=Station.flow[1].describe;//流程说明
+BraidFlaring.Hmi.Station.flow[2].actStep:=Station.flow[2].actStep;// 流程当前步号
+BraidFlaring.Hmi.Station.flow[2].name:=Station.flow[2].name;//流程名称
+BraidFlaring.Hmi.Station.flow[2].describe:=Station.flow[2].describe;//流程说明
+BraidFlaring.Hmi.Station.flow[3].actStep:=Station.flow[3].actStep;// 流程当前步号
+BraidFlaring.Hmi.Station.flow[3].name:=Station.flow[3].name;//流程名称
+BraidFlaring.Hmi.Station.flow[3].describe:=Station.flow[3].describe;//流程说明
+BraidFlaring.Hmi.Station.flow[4].actStep:=Station.flow[4].actStep;// 流程当前步号
+BraidFlaring.Hmi.Station.flow[4].name:=Station.flow[4].name;//流程名称
+BraidFlaring.Hmi.Station.flow[4].describe:=Station.flow[4].describe;//流程说明
+BraidFlaring.Hmi.Station.flow[5].actStep:=Station.flow[5].actStep;// 流程当前步号
+BraidFlaring.Hmi.Station.flow[5].name:=Station.flow[5].name;//流程名称
+BraidFlaring.Hmi.Station.flow[5].describe:=Station.flow[5].describe;//流程说明
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ManualTip" Id="{8ff412ab-ceb4-40f9-889c-96fe5bf823ef}">
+      <Implementation>
+        <ST><![CDATA[ BraidFlaring.Message.userManualTips[0] := machine.presetManualTips[0];//急停中,无法操作
+ BraidFlaring.Message.userManualTips[1] := machine.presetManualTips[1];//安全条件不满足,无法操作
+ BraidFlaring.Message.userManualTips[2] := machine.presetManualTips[2];//安全门未锁好,无法操作
+ BraidFlaring.Message.userManualTips[3] := machine.presetManualTips[3];//气压不足,无法操作
+ BraidFlaring.Message.userManualTips[4] := machine.presetManualTips[4];//不在手动模式,无法操作
+ 
+ IF machine.manualMode
+ THEN
+ 	IF fixCyl.noWorkPermitManualTip
+	THEN
+		BraidFlaring.Message.userManualTips[0]:=TRUE;
+	END_IF
+	
+ 	IF stepFixCyl.noWorkPermitManualTip
+	THEN
+		BraidFlaring.Message.userManualTips[1]:=TRUE;
+	END_IF
+ END_IF
+ 
+ 
+ ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Permit" Id="{97a03459-f8e3-4594-83f7-bd959fcfc9f6}">
+      <Implementation>
+        <ST><![CDATA[//Cylinder permit
+fixCyl.workPermit := BraidFlaring.Imm.carrierInPos;
+stepFixCyl.workPermit := BraidFlaring.Imm.carrierInPos;
+
+
+BraidFlaring.Imm.carrierFree := fixCyl.inHome
+								AND stepFixCyl.inHome
+								AND jackCyl.inHome
+								AND transferAxis.inPos[HOME_TRANS];]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{464dcf45-559e-484e-98ba-1d25b90f36e3}">
+      <Implementation>
+        <ST><![CDATA[fB_BraidFlaring(machine:=Machine , station:=station );
+
+FB_gripCyl(machine:= Machine, station:= station, vari:= gripCyl, data:=BraidFlaringData.GripCyl );
+FB_jackCyl(machine:=Machine , station:=station , vari:= jackCyl, data:= BraidFlaringData.jackCyl);
+FB_pushCyl(machine:=Machine , station:=station , vari:= pushCyl, data:= BraidFlaringData.pushCyl);
+FB_blow(machine:=Machine , station:=station , vari:= blow, data:= BraidFlaringData.blow);
+FB_vacuum(machine:=Machine , station:=station , vari:= vacuum, data:= BraidFlaringData.vacuum);
+
+FB_fixCyl(machine:= Machine, station:= station, vari:= fixCyl, data:=BraidFlaringData.FixCyl );
+FB_stepFixCyl(machine:=Machine , station:=station , vari:= stepFixCyl, data:=BraidFlaringData.StepFixCyl );
+
+fb_transferAxis(machine:= Machine, station:= station, vari:= transferAxis, data:= BraidFlaringData.TransferAxis);
+fb_rotateAxis(machine:= Machine, station:= station, vari:= rotateAxis, data:= BraidFlaringData.rotateAxis);
+
+
+//Imm
+
+Machine.airOn := BraidFlaring.Imm.Machine_airOn;
+Machine.allDoorClosed:=BraidFlaring.Imm.Machine_allDoorClosed;
+Machine.eStop:=BraidFlaring.Imm.Machine_eStop;
+Machine.safety:=BraidFlaring.Imm.Machine_safety;
+Machine.manualMode:=BraidFlaring.Imm.Machine_manualMode;
+Machine.autoMode:=BraidFlaring.Imm.Machine_autoMode;
+Machine.reset := BraidFlaring.Imm.Machine_reset;
+machine.stopping := BraidFlaring.Imm.Machine_stopping;
+
+station.canRun:= BraidFlaring.Imm.stationCanRun;
+station.done:= BraidFlaring.Imm.stationDone;
+ 
+gripCyl.homeSensor[0]:= HomeSensor_gripCyl ;
+gripCyl.workSensor[0]:= WorkSensor_gripCyl ;
+HomeValve_gripCyl:= gripCyl.homeValve ;
+WorkValve_gripCyl:= gripCyl.workValve ;
+gripCyl.homeSensorLabel[0] := HomeLabel_gripCyl;
+gripCyl.workSensorLabel[0] := WorkLabel_gripCyl;
+
+jackCyl.homeSensor[0]:= HomeSensor_jackCyl ;
+jackCyl.workSensor[0]:= WorkSensor_jackCyl ;
+HomeValve_jackCyl:= jackCyl.homeValve ;
+WorkValve_jackCyl:= jackCyl.workValve ;
+jackCyl.homeSensorLabel[0] := HomeLabel_jackCyl;
+jackCyl.workSensorLabel[0] := WorkLabel_jackCyl;
+
+pushCyl.homeSensor[0]:= HomeSensor_pushCyl ;
+pushCyl.workSensor[0]:= WorkSensor_pushCyl ;
+HomeValve_pushCyl:= pushCyl.homeValve ;
+WorkValve_pushCyl:= pushCyl.workValve ;
+pushCyl.homeSensorLabel[0] := HomeLabel_pushCyl;
+pushCyl.workSensorLabel[0] := WorkLabel_pushCyl;
+
+HomeValve_blow:= blow.homeValve ;
+WorkValve_blow:= blow.workValve ;
+
+HomeValve_vacuum:= vacuum.homeValve ;
+WorkValve_vacuum:= vacuum.workValve ;
+
+fixCyl.homeSensor[0]:= HomeSensor_fixCyl ;
+fixCyl.workSensor[0]:= WorkSensor_fixCyl ;
+HomeValve_fixCyl:= fixCyl.homeValve ;
+WorkValve_fixCyl:= fixCyl.workValve ;
+fixCyl.homeSensorLabel[0] := HomeLabel_fixCyl;
+fixCyl.workSensorLabel[0] := WorkLabel_fixCyl;
+
+stepFixCyl.homeSensor[0]:= HomeSensor_stepFixCyl ;
+stepFixCyl.workSensor[0]:= WorkSensor_stepFixCyl ;
+HomeValve_stepFixCyl:= stepFixCyl.homeValve ;
+WorkValve_stepFixCyl:= stepFixCyl.workValve ;
+stepFixCyl.homeSensorLabel[0] := HomeLabel_stepFixCyl;
+stepFixCyl.workSensorLabel[0] := WorkLabel_stepFixCyl;
+
+// Parameter 
+BraidFlaringData.blow.homeSensorDisabled[0]:=TRUE;
+BraidFlaringData.blow.workSensorDisabled[0]:=TRUE;
+
+BraidFlaringData.vacuum.homeSensorDisabled[0]:=TRUE;
+BraidFlaringData.vacuum.workSensorDisabled[0]:=TRUE;
+
+transferAxis.movePosNum := 7;
+rotateAxis.movePosNum := 6;
+
+transferAxis.Override:=BraidFlaringData.CPP.override;
+rotateAxis.Override:=BraidFlaringData.CPP.override;
+
+//DATA 模拟
+IF NOT activated THEN
+
+activated:=TRUE;
+
+BraidFlaring.Imm.Machine_airOn := TRUE;
+BraidFlaring.Imm.Machine_allDoorClosed:= TRUE;
+BraidFlaring.Imm.Machine_eStop:= TRUE;
+BraidFlaring.Imm.Machine_safety:= TRUE;
+BraidFlaring.Imm.Machine_manualMode:= TRUE;
+
+BraidFlaring.Imm.stationCanRun := TRUE;
+BraidFlaring.Imm.carrierPos:=ENUM_CarrierPos.Left;
+BraidFlaring.Imm.carrierInPos := TRUE;
+BraidFlaringData.CPP.override:=100;
+
+BraidFlaringData.TransferAxis.movePos[HOME_TRANS] := 0;
+BraidFlaringData.TransferAxis.movePos[FIRST_CLIP_TRANS] := 40;
+BraidFlaringData.TransferAxis.movePos[SECOND_CLIP_TRANS] := 50;
+BraidFlaringData.TransferAxis.movePos[THIRD_CLIP_TRANS] := 60;
+BraidFlaringData.TransferAxis.movePos[PUSH_STRAT_TRANS] := 20;
+BraidFlaringData.TransferAxis.movePos[PUSH_END_TRANS] := 70;
+//BraidFlaringData.TransferAxis.movePos[CLIP_TRANS] := 30;
+
+BraidFlaringData.rotateAxis.movePos[HOME_ROTATE] := 0;
+BraidFlaringData.rotateAxis.movePos[FIRST_CLIP_ROTATE] := 40;
+BraidFlaringData.rotateAxis.movePos[SECOND_CLIP_ROTATE] := 50;
+BraidFlaringData.rotateAxis.movePos[THIRD_CLIP_ROTATE] := 60;
+BraidFlaringData.rotateAxis.movePos[PUSH_ROTATE] := 20;
+//BraidFlaringData.rotateAxis.movePos[CLIP_ROTATE] := 70;
+
+BraidFlaringData.GripCyl.homeSensorDisabled[0] := TRUE;
+BraidFlaringData.GripCyl.workSensorDisabled[0] := TRUE;
+BraidFlaringData.jackCyl.homeSensorDisabled[0] := TRUE;
+BraidFlaringData.jackCyl.workSensorDisabled[0] := TRUE;
+BraidFlaringData.pushCyl.homeSensorDisabled[0] := TRUE;
+BraidFlaringData.pushCyl.workSensorDisabled[0] := TRUE;
+BraidFlaringData.FixCyl.homeSensorDisabled[0] := TRUE;
+BraidFlaringData.FixCyl.workSensorDisabled[0] := TRUE;
+BraidFlaringData.StepFixCyl.homeSensorDisabled[0] := TRUE;
+BraidFlaringData.StepFixCyl.workSensorDisabled[0] := TRUE;
+BraidFlaringData.GripCyl.homeTime := 2000;
+BraidFlaringData.GripCyl.workTime := 2000;
+BraidFlaringData.jackCyl.homeTime := 2000;
+BraidFlaringData.jackCyl.workTime := 2000;
+BraidFlaringData.pushCyl.homeTime := 2000;
+BraidFlaringData.pushCyl.workTime := 2000;
+BraidFlaringData.vacuum.homeTime := 2000;
+BraidFlaringData.vacuum.workTime := 2000;
+BraidFlaringData.blow.homeTime := 2000;
+BraidFlaringData.blow.workTime := 2000;
+BraidFlaringData.FixCyl.homeTime := 2000;
+BraidFlaringData.FixCyl.workTime := 2000;
+BraidFlaringData.StepFixCyl.homeTime := 2000;
+BraidFlaringData.StepFixCyl.workTime := 2000;
+
+
+END_IF
+
+
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="StepAuto" Id="{2215db96-eb21-4b0a-9228-b07f7835f275}">
+      <Implementation>
+        <ST><![CDATA[IF NOT station.initDone THEN
+	station.flow[AUTO].actStep:=0;
+ELSIF station.running 
+		OR RunningExcept
+THEN
+
+CASE station.flow[AUTO].actStep OF
+
+//	Home Step
+0:
+IF station.disabled
+	AND station.canRun
+  AND NOT machine.stopping
+  AND NOT station.cycleRunning
+THEN
+	station.Done:=TRUE;
+END_IF
+
+IF (station.cycleRunning
+		OR station.canRun
+			AND NOT station.Done
+			AND NOT station.Disabled
+      AND NOT machine.stopping
+	)
+	AND BraidFlaring.Imm.carrierInPos
+THEN
+	station.flow[AUTO].actStep:=10;
+	station.cycleTimeStart:=TRUE;
+	station.cycleTimeEnd:=FALSE;
+END_IF
+
+
+//	fixCyl up
+10:
+IF BraidFlaring.Imm.carrierPos= ENUM_CarrierPos.Left THEN
+  fixCyl.auto:= TRUE;
+  IF fixCyl.inWork THEN
+  	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+  END_IF
+ELSIF BraidFlaring.Imm.carrierPos= ENUM_CarrierPos.Right THEN
+  stepFixCyl.auto:= TRUE;
+  IF stepFixCyl.inWork THEN
+  	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+  END_IF
+END_IF
+
+
+//	jackCyl up
+20:
+jackCyl.auto:=TRUE;
+IF jackCyl.inWork THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//	gripCyl close
+30:
+gripCyl.auto:=TRUE;
+IF gripCyl.inWork THEN
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//transferAxis to firstClip pos
+40:
+transferAxis.moveAutoNo:=FIRST_CLIP_TRANS;
+IF transferAxis.inPos[FIRST_CLIP_TRANS] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//rotateAxis to firstClip pos
+50:
+rotateAxis.moveAutoNo:=FIRST_CLIP_ROTATE;
+IF rotateAxis.inPos[FIRST_CLIP_ROTATE] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//rotateAxis to home pos
+60:
+rotateAxis.moveAutoNo:=HOME_ROTATE;
+IF rotateAxis.inPos[HOME_ROTATE] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//transferAxis to secondClip pos
+70:
+transferAxis.moveAutoNo:=SECOND_CLIP_TRANS;
+IF transferAxis.inPos[SECOND_CLIP_TRANS] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//rotateAxis to secondClip pos
+80:
+rotateAxis.moveAutoNo:=SECOND_CLIP_ROTATE;
+IF rotateAxis.inPos[SECOND_CLIP_ROTATE] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//rotateAxis to home pos
+90:
+rotateAxis.moveAutoNo:=HOME_ROTATE;
+IF rotateAxis.inPos[HOME_ROTATE] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//transferAxis to pushstart pos
+100:
+transferAxis.moveAutoNo:=PUSH_STRAT_TRANS;
+IF transferAxis.inPos[PUSH_STRAT_TRANS] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+  
+//rotateAxis to push pos
+110:
+rotateAxis.moveAutoNo:=PUSH_ROTATE;
+IF rotateAxis.inPos[PUSH_ROTATE] THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+
+//pushCyl work
+120:
+pushCyl.auto:=TRUE;
+IF pushCyl.inWork THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//rotateAxis to home pos
+130:
+rotateAxis.moveAutoNo:=HOME_ROTATE;
+IF rotateAxis.inPos[HOME_ROTATE]
+THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//transferAxis to pushend pos
+140:
+transferAxis.moveAutoNo:=PUSH_END_TRANS;
+IF transferAxis.inPos[PUSH_END_TRANS] THEN 
+	IF BraidFlaring.Imm.carrierPos= ENUM_CarrierPos.Left THEN
+		BraidFlaring.Imm.carrierLeftProductState:=ENUM_ProductState.Good;
+	ELSIF BraidFlaring.Imm.carrierPos= ENUM_CarrierPos.Right THEN
+		BraidFlaring.Imm.carrierRightProductState:=ENUM_ProductState.Good;
+	END_IF
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//rotateAxis to home pos
+150:
+pushCyl.auto:=FALSE;
+rotateAxis.moveAutoNo:=HOME_ROTATE;
+IF rotateAxis.inPos[HOME_ROTATE]
+	AND pushCyl.inHome
+THEN 
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//transferAxis to home pos
+160:
+transferAxis.moveAutoNo:=HOME_TRANS;
+IF transferAxis.inPos[HOME_TRANS] THEN 
+	blow.auto:=TRUE;
+	vacuum.auto:=TRUE;
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//gripCyl home
+170:
+gripCyl.auto:=FALSE;
+IF gripCyl.inHome THEN
+	blow.auto:=FALSE;
+	vacuum.auto:=FALSE;
+	station.flow[AUTO].actStep:=station.flow[AUTO].actStep + 10;
+END_IF
+
+//fixCyl jackCyl home
+180:
+fixCyl.auto:=FALSE;
+jackCyl.auto:=FALSE;
+stepFixCyl.auto:=FALSE;
+IF fixCyl.inHome
+	AND jackCyl.inHome
+	AND stepFixCyl.inHome
+THEN
+	blow.auto:=FALSE;
+	vacuum.auto:=FALSE;
+	station.flow[AUTO].actStep:=999;
+END_IF
+
+//	Single Run Finish
+999:
+station.cycleRunFlag:=FALSE;
+station.flow[AUTO].actStep:=0;
+station.cycleTimeStart:=FALSE;
+station.cycleTimeEnd:=TRUE;
+station.Done:=TRUE;
+END_CASE
+
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="StepInit" Id="{e3c2e083-f882-4bbd-a433-9bc2e830c380}">
+      <Implementation>
+        <ST><![CDATA[IF NOT station.Initing THEN
+	station.flow[INIT].actStep:=0;
+ELSE
+
+CASE station.flow[INIT].actStep OF
+//	Home Step
+0:
+IF station.Initing
+	AND NOT station.InitDone
+THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	Axis Power
+10:
+rotateAxis.velocityAuto:=FALSE;
+rotateAxis.powerInit:=TRUE;
+transferAxis.powerInit:=TRUE;
+IF rotateAxis.isPowerOn
+	AND transferAxis.isPowerOn
+THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	rotateAxis home
+20:
+rotateAxis.moveAutoNo:=HOME_ROTATE;
+IF rotateAxis.inPos[HOME_ROTATE] THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	transferAxis  home
+30:
+transferAxis.moveAutoNo:=HOME_TRANS;
+IF transferAxis.inPos[HOME_TRANS] THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+//	gripCyl home
+40:
+gripCyl.homeInit:=TRUE;
+blow.homeInit:=TRUE;
+vacuum.homeInit:=TRUE;
+IF gripCyl.inHome THEN
+	station.flow[INIT].actStep:=station.flow[INIT].actStep + 10;
+END_IF
+
+
+//	fixCyl down
+50:
+jackCyl.homeInit:=TRUE;
+fixCyl.homeInit:=TRUE;
+stepFixCyl.homeInit:=TRUE;
+pushCyl.homeInit:=TRUE;
+IF fixCyl.inHome 
+	AND stepFixCyl.inHome
+	AND jackCyl.inHome
+	AND pushCyl.inHome
+THEN
+	station.flow[INIT].actStep:=999;
+END_IF
+
+
+//	Init Done
+999:
+station.flow[INIT].actStep:=0;
+station.InitDone:=TRUE;
+
+END_CASE
+
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Tip" Id="{7d249575-925a-4c78-b3e0-307a3d7776ab}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_BraidFlaring_RD">
+      <LineId Id="29" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="30" Count="1" />
+      <LineId Id="21" Count="1" />
+      <LineId Id="24" Count="2" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="95" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BraidFlaring_RD.Alarm">
+      <LineId Id="1" Count="3" />
+      <LineId Id="6" Count="3" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="29" Count="3" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="11" Count="3" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="16" Count="3" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="85" Count="3" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="26" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="92" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BraidFlaring_RD.AutoTip">
+      <LineId Id="1" Count="0" />
+      <LineId Id="3" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="5" Count="1" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="98" Count="3" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="102" Count="4" />
+      <LineId Id="55" Count="1" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="57" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BraidFlaring_RD.Command">
+      <LineId Id="168" Count="8" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="178" Count="3" />
+      <LineId Id="86" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BraidFlaring_RD.General">
+      <LineId Id="2" Count="4" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="41" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BraidFlaring_RD.Hmi">
+      <LineId Id="1533" Count="13" />
+      <LineId Id="853" Count="0" />
+      <LineId Id="864" Count="1" />
+      <LineId Id="1547" Count="13" />
+      <LineId Id="1298" Count="0" />
+      <LineId Id="879" Count="0" />
+      <LineId Id="1180" Count="0" />
+      <LineId Id="1561" Count="13" />
+      <LineId Id="1312" Count="0" />
+      <LineId Id="1179" Count="0" />
+      <LineId Id="1196" Count="0" />
+      <LineId Id="1575" Count="13" />
+      <LineId Id="1326" Count="0" />
+      <LineId Id="1195" Count="0" />
+      <LineId Id="1211" Count="0" />
+      <LineId Id="1589" Count="13" />
+      <LineId Id="1340" Count="0" />
+      <LineId Id="1210" Count="0" />
+      <LineId Id="1226" Count="0" />
+      <LineId Id="1603" Count="13" />
+      <LineId Id="1354" Count="0" />
+      <LineId Id="1225" Count="0" />
+      <LineId Id="890" Count="1" />
+      <LineId Id="1617" Count="13" />
+      <LineId Id="1240" Count="0" />
+      <LineId Id="839" Count="0" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="1631" Count="8" />
+      <LineId Id="1641" Count="24" />
+      <LineId Id="1510" Count="0" />
+      <LineId Id="991" Count="0" />
+      <LineId Id="1120" Count="2" />
+      <LineId Id="1666" Count="8" />
+      <LineId Id="1676" Count="24" />
+      <LineId Id="1514" Count="0" />
+      <LineId Id="1158" Count="1" />
+      <LineId Id="1701" Count="16" />
+      <LineId Id="1719" Count="0" />
+      <LineId Id="1157" Count="0" />
+      <LineId Id="1720" Count="0" />
+      <LineId Id="1723" Count="1" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="1726" Count="1" />
+      <LineId Id="1725" Count="0" />
+      <LineId Id="1729" Count="1" />
+      <LineId Id="1728" Count="0" />
+      <LineId Id="1732" Count="1" />
+      <LineId Id="1731" Count="0" />
+      <LineId Id="1735" Count="1" />
+      <LineId Id="1734" Count="0" />
+      <LineId Id="30" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BraidFlaring_RD.ManualTip">
+      <LineId Id="2" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="20" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="26" Count="2" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="13" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_BraidFlaring_RD.Permit">
+      <LineId Id="11" Count="0" />
+      <LineId Id="1" Count="1" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="19" Count="3" />
+    </LineIds>
+    <LineIds Name="FB_BraidFlaring_RD.SetUp">
+      <LineId Id="1" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="18" Count="1" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="330" Count="0" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="115" Count="1" />
+      <LineId Id="327" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="172" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="347" Count="0" />
+      <LineId Id="22" Count="1" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="221" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="52" Count="2" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="259" Count="4" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="339" Count="1" />
+      <LineId Id="338" Count="0" />
+      <LineId Id="379" Count="1" />
+      <LineId Id="378" Count="0" />
+      <LineId Id="286" Count="12" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="349" Count="0" />
+      <LineId Id="348" Count="0" />
+      <LineId Id="351" Count="1" />
+      <LineId Id="381" Count="1" />
+      <LineId Id="350" Count="0" />
+      <LineId Id="124" Count="1" />
+      <LineId Id="383" Count="0" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="356" Count="1" />
+      <LineId Id="203" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="230" Count="5" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="239" Count="0" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="359" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="384" Count="4" />
+      <LineId Id="390" Count="6" />
+      <LineId Id="183" Count="5" />
+      <LineId Id="307" Count="0" />
+      <LineId Id="190" Count="2" />
+      <LineId Id="360" Count="0" />
+      <LineId Id="194" Count="3" />
+      <LineId Id="312" Count="0" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="341" Count="0" />
+      <LineId Id="346" Count="0" />
+      <LineId Id="345" Count="0" />
+      <LineId Id="200" Count="2" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="326" Count="0" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="155" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BraidFlaring_RD.StepAuto">
+      <LineId Id="320" Count="2" />
+      <LineId Id="955" Count="0" />
+      <LineId Id="324" Count="7" />
+      <LineId Id="702" Count="0" />
+      <LineId Id="635" Count="0" />
+      <LineId Id="334" Count="6" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="703" Count="0" />
+      <LineId Id="344" Count="5" />
+      <LineId Id="351" Count="2" />
+      <LineId Id="968" Count="3" />
+      <LineId Id="974" Count="4" />
+      <LineId Id="980" Count="2" />
+      <LineId Id="366" Count="2" />
+      <LineId Id="983" Count="4" />
+      <LineId Id="714" Count="0" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="988" Count="2" />
+      <LineId Id="992" Count="1" />
+      <LineId Id="381" Count="1" />
+      <LineId Id="994" Count="4" />
+      <LineId Id="640" Count="0" />
+      <LineId Id="389" Count="0" />
+      <LineId Id="999" Count="4" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="869" Count="0" />
+      <LineId Id="1004" Count="4" />
+      <LineId Id="873" Count="0" />
+      <LineId Id="399" Count="0" />
+      <LineId Id="1009" Count="1" />
+      <LineId Id="1014" Count="2" />
+      <LineId Id="879" Count="0" />
+      <LineId Id="408" Count="0" />
+      <LineId Id="1017" Count="1" />
+      <LineId Id="1022" Count="2" />
+      <LineId Id="415" Count="2" />
+      <LineId Id="1025" Count="1" />
+      <LineId Id="1030" Count="2" />
+      <LineId Id="950" Count="0" />
+      <LineId Id="911" Count="0" />
+      <LineId Id="424" Count="0" />
+      <LineId Id="1033" Count="4" />
+      <LineId Id="815" Count="0" />
+      <LineId Id="683" Count="0" />
+      <LineId Id="1038" Count="4" />
+      <LineId Id="436" Count="2" />
+      <LineId Id="1043" Count="4" />
+      <LineId Id="445" Count="1" />
+      <LineId Id="1048" Count="5" />
+      <LineId Id="471" Count="0" />
+      <LineId Id="1055" Count="9" />
+      <LineId Id="1074" Count="0" />
+      <LineId Id="1054" Count="0" />
+      <LineId Id="1076" Count="8" />
+      <LineId Id="1075" Count="0" />
+      <LineId Id="1086" Count="7" />
+      <LineId Id="1085" Count="0" />
+      <LineId Id="1095" Count="7" />
+      <LineId Id="1094" Count="0" />
+      <LineId Id="1104" Count="12" />
+      <LineId Id="1103" Count="0" />
+      <LineId Id="624" Count="4" />
+      <LineId Id="636" Count="0" />
+      <LineId Id="631" Count="3" />
+      <LineId Id="318" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BraidFlaring_RD.StepInit">
+      <LineId Id="2" Count="0" />
+      <LineId Id="8" Count="11" />
+      <LineId Id="171" Count="8" />
+      <LineId Id="32" Count="1" />
+      <LineId Id="180" Count="4" />
+      <LineId Id="40" Count="1" />
+      <LineId Id="111" Count="4" />
+      <LineId Id="47" Count="1" />
+      <LineId Id="185" Count="2" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="193" Count="1" />
+      <LineId Id="55" Count="2" />
+      <LineId Id="195" Count="2" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="201" Count="0" />
+      <LineId Id="203" Count="0" />
+      <LineId Id="205" Count="5" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="84" Count="3" />
+      <LineId Id="89" Count="1" />
+      <LineId Id="92" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_BraidFlaring_RD.Tip">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

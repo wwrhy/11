@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_MotorData_RD" Id="{11638f4f-b104-4c19-9e30-48e7bc70d89c}">
+    <Declaration><![CDATA[TYPE UDT_MotorData_RD :
+STRUCT
+startTime       : DINT;// 启动延时
+stopTime        : DINT;// 停止延时
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

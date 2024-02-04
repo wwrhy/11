@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FUN_UpdateLeftSidebar_RD" Id="{5be02505-a5db-49a6-ba16-a5bd5e080546}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION FUN_UpdateLeftSidebar_RD : bool
+VAR_IN_OUT
+machine       : UDT_Machine_RD;
+hmi           : UDT_hmi_RD;
+END_VAR
+VAR CONSTANT
+LEFT_SIDEBAR_MANUAL_MODE : INT :=1;
+LEFT_SIDEBAR_AUTO_MODE   : INT :=2;
+LEFT_SIDEBAR_JOG_MODE    : INT :=3;
+LEFT_SIDEBAR_SETUP_MODE  : INT :=4;
+LEFT_SIDEBAR_INIT        : INT :=5;
+LEFT_SIDEBAR_START       : INT :=6;
+LEFT_SIDEBAR_STOP        : INT :=7;
+LEFT_SIDEBAR_RESET       : INT :=8;
+LEFT_SIDEBAR_EMPTY       : INT :=9;
+LEFT_SIDEBAR_PAUSE       : INT :=10;
+LEFT_SIDEBAR_MANUAL      : INT :=11;
+LEFT_SIDEBAR_PARAMETER   : INT :=12;
+LEFT_SIDEBAR_STATION     : INT :=13;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// 获取左侧边栏按钮是否按下
+machine.manualModeHmi := machine.sidebar.click[LEFT_SIDEBAR_MANUAL_MODE];
+machine.autoModeHmi := machine.sidebar.click[LEFT_SIDEBAR_AUTO_MODE];
+machine.jogModeHmi := machine.sidebar.click[LEFT_SIDEBAR_JOG_MODE];
+machine.setupModeHmi := machine.sidebar.click[LEFT_SIDEBAR_SETUP_MODE];
+machine.initHmi := machine.sidebar.click[LEFT_SIDEBAR_INIT];
+machine.startHmi := machine.sidebar.click[LEFT_SIDEBAR_START];
+machine.stopHmi := machine.sidebar.click[LEFT_SIDEBAR_STOP];
+machine.resetHmi := machine.sidebar.click[LEFT_SIDEBAR_RESET];
+machine.emptyHmi := machine.sidebar.click[LEFT_SIDEBAR_EMPTY];
+machine.pauseHmi := machine.sidebar.click[LEFT_SIDEBAR_PAUSE];
+IF machine.sidebar.click[LEFT_SIDEBAR_MANUAL] THEN
+	hmi.toManualPageClick:=TRUE;
+END_IF;
+IF machine.sidebar.click[LEFT_SIDEBAR_PARAMETER] THEN
+	hmi.toParameterPageClick:=TRUE;
+END_IF;
+IF machine.sidebar.click[LEFT_SIDEBAR_STATION] THEN
+	hmi.toStationPageClick:=TRUE;
+END_IF;
+
+// 设置左侧边栏按钮状态显示
+machine.sidebar.status[LEFT_SIDEBAR_MANUAL_MODE] := machine.manualMode;
+machine.sidebar.status[LEFT_SIDEBAR_AUTO_MODE] := machine.autoMode;
+machine.sidebar.status[LEFT_SIDEBAR_JOG_MODE] := machine.jogMode;
+machine.sidebar.status[LEFT_SIDEBAR_SETUP_MODE] := machine.setupMode;
+machine.sidebar.status[LEFT_SIDEBAR_INIT] := machine.initButtonLight;
+machine.sidebar.status[LEFT_SIDEBAR_START] := machine.startButtonLight;
+machine.sidebar.status[LEFT_SIDEBAR_STOP] := machine.stopButtonLight;
+machine.sidebar.status[LEFT_SIDEBAR_RESET] := machine.resetButtonLight;
+machine.sidebar.status[LEFT_SIDEBAR_EMPTY] := machine.emptying;
+machine.sidebar.status[LEFT_SIDEBAR_PAUSE] := machine.pauseButtonLight;
+machine.sidebar.status[LEFT_SIDEBAR_MANUAL] := hmi.inManualPage;
+machine.sidebar.status[LEFT_SIDEBAR_PARAMETER] := hmi.inParameterPage;
+machine.sidebar.status[LEFT_SIDEBAR_STATION] := hmi.inStationPage;
+]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_UpdateLeftSidebar_RD">
+      <LineId Id="45" Count="34" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

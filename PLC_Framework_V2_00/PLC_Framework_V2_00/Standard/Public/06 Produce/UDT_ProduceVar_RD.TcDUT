@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_ProduceVar_RD" Id="{376b34af-1422-401a-96f5-f68a34c6ba5a}">
+    <Declaration><![CDATA[TYPE UDT_ProduceVar_RD :
+STRUCT
+goodExecute : BOOL; // 良品计数
+allClearHmi : Bool; // 全部清零Hmi
+allClearAuto : Bool; // 全部清零Auto
+goodIncrements : Int; // 良品增量，每次增加的数量
+percentMode : Int; // 百分比模式  0:  N/总产量, 1:  N/总不良
+sortMode : Int; // 排序模式 0:  分类序号, 1:  大->小, 2:  小->大
+badTypeNum : Int; // 分类不良数量
+badMax : DINT; // 分类不良最大值
+badList : ARRAY[0..99] OF int; // 下属分类不良编号
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

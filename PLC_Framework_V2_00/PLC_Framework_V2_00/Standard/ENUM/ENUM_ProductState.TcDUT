@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ENUM_ProductState" Id="{7202f8c3-fbaf-4a4f-99fb-e7d9238fc4f0}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'strict'}
+TYPE ENUM_ProductState :
+(
+	Empty:=0,					//无产品
+	Good:=1,					//良品
+	Bad:=2,						//不良品
+	New:=3,						//新产品
+	Sample:=4					//送检样品
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

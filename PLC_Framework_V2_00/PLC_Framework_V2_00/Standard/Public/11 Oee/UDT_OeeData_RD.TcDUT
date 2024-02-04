@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_OeeData_RD" Id="{fe512c19-e5a0-4ded-9806-070e4ec99248}">
+    <Declaration><![CDATA[TYPE UDT_OeeData_RD :
+STRUCT
+startTimeDisplay          : BOOL; // 开始时刻显示
+endTimeDisplay            : BOOL; // 结束时刻显示
+goodValue                 : DINT; // 良品数量
+badValue                  : DINT; // 不良品数量
+totalValue                : DINT; // 总数量
+availability              : REAL; // 可用率
+performance               : REAL; // 性能指数
+quality                   : REAL; // 质量指数
+oee                       : REAL; // 综合效率
+startTime                 : DATE_AND_TIME; // 开始时刻
+endTime                   : DATE_AND_TIME; // 结束时刻
+totalTime                 : UDT_DayTime_RD; // 总时间
+productiveTime            : UDT_DayTime_RD; // 生产时间
+downTime                  : UDT_DayTime_RD; // 计划停机时间
+runtime                   : UDT_DayTime_RD; // 运行时间
+standbyTime               : UDT_DayTime_RD; // 待机时间
+failureTime               : UDT_DayTime_RD; // 故障时间
+failureCount              : UINT; // 故障次数
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

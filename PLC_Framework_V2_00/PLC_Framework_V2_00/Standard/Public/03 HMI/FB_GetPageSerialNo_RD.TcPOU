@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_GetPageSerialNo_RD" Id="{75a2852b-483c-4c5e-b4cf-4c0db048950f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_GetPageSerialNo_RD
+VAR_IN_OUT
+pageDisplayNum : INT; // 当页显示数量
+maxModuleNumInStation : Int; // 单工站最大部件数
+nextPage : Bool; // 下一页
+prevPage : Bool; // 上一页
+nextPageDisplay : Bool; // 下一页按钮显示
+prevPageDisplay : Bool; // 上一页按钮显示
+control : Array[0..8] of Int; // 当前工站数据
+unitList : Array[*] of Int; // 当前部件显示列表
+
+END_VAR
+
+VAR
+serialNo : DINT; // 序号
+serialMax : DINT; // 最大可翻页
+index : DInt; // 循环索引
+
+END_VAR
+
+VAR CONSTANT
+
+PAGE_MAX_NUM : DINT := 8; // 单画面最大部件数
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// 上下翻页
+IF nextPage THEN
+  serialNo := serialNo + pageDisplayNum;
+ELSIF prevPage THEN
+  serialNo := serialNo - pageDisplayNum;
+END_IF;
+
+// 根据当前工站部件数量和显示位置获取最大可翻页序号(例如 1,3,5,7,9)
+serialMax := 0;
+FOR index := maxModuleNumInStation TO 1 BY -1 DO
+  IF unitList[index] <> 0 THEN
+    serialMax := ((index - 1) / pageDisplayNum) * pageDisplayNum;
+    EXIT;   // 获取最大位置即跳出循环
+  END_IF;
+END_FOR;
+
+//清空多余页
+IF pageDisplayNum < PAGE_MAX_NUM THEN
+  FOR index := pageDisplayNum + 1 TO PAGE_MAX_NUM DO
+    control[index] := 0;
+  END_FOR;
+END_IF;
+
+// 根据最大可翻页序号,防止越界
+IF serialNo > serialMax THEN
+  serialNo := serialMax;
+END_IF;
+serialNo := LIMIT(serialNo,0,maxModuleNumInStation - pageDisplayNum);
+
+// 显示偏移
+FOR index := 1 TO pageDisplayNum DO
+  IF (serialNo + index) <= maxModuleNumInStation THEN
+    control[index] :=
+    unitList[serialNo + index];
+  ELSE
+    control[index] := 0;
+  END_IF;
+END_FOR;
+
+// 上/下一页显示
+prevPageDisplay := serialNo > 0;
+nextPageDisplay := serialNo < serialMax;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_GetPageSerialNo_RD">
+      <LineId Id="31" Count="40" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_MachineReport_RD" Id="{2a40d8f0-68a0-47b8-ae8f-070fcdc8f011}">
+    <Declaration><![CDATA[TYPE UDT_MachineReport_RD :
+STRUCT
+alarming : BOOL; // 其它报警中
+manualTip : Bool; // 其它手动提示
+autoTip : Bool; // 其它自动提示
+alarmCanReset : Bool; // 报警可复位
+notSafetyDoors : Bool; // 安全门未就绪
+notEstops : Bool; // 急停未就绪
+stationAlarming : Bool; // 工站报警中
+stationManualTip : Bool; // 工站手动提示
+stationAutoTip : Bool; // 工站自动提示
+stationNotInitDone : Bool; // 工站初始化未完成
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FUN_AryToWord_RD" Id="{63630aca-8f35-49b2-96ee-adfb12b035d1}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION FUN_AryToWord_RD : WORD
+VAR_IN_OUT
+ IN : ARRAY[*] OF BOOL;
+END_VAR
+VAR
+    index : INT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FUN_AryToWord_RD.0 := IN[0];
+FUN_AryToWord_RD.1 := IN[1];
+FUN_AryToWord_RD.2 := IN[2];
+FUN_AryToWord_RD.3 := IN[3];
+FUN_AryToWord_RD.4 := IN[4];
+FUN_AryToWord_RD.5 := IN[5];
+FUN_AryToWord_RD.6 := IN[6];
+FUN_AryToWord_RD.7 := IN[7];
+FUN_AryToWord_RD.8 := IN[8];
+FUN_AryToWord_RD.9 := IN[9];
+FUN_AryToWord_RD.10 := IN[10];
+FUN_AryToWord_RD.11 := IN[11];
+FUN_AryToWord_RD.12 := IN[12];
+FUN_AryToWord_RD.13 := IN[13];
+FUN_AryToWord_RD.14 := IN[14];
+FUN_AryToWord_RD.15 := IN[15];
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_AryToWord_RD">
+      <LineId Id="30" Count="15" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="22" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

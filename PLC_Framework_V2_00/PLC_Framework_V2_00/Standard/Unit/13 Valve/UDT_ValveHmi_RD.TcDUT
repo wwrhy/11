@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_ValveHmi_RD" Id="{ee88603e-ee91-42cf-a3a6-c7d2b993899f}">
+    <Declaration><![CDATA[TYPE UDT_ValveHmi_RD :
+STRUCT
+hmi           : BOOL; // HMI
+manual        : BOOL; // 手动执行
+forbidIcon    : BOOL; // 禁止图标
+display       : BOOL; // 显示
+valve         : BOOL; // 阀输出
+number        : INT; // 编号
+holdTime      : DINT; // 阀动作保持时间
+END_STRUCT 
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

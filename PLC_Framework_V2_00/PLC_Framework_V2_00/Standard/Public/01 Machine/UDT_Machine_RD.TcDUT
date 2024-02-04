@@ -1,0 +1,113 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Machine_RD" Id="{245b65ac-3a07-4fac-aa36-1e6103ff986e}">
+    <Declaration><![CDATA[TYPE UDT_Machine_RD :
+STRUCT
+startUp : BOOL; // 上电或切换语言
+eStop : Bool; // 急停
+safety : Bool; // 安全防护
+airOn : Bool; // 气压正常
+allDoorClosed : Bool; // 所有安全门关好
+ready : Bool; // 准备就绪
+start : Bool; // 启动
+stop : Bool; // 停止
+reset : Bool; // 复位
+pause : Bool; // 暂停
+init : Bool; // 初始化
+manualMode : Bool; // 手动模式
+autoMode : Bool; // 自动模式
+jogMode : Bool; // 寸动模式
+setupMode : BOOL; // 调试模式
+releaseMode : BOOL; //抽检模式
+tipReset : Bool; // 提示复位
+running : Bool; // 运行中
+stopping : Bool; // 停止中
+stopDoneAllow : Bool; // 停止完成允许
+stopDone : Bool; // 停止完成
+alarming : Bool; // 机器报警中
+paused : Bool; // 暂停中
+initConfirm : Bool; // 整机初始化确认
+initing : Bool; // 整机初始化中
+initDone : Bool; // 整机初始化完成
+initDelay : Bool; // 整机初始化延时
+initFlowDone : Bool; // 整机初始化流程结束
+emptyConfirm : Bool; // 清料确认
+emptyhmi : Bool; // 清料hmi
+emptying : Bool; // 清料中
+emptyDone : Bool; // 清料完成
+dummying : Bool; // 点检中
+dummyDone : Bool; // 点检完成
+manualTip : Bool; // 手动提示中
+autoTip : Bool; // 自动提示中
+autoTipTrigger : Bool; // 自动提示触发显示
+publicAlarm : Bool; // 公共报警中
+alarmCanReset : Bool; // 报警可复位
+dryRun : Bool; // 空跑
+runPermit : Bool; // 机器运行条件
+startPermit : Bool; // 启动条件
+startButton : Bool; // 启动按钮
+stopButton : Bool; // 停止按钮
+resetButton : Bool; // 复位按钮
+pauseButton : Bool; // 暂停按钮
+initButton : Bool; // 初始化按钮
+manualSwitch : Bool; // 手动模式开关
+autoSwitch : Bool; // 自动模式开关
+startButtonLight : Bool; // 启动按钮指示灯
+stopButtonLight : Bool; // 停止按钮指示灯
+resetButtonLight : Bool; // 复位按钮指示灯
+pauseButtonLight : Bool; // 暂停按钮指示灯
+initButtonLight : Bool; // 初始化按钮指示灯
+redStatusLight : Bool; // 三色灯红
+yellowStatusLight : Bool; // 三色灯黄
+greenStatusLight : Bool; // 三色灯绿
+buzzer : Bool; // 三色灯蜂鸣器
+starthmi : Bool; // 启动hmi
+stophmi : Bool; // 停止hmi
+resethmi : Bool; // 复位hmi
+pausehmi : Bool; // 暂停hmi
+inithmi : Bool; // 整机初始化hmi
+manualModehmi : Bool; // 手动模式hmi
+autoModehmi : Bool; // 自动模式hmi
+jogModehmi : Bool; // 寸动模式hmi
+setupModehmi : Bool; // 调试模式hmi
+lampTesthmi : Bool; // 指示灯测试hmi
+floodlighthmi : Bool; // 照明灯光打开hmi
+alarmTopBarDisplay : Bool; // 报警顶栏显示
+cycleTimeStart : Bool; // 机器周期计时开始
+cycleTimeEnd : Bool; // 机器周期计时结束
+cycleTime : DINT; // 机器周期时间
+idealCycleTime : Time; // 机器理想周期时间
+initTimeout : Time; // 初始化超时时间
+stopTimeout : Time; // 停止超时时间
+buzzerTime : Time; // 蜂鸣器持续时间
+alarmCount : UInt; // 报警计数
+actAlarmTimes : UInt; // 当前发生报警条数
+status : UInt; // 整机状态显示
+initStatus : UInt; // 整机初始化状态显示
+mode : UInt; // 操作模式
+haveControlhmiNo : UINT; // 当前拥有该机器控制权的hmi编号
+requestControlhmiNo : UINT; // 请求该机器控制权的hmi编号
+requestCountdown : UINT; // hmi请求控制权倒计时
+actLanguage : UINT; // 当前使用语言
+mainScreenNo : UINT; // 主画面编号
+popup : UINT; // 触摸屏弹窗
+machineNo : UINT; // 当前机器编号
+flow : Array[0..5] of UDT_Flow_RD; // 流程
+presetAlarms : Array[0..15] of Bool; // 预置报警
+presetManualTips : Array[0..15] of Bool; // 预置手动提示
+presetAutoTips : Array[0..15] of Bool; // 预置自动提示
+presetTips : Array[0..31] of Bool; // 预置一般提示
+userAlarms : Array[0..63] of Bool; // 用户报警
+userManualTips : Array[0..63] of Bool; // 用户手动提示
+userAutoTips : Array[0..63] of Bool; // 用户自动提示
+userTips : Array[0..63] of Bool; // 用户一般提示
+report : UDT_MachineReport_RD; // 下属状态反馈
+sidebar : UDT_MachineSidebar_RD; // 左侧边栏
+
+
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

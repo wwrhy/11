@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_CycleTimeHmi_RD" Id="{0e71bb4f-5c54-41d5-af96-40428dd25e78}">
+    <Declaration><![CDATA[TYPE UDT_CycleTimeHmi_RD :
+STRUCT
+turnPages : UDT_TurnPages_RD; //
+cycleTimeMax : Dint; // 周期时间MAX
+cycleTimeMin : Dint; // 周期时间MIN
+idealCycleTime : Dint; // 理想周期时间
+number : Array[0..8] of int; // 编号
+cycleTime : Array[0..8] of Dint; // 周期时间
+display : Array[0..8] of Bool; // 工站显示
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

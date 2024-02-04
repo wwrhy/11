@@ -1,0 +1,399 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Tben_L5_4Rfid_RD" Id="{df3a0a4b-7f3f-44f7-b3c8-be979553cf51}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Tben_L5_4Rfid_RD
+VAR_IN_OUT
+udiStartAddress : UDINT; //
+uiDataLength : UINT; //
+ixRead : BOOL; //
+ixWrite : BOOL; //
+ixReset : BOOL; //
+iarbDataTx : ARRAY[0..127] OF BYTE; //
+ixChannel : UINT; //
+InputData : ARRAY[0..471] OF BYTE; //
+OutputData : ARRAY[0..325] OF BYTE; //
+xDone : BOOL; //
+xBusy : BOOL; //
+xError : BOOL; //
+eErrorCode : WORD; //
+xTP : BOOL; //
+xRWHeadNotConnected : BOOL; //
+xuiDataLength : UINT; //
+xarbRxData : ARRAY[0..127] OF byte; //
+xarbTagUID : ARRAY[0..7] OF byte; //
+
+END_VAR
+VAR
+iCommandSeq : UINT; //
+iCnt01 : INT; //
+iCnt02 : INT; //
+bExcute : BOOL; //
+wError : WORD; //
+tTimout : TON; //
+bOldRead : BOOL; //
+bOldWrite : BOOL; //
+bOldTagPresent : BOOL; //
+iAdress0 : UINT; //
+iAdress1 : UINT; //
+iAdress2 : UINT; //
+iAdress3 : UINT; //
+iAdress4 : UINT; //
+iAdress5 : UINT; //
+InputData6_In : BYTE; //
+InputData86_In : BYTE; //
+InputData166_In : BYTE; //
+InputData246_In : BYTE; //
+ResponseCode_In : UINT; //
+TagPresent_In : BOOL; //
+HeadNotConnected_In : BOOL; //
+ReadLength_In : UINT; //
+ErrorCode_In : WORD; //
+CommandCode_Out : INT; //
+LoopCounter_Out : USINT; //
+StartAddress_Out : DWORD; //
+DataLength_Out : UINT; //
+Index1 : UINT; //
+Index2 : UINT; //
+Index3 : UINT; //
+OperationType : UINT; //
+LoopCounter_In : UINT; //
+rR_TRIG : ARRAY[0..5] OF R_TRIG; //
+fbUnpackWord   : MEM.UnpackWord;
+fbUnpackDWord  : MEM.UnpackDWord;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Input And Output Address Calculate
+(*
+Input Data:	
+系统占用2字节
+CH0			CH1				CH2				CH3
+2-3			82-83			162-163		242-243		ResponseCode_In				//反馈代码
+4				84					164				244				LooperCounter					//LooperCounter
+6.0			86.0				166.0			246.0			TP,0:No Tag 1:Tag present	//标签存在
+6.7			86.7				166.7			246.7			HeadNotConnected			//读取头未连接
+8-9			88-89			168-169		248-249		Length									//读取长度
+10-11		90-91			170-171		250-251		Error Code							//出错代码
+12-13		92-93			172-173		252-253		Tag counter							//标签计数			
+26-81		106-161		186-241		266-321		Read data Byte 0-55			//读取的数据
+
+Output Data:	
+系统占用2字节
+CH0			CH1				CH2				CH3
+2-3			82-83			162-163		242-243		CommandCode					//命令代码
+6-9			86-89			166-169		246-249		Start address						//起始地址
+10-11		90-91			170-171		250-251		Length									//写入长度
+26-81		86-161			186-241		266-321		Write data Byte 0-55			//写入的数据
+*)
+
+IF ixChannel=0 THEN 
+	ResponseCode_In := WORD_TO_UINT( MEM.PackBytesToWord(byHighByte:= InputData[3], byLowByte:=InputData[2] ));  //2-3,反馈代码
+	LoopCounter_In:=BYTE_TO_UINT(InputData[4]);						//4,LooperCounter
+	InputData6_In:=InputData[6];											//6
+	TagPresent_In:=InputData6_In.0;									//6.0,Tag present，标签存在
+	HeadNotConnected_In:=InputData6_In.7;					//6.7,HeadNotConnected，读取头未连接
+	ReadLength_In := WORD_TO_UINT( MEM.PackBytesToWord(byHighByte:= InputData[9], byLowByte:=InputData[8] ));  //ReadLength,8-9，读取到的长度
+	ErrorCode_In := MEM.PackBytesToWord(byHighByte:= InputData[11], byLowByte:=InputData[10] );  //Error Code 10-11，出错代码
+ELSIF ixChannel=1 THEN 
+	ResponseCode_In := WORD_TO_UINT( MEM.PackBytesToWord(byHighByte:= InputData[83], byLowByte:=InputData[82] ));  //82-83,反馈代码
+	LoopCounter_In:=BYTE_TO_UINT(InputData[84]);						//84,LooperCounter
+	InputData86_In:=InputData[86];											//86
+	TagPresent_In:=InputData86_In.0;									//86.0,Tag present，标签存在
+	HeadNotConnected_In:=InputData86_In.7;					//86.7,HeadNotConnected，读取头未连接
+	ReadLength_In := WORD_TO_UINT( MEM.PackBytesToWord(byHighByte:= InputData[89], byLowByte:=InputData[88] ));  //ReadLength,88-89，读取到的长度
+	ErrorCode_In := MEM.PackBytesToWord(byHighByte:= InputData[91], byLowByte:=InputData[90] );  //Error Code 90-91，出错代码	
+ELSIF ixChannel=2 THEN 
+	ResponseCode_In := WORD_TO_UINT( MEM.PackBytesToWord(byHighByte:= InputData[163], byLowByte:=InputData[162] ));  //162-163,反馈代码
+	LoopCounter_In:=BYTE_TO_UINT(InputData[164]);						//164,LooperCounter
+	InputData166_In:=InputData[166];											//166
+	TagPresent_In:=InputData166_In.0;									//166.0,Tag present，标签存在
+	HeadNotConnected_In:=InputData166_In.7;					//166.7,HeadNotConnected，读取头未连接
+	ReadLength_In := WORD_TO_UINT( MEM.PackBytesToWord(byHighByte:= InputData[169], byLowByte:=InputData[168] ));  //ReadLength,168-169，读取到的长度
+	ErrorCode_In := MEM.PackBytesToWord(byHighByte:= InputData[171], byLowByte:=InputData[170] );  //Error Code 170-171，出错代码
+ELSIF ixChannel=3 THEN 
+	ResponseCode_In := WORD_TO_UINT( MEM.PackBytesToWord(byHighByte:= InputData[243], byLowByte:=InputData[242] ));  //242-243,反馈代码
+	LoopCounter_In:=BYTE_TO_UINT(InputData[244]);						//244,LooperCounter
+	InputData6_In:=InputData[246];											//246
+	TagPresent_In:=InputData246_In.0;									//246.0,Tag present，标签存在
+	HeadNotConnected_In:=InputData246_In.7;					//246.7,HeadNotConnected，读取头未连接
+	ReadLength_In := WORD_TO_UINT( MEM.PackBytesToWord(byHighByte:= InputData[249], byLowByte:=InputData[248] ));  //ReadLength,248-249，读取到的长度
+	ErrorCode_In := MEM.PackBytesToWord(byHighByte:= InputData[251], byLowByte:=InputData[250] );  //Error Code 250-251，出错代码
+ELSE
+	 wError:=2;// error，Invalid Parameter -> check the Channel setting
+END_IF;
+
+rR_TRIG[0](CLK:=ixRead);		//Read
+rR_TRIG[1](CLK:=ixWrite);	//Write
+rR_TRIG[2](CLK:=ixReset);	//Reset
+//Excute the Command，触发
+IF (rR_TRIG[0].Q AND NOT bOldRead) OR (rR_TRIG[1].Q AND NOT bOldWrite)  OR (rR_TRIG[2].Q AND xError) THEN
+	IF ixRead THEN OperationType:=16#2;
+	ELSIF ixWrite THEN OperationType:=16#4;
+	ELSIF ixReset THEN OperationType:=16#8000;
+	END_IF;
+    bExcute:=TRUE;
+END_IF;
+//Reset b,复位
+IF xError AND ixReset THEN
+	wError:=0;
+	xBusy:=FALSE;
+	iCommandSeq:=0;
+END_IF;
+
+//自动流程
+CASE iCommandSeq OF
+	0:  //Idle Command and Reset Done ，等待触发
+	  xDone:=FALSE; //Reset Done marker
+      CommandCode_Out:=0;  //Clear the Command
+	  IF ResponseCode_In=0 AND LoopCounter_Out=16#0  
+		  AND bExcute THEN 
+       iCommandSeq:=10;   
+	  END_IF;
+	  
+	 5:	//Clear the Read data，读取前清零接收数据
+	  IF ixRead THEN
+		  FOR iCnt01:=0 TO 127 BY 1 DO  
+				xarbRxData[iCnt01]:=0;	//读取前清零
+		  END_FOR;
+	  END_IF;
+	  iCommandSeq:=10;
+	    
+	10:  //waiting for Excute start, Then Initial the Command ，执行触发
+	     xuiDataLength:=0; //Clear the read data length of FB output
+		  //Read Command
+			IF ErrorCode_In=0 AND OperationType=16#2 AND OperationType<>16#4 THEN 	
+				DataLength_Out:=uiDataLength;//	写入长度
+				CommandCode_Out:=16#2;  //read command，读取代码2	
+				bExcute:=FALSE;
+				iCommandSeq:=20;
+			END_IF;
+			//Write Command
+			IF ErrorCode_In=0 AND OperationType<>16#2 AND OperationType=16#4 THEN 			
+				IF ixChannel=0 THEN 		//写入数据更新
+					FOR Index2:=0 TO 55 BY 1 DO
+						OutputData[Index2+26]:=iarbDataTx[0+Index2];
+					END_FOR;	
+				ELSIF ixChannel=1 THEN 
+					FOR Index2:=0 TO 55 BY 1 DO
+						OutputData[Index2+106]:=iarbDataTx[0+Index2];
+					END_FOR;
+				ELSIF ixChannel=2 THEN 
+					FOR Index2:=0 TO 55 BY 1 DO
+						OutputData[Index2+186]:=iarbDataTx[0+Index2];
+					END_FOR;					
+				ELSIF ixChannel=3 THEN 
+					FOR Index2:=0 TO 55 BY 1 DO
+						OutputData[Index2+266]:=iarbDataTx[0+Index2];
+					END_FOR;					
+				END_IF;		
+				DataLength_Out:=uiDataLength;//	写入长度
+				CommandCode_Out:=16#4;  //write command，写入代码4
+				bExcute:=FALSE;
+				iCommandSeq:=20;
+			END_IF;
+			//Reset Command
+			IF  OperationType=16#8000 AND ErrorCode_In<>0 THEN
+				CommandCode_Out:=16#8000 ;  //Reset command，复位代码，16#8000
+				bExcute:=FALSE;
+				iCommandSeq:=20;
+			END_IF	;
+
+	20: //Excuting the Command ,Wait the response from RFID，等待RFID执行
+	  IF ResponseCode_In<=0 THEN 
+	     xBusy:=TRUE;
+	  END_IF;
+	   //Command excuting done,No error
+      IF ResponseCode_In>0 AND ErrorCode_In=0  THEN 
+		  xBusy:=FALSE;
+		 iCommandSeq:=30; 
+	  END_IF;
+	  //Command excuting Done, error occurs
+	  IF  ErrorCode_In<>0 THEN 
+		 xBusy:=FALSE; 
+	  END_IF;
+	  
+	30: //Set Command Done signal when no error and Deal with Read data，执行完成，触发信号复位后回到0步
+		IF  ResponseCode_In<16#4000 
+		THEN
+		   xDone:=TRUE;
+		   xuiDataLength:=ReadLength_In;  //Display of the length of the read data
+		   //Read Command Done, Store data from Input mappping
+		   IF ResponseCode_In=16#2 THEN 	//读取数据转存
+				IF ixChannel=0 THEN 
+					FOR Index1:=0 TO 55 BY 1 DO
+						xarbRxData[Index1]:=InputData[Index1+26];
+					END_FOR;	
+				ELSIF ixChannel=1 THEN 
+					FOR Index1:=0 TO 55 BY 1 DO
+						xarbRxData[Index1]:=InputData[Index1+106];
+					END_FOR;
+				ELSIF ixChannel=2 THEN 
+					FOR Index1:=0 TO 55 BY 1 DO
+						xarbRxData[Index1]:=InputData[Index1+186];
+					END_FOR;					
+				ELSIF ixChannel=3 THEN 
+					FOR Index1:=0 TO 55 BY 1 DO
+						xarbRxData[Index1]:=InputData[Index1+266];
+					END_FOR;					
+					
+				END_IF;
+		   END_IF ;
+		 END_IF;
+		 IF NOT ixRead AND NOT ixWrite THEN	//触发信号复位后回到0步
+	    	iCommandSeq:=0; 
+		 END_IF;
+END_CASE;
+
+(*Error information*)
+IF ixRead AND ixWrite THEN 
+	wError:=3;// error，Read and Write are both on，读写同时执行报错
+END_IF;
+
+tTimout(IN:=xBusy,PT:=T#3S);  
+IF tTimout.Q THEN 
+   wError:=1;	           //Timeout for command excuting，超时
+END_IF;
+
+(*Function Block output*)
+//Error code
+IF wError<>0 THEN 
+	eErrorCode:=wError;  //Self defined error,自定义报错代码
+ ELSE
+	eErrorCode:= ErrorCode_In; //Error from RFID，RFID报错代码
+ END_IF;
+ 
+//total Error
+IF eErrorCode>0 THEN //输出报错
+	xError:=TRUE;
+ ELSE
+	xError:=FALSE;	
+END_IF;
+
+xTP:=TagPresent_In;  //Tag Present Status，标签存在输出
+xRWHeadNotConnected:=HeadNotConnected_In; //RWHead Connected Status，读头未连接输出
+(*Tag UID  information*)
+ IF TagPresent_In AND NOT bOldTagPresent AND CommandCode_Out=0 THEN 	//uid输出
+	FOR iCnt02:=0 TO 7 BY 1 DO 
+	   xarbTagUID[iCnt02]:= InputData[iCnt02];
+	END_FOR;
+END_IF;
+IF bOldTagPresent AND NOT TagPresent_In THEN        //Clear Tag UID information，清除UID
+	FOR iCnt02:=0 TO 7 BY 1 DO 
+	   xarbTagUID[iCnt02]:= 0 ;
+   END_FOR;
+END_IF;
+(*Controll mapping *)
+//WriteLength_Out:=uiDataLength; //Write data length
+StartAddress_Out:=UDINT_TO_DWORD( udiStartAddress);   //起始地址
+LoopCounter_Out:=0;   //no less than 112 byte per the tag
+
+(*Output mapping*)
+IF ixChannel=0 THEN 
+	OutputData[4]:=UINT_TO_BYTE( LoopCounter_Out);														//LoopCounter,4
+	fbUnpackDWord(
+	dwValue:= StartAddress_Out,  
+	byLLByte=> OutputData[6], 
+	byLHByte=> OutputData[7], 
+	byHLByte=> OutputData[8],  
+	byHHByte=> OutputData[9], );                                                        //StartAddress,6-9，起始地址
+	fbUnpackWord(
+	wValue:= UINT_TO_WORD(DataLength_Out), 
+	byLowByte=> OutputData[10], 
+	byHighByte=> OutputData[11], );                                                     //WriteLength,10-11，写入长度
+	fbUnpackWord(
+	wValue:= INT_TO_WORD(CommandCode_Out), 
+	byLowByte=> OutputData[2], 
+	byHighByte=> OutputData[3], );                                                     ///CommandCode,2-3，命令代码
+ELSIF ixChannel=1 THEN 
+	OutputData[84]:=UINT_TO_BYTE(LoopCounter_Out);														//LoopCounter,84
+	fbUnpackDWord(
+	dwValue:= StartAddress_Out,  
+	byLLByte=> OutputData[86], 
+	byLHByte=> OutputData[87], 
+	byHLByte=> OutputData[88],  
+	byHHByte=> OutputData[89], );                                                        //StartAddress,86-89，起始地址
+	fbUnpackWord(
+	wValue:= UINT_TO_WORD(DataLength_Out), 
+	byLowByte=> OutputData[90], 
+	byHighByte=> OutputData[91], );                                                     //WriteLength,90-91，写入长度
+	fbUnpackWord(
+	wValue:= INT_TO_WORD(CommandCode_Out), 
+	byLowByte=> OutputData[82], 
+	byHighByte=> OutputData[83], );                                                     ///CommandCode,82-83，命令代码
+ELSIF ixChannel=2 THEN 
+	OutputData[164]:=UINT_TO_BYTE( LoopCounter_Out);	//LoopCounter,164
+		fbUnpackDWord(
+	dwValue:= StartAddress_Out,  
+	byLLByte=> OutputData[166], 
+	byLHByte=> OutputData[167], 
+	byHLByte=> OutputData[168],  
+	byHHByte=> OutputData[169], );                                                        //StartAddress,166-169，起始地址
+	fbUnpackWord(
+	wValue:= UINT_TO_WORD(DataLength_Out), 
+	byLowByte=> OutputData[170], 
+	byHighByte=> OutputData[171], );                                                     //WriteLength,170-171，写入长度
+	fbUnpackWord(
+	wValue:= INT_TO_WORD(CommandCode_Out), 
+	byLowByte=> OutputData[162], 
+	byHighByte=> OutputData[163], );                                                     ///CommandCode,162-163，命令代码
+ELSIF ixChannel=3 THEN 
+	OutputData[244]:=UINT_TO_BYTE( LoopCounter_Out);	//LoopCounter,244
+		fbUnpackDWord(
+	dwValue:= StartAddress_Out,  
+	byLLByte=> OutputData[246], 
+	byLHByte=> OutputData[247], 
+	byHLByte=> OutputData[248],  
+	byHHByte=> OutputData[249], );                                                        //StartAddress,246-249，起始地址
+	fbUnpackWord(
+	wValue:= UINT_TO_WORD(DataLength_Out), 
+	byLowByte=> OutputData[250], 
+	byHighByte=> OutputData[251], );                                                     //WriteLength,250-251，写入长度
+	fbUnpackWord(
+	wValue:= INT_TO_WORD(CommandCode_Out), 
+	byLowByte=> OutputData[242], 
+	byHighByte=> OutputData[243], );                                                     ///CommandCode,242-243，命令代码
+ELSE
+	 wError:=2;// error，Invalid Parameter -> check the Channel setting
+END_IF;
+
+(* Read and Write old Status*)
+bOldRead:=ixRead;
+bOldWrite:=ixWrite;
+bOldTagPresent:=TagPresent_In;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Tben_L5_4Rfid_RD">
+      <LineId Id="65" Count="21" />
+      <LineId Id="417" Count="0" />
+      <LineId Id="419" Count="5" />
+      <LineId Id="455" Count="0" />
+      <LineId Id="426" Count="1" />
+      <LineId Id="458" Count="5" />
+      <LineId Id="457" Count="0" />
+      <LineId Id="435" Count="0" />
+      <LineId Id="465" Count="5" />
+      <LineId Id="464" Count="0" />
+      <LineId Id="443" Count="0" />
+      <LineId Id="473" Count="5" />
+      <LineId Id="472" Count="0" />
+      <LineId Id="451" Count="1" />
+      <LineId Id="418" Count="0" />
+      <LineId Id="123" Count="166" />
+      <LineId Id="480" Count="1" />
+      <LineId Id="503" Count="1" />
+      <LineId Id="507" Count="3" />
+      <LineId Id="543" Count="3" />
+      <LineId Id="563" Count="2" />
+      <LineId Id="562" Count="0" />
+      <LineId Id="485" Count="1" />
+      <LineId Id="567" Count="12" />
+      <LineId Id="489" Count="2" />
+      <LineId Id="581" Count="12" />
+      <LineId Id="494" Count="2" />
+      <LineId Id="595" Count="12" />
+      <LineId Id="499" Count="2" />
+      <LineId Id="479" Count="0" />
+      <LineId Id="313" Count="3" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_TerminalMessage_RD" Id="{745b291b-5ba0-4f14-a56a-7dcb1bd95f05}">
+    <Declaration><![CDATA[TYPE UDT_TerminalMessage_RD :
+STRUCT
+timeoutAlarm       : BOOL; //对端子超时报警
+lackTerminalAlarm  : BOOL; //缺端子报警
+coverAlarm         : BOOL; //盖板未检测到报警
+alarming           : BOOL; //报警
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

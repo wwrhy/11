@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Hmi_RD" Id="{301a3e83-7fdf-4419-885f-fe1839b77ab0}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Hmi_RD
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[  //================================================================================== 
+  // Harmontromics / (C) Copyright (2021) 
+  //----------------------------------------------------------------------------------
+  // Title:               hmi
+  // Comment/Function:    Operation and display of hmi interface
+  // Library/Family:      (that the source is dedicated to)
+  // Author:              David.Wong
+  // Target System: 
+  // Engineering:         Sysmac Studio
+  // Restrictions:        (OB types, etc.)
+  // Requirements:        (hardware, technological package, etc.) 
+  //----------------------------------------------------------------------------------
+  // Change log table:
+  // Version     | Date       | Expert in charge | Changes applied
+  //-------------|------------|------------------|------------------------------------
+  // 001.000.000 | 2021-12-11 | David.Wong       | First released version
+  // 001.000.001 | 2022-1-6   | David.Wong       | The multi page display of modified cylinder servo is incorrect
+  // 001.000.002 | 2022-3-25  | David.Wong       | Add the lower limit detection of MAX_AXIS_IN_STATION and MAX_CYL_IN_STATION             
+  // 001.001.001 | 2022-5-8   | David.Wong       | 增加传感器、扫码枪等画面的自动编号和显示
+  // 001.002.000 | 2022-11-8  | David.Wong       | Unit的数量扩展为100，修复切换机器编号后无法跳转到手动/参数页面问题
+  //             |            |                  | 
+  //================================================================================== ]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Hmi_RD">
+      <LineId Id="17" Count="20" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

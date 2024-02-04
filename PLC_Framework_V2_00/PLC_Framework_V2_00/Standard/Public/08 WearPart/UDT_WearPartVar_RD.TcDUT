@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_WearPartVar_RD" Id="{75b0f959-f8c0-4ceb-a25f-8b1a180c0250}">
+    <Declaration><![CDATA[TYPE UDT_WearPartVar_RD :
+STRUCT
+countExecute : BOOL; //计数
+clearHmi : Bool; //清零Hmi
+clearAllow : Bool; //清零允许操作
+clearForbidIcon : Bool; //清零禁止图标
+clearPermit : Bool; //清零条件
+clearAuto : Bool; //清零Auto
+display : Bool; //显示
+alarming : Bool; //报警
+tip : Bool; //提示
+machineNo : UINT; //所属机器编号
+stationNo : UINT; //所属工站编号
+serialNo : UINT; //HMI显示序号
+subDisplay : Word; //子页面显示
+increments : DInt; //计数增量
+unit : ARRAY[0..3] OF STRING[20]; //单位
+name : ARRAY[0..3] OF STRING[20]; //名字
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

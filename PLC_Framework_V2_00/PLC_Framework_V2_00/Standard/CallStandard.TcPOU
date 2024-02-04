@@ -1,0 +1,419 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="CallStandard" Id="{d28e24d6-46a8-4d11-9049-f7f46987da76}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM CallStandard
+VAR
+  index : UINT;
+  index1 :UINT;
+  buf : ARRAY [0..10] OF UINT;
+  machineNo : UINT;
+  stationNo : UINT;
+  powerOn : BOOL;
+  CylinderAlarmTemp	: ARRAY[0..100] OF BOOL;
+
+END_VAR
+
+VAR
+  
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CallSystem();
+CallWearPart();
+(*CallMachine();
+CallProduce();
+CallOEE();
+CallStation();
+CallEstop();
+CallSafetyDoor();
+CallCylinder();
+CallAxis();
+CallSensor();
+CallMotor();
+CallKeyenceScan();
+CallDelay();
+CallValve();
+CallTermininal();*)]]></ST>
+    </Implementation>
+    <Action Name="CallAxis" Id="{ded9d182-84e1-455b-b5ad-e1113927ac99}">
+      <Implementation>
+        <ST><![CDATA[IF AXIS_NUM >0 THEN
+	FOR index:=0 TO AXIS_NUM   DO
+		stationNo:=axisVar[index].stationNo;
+		machineNo:=station[stationNo].machineNo;
+		IF stationNo >0 AND machineNo >0 THEN
+			fbAxis[index](machine:=machine[machineNo],
+								station:=station[stationNo],
+								vari:=axisVar[index],
+								data:=axisData[index]							
+									   );
+		END_IF;
+		AxisVar[index].homeDisplay:=TRUE;
+	END_FOR;
+
+	
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallCylinder" Id="{1628a660-2477-4ae5-8a0f-d625c30c427f}">
+      <Implementation>
+        <ST><![CDATA[IF CYLINDER_NUM >0 THEN
+	FOR index:=0 TO CYLINDER_NUM   DO
+		stationNo:=cylinderVar[index].stationNo;
+		machineNo:=station[stationNo].machineNo;
+		IF stationNo >0 AND machineNo >0 THEN
+			fbCylinder[index](machine:=machine[machineNo],
+									   station:=station[stationNo],
+									   vari:=cylinderVar[index],
+									   data:=cylinderdata[index]
+									   );
+			IF cylinderVar[index].alarming THEN 
+				CylinderAlarmTemp[index]:=TRUE;
+			ELSE
+				CylinderAlarmTemp[index]:=FALSE;
+			END_IF;
+		END_IF;
+	END_FOR;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallDelay" Id="{2c212ae5-f242-4623-958f-85ad92fba1c6}">
+      <Implementation>
+        <ST><![CDATA[IF DELAY_NUM >0 THEN
+	FOR index:=0 TO DELAY_NUM   DO
+		stationNo:=DelayVar[index].stationNo;
+		machineNo:=Station[stationNo].machineNo;
+		IF stationNo >0 AND machineNo >0 THEN
+			fbDelay[index](machine	:=Machine[machineNo],
+								   station		:=Station[stationNo],
+								   vari			:=DelayVar[index],
+								   data			:=DelayData[index]
+								   );
+		END_IF;
+	END_FOR;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallEstop" Id="{3001ddf4-2c75-4f61-b50c-ed5eb6b1c461}">
+      <Implementation>
+        <ST><![CDATA[machineNo:=1;
+IF ESTOP_NUM >1 THEN
+	FOR index:=0 TO ESTOP_NUM   DO
+			fbEstop[index](machine	:=machine[machineNo],
+											vari			:=Estop[index]
+									   		);
+	END_FOR;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallKeyenceScan" Id="{e7cb6aa9-c629-4492-89aa-cc913d728ce6}">
+      <Implementation>
+        <ST><![CDATA[IF KEYENCE_SCAN_NUM >0 THEN
+	FOR index:=0 TO KEYENCE_SCAN_NUM   DO
+		stationNo:=KeyenceScanVar[index].stationNo;
+		machineNo:=Station[stationNo].machineNo;
+		IF stationNo >0 AND machineNo >0 THEN
+			fbKeyenceScan[index](machine	:=Machine[machineNo],
+											   station		:=Station[stationNo],
+											   vari			:=KeyenceScanVar[index],
+											   data			:=KeyenceScanData[index]
+											   );
+		END_IF;
+	END_FOR;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallMachine" Id="{3801b1c7-296a-4201-88c5-58fd5bf01f65}">
+      <Implementation>
+        <ST><![CDATA[IF MACHINE_NUM >0 THEN
+	FOR index:=1 TO MACHINE_NUM  DO
+		IF machine[index].machineNo >0 THEN
+			fbMachine[index](machine:=machine[index],
+									   hmi:=hmi[machine[index].haveControlhmiNo],
+									   clock :=System.clock
+									   );
+			
+		END_IF;
+	END_FOR;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallMotor" Id="{d8643705-8ddd-48c5-afa2-00e0a11ba099}">
+      <Implementation>
+        <ST><![CDATA[IF MOTOR_NUM > 0 THEN
+	FOR index:=0 TO MOTOR_NUM   DO
+		stationNo:=MotorVar[index].stationNo;
+		machineNo:=Station[stationNo].machineNo;
+		IF stationNo >0 AND machineNo >0 THEN
+			fbMotor[index](machine	:=Machine[machineNo],
+								   station		:=Station[stationNo],
+								   vari			:=MotorVar[index],
+								   data			:=MotorData[index]
+								   );
+		END_IF;
+	END_FOR;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallOEE" Id="{db336ce7-9548-4e5b-a991-89f37e7ed475}">
+      <Implementation>
+        <ST><![CDATA[IF OEE_NUM >0 THEN
+	FOR index:=1 TO OEE_NUM  DO
+		IF Machine[index].machineNo >0 THEN
+			OeeVar[index].goodValue	:=ProduceData[index].goodValue;
+			OeeVar[index].badValue	:=ProduceData[index].badValue;
+			OeeVar[index].running	:=Machine[index].running;
+			OeeVar[index].alarming	:=Machine[index].alarming;
+			OeeVar[index].idealCycleTime	:=Machine[index].idealCycleTime;
+			fbOee[index](
+								localClock:=System.plcStatus.systemClock,
+								vari:=OeeVar[index],
+								data:=OeeData[index],	
+								lastData:=OeeLastData[index]
+							 );
+			
+		END_IF;
+	END_FOR;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallProduce" Id="{dc700e8c-6ca0-4bc1-b0aa-9d217e27304a}">
+      <Implementation>
+        <ST><![CDATA[IF PRODUCE_NUM >0 THEN
+	FOR index:=1 TO PRODUCE_NUM  DO
+		IF machine[index].machineNo >0 THEN
+			fbProduce[index](machine:=machine[index],
+											stations:=station,
+											vari:=produceVar[index],
+											data:=produceData[index],
+											badVar:=badVar,
+											badData:=badData,
+											lastProduce:=ProduceDataRecord[index]
+									   );
+		END_IF;
+	END_FOR;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallSafetyDoor" Id="{07a2d61c-fb11-4e7f-b2ee-48f15adb25c1}">
+      <Implementation>
+        <ST><![CDATA[IF SAFETY_DOOR_NUM >0 THEN
+	FOR index:=0 TO SAFETY_DOOR_NUM  DO
+		machineNo:=safetyDoor[index].machineNo;
+		IF machineNo >0 THEN
+			fbSafetyDoor[index](machine	:=machine[machineNo],
+											vari			:=safetyDoor[index],
+											clock		:=System.clock
+									   		);
+		END_IF;
+			SafetyDoor[index].autoLock:=1;
+			SafetyDoor[index].autoLockTime:=T#3000ms;
+			SafetyDoor[index].machineNo:=1;
+		
+		
+	END_FOR;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallSensor" Id="{158a6554-a787-4094-93c0-178108134c08}">
+      <Implementation>
+        <ST><![CDATA[IF SENSOR_NUM >0 THEN
+	FOR index:=0 TO SENSOR_NUM   DO
+		stationNo:=sensorVar[index].stationNo;
+		machineNo:=station[stationNo].machineNo;
+		IF stationNo >0 AND machineNo >0 THEN
+			fbSensor[index](machine:=machine[machineNo],
+									   station:=station[stationNo],
+									   vari:=sensorVar[index],
+									   data:=sensorData[index]
+									   );
+		END_IF;
+	END_FOR;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallStation" Id="{b9bf2f95-1924-465d-9798-c75f00b82f0d}">
+      <Implementation>
+        <ST><![CDATA[IF STATION_NUM >1 THEN
+	
+  //上电或切换语言调用一次
+  IF NOT PowerOn THEN
+    // 在计算之前先清空序号存储区
+    FOR index := 1 TO MACHINE_NUM DO
+      buf[index] := 1;
+    END_FOR;
+    FOR index := 1 TO HMI_NUM DO
+      hmi[index].includingStationNum := 0;
+      FOR index1 := 1 TO STATION_NUM -1 DO
+        hmi[index].includingStationIndex[index1] := 0;
+      END_FOR;
+    END_FOR;
+
+      FOR index := 1 TO STATION_NUM  DO
+        //给机器里面写入包含的工站序号
+        machineNo := station[index].machineNo;
+        IF machineNo > 0 THEN
+          FOR index1 := 1 TO HMI_NUM DO
+            IF hmi[index1].machineNo = machineNo THEN
+              hmi[index1].includingStationIndex[buf[machineNo]] := index;
+              hmi[index1].includingStationNum := hmi[index1].includingStationNum +1;
+            END_IF;
+          END_FOR;
+          buf[machineNo] := buf[machineNo] +1;
+        END_IF;
+      END_FOR;
+    END_IF;
+	
+	FOR index:=0 TO STATION_NUM   DO
+		machineNo:=station[index].machineNo;
+		IF machineNo >=0 THEN
+			fbstation[index](machine:=machine[machineNo],
+										station:=station[index]
+									   );
+		END_IF;
+	END_FOR;
+END_IF;
+;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallSystem" Id="{38924d43-5cab-4bfc-adad-05868058130a}">
+      <Implementation>
+        <ST><![CDATA[fbGetPlcClock(clock:= System.clock);
+//System.plcStatus.systemClock			:=_CurrentTime;
+//GetMyTaskStatus(LastExecTime=>System.plcStatus.cycleTime	, 
+							//MaxExecTime=>System.plcStatus.maxCycleTime, 
+							//MinExecTime=>System.plcStatus.minCycleTime
+							//);]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallTermininal" Id="{57a0c7b1-69ae-42ed-a09d-af9679ffcbc6}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallValve" Id="{d36618a0-5e12-4edb-951a-a5e041cbfc7d}">
+      <Implementation>
+        <ST><![CDATA[IF VALVE_NUM > 0THEN
+	FOR index:=0 TO VALVE_NUM   DO
+		stationNo:=ValveVar[index].stationNo;
+		machineNo:=Station[stationNo].machineNo;
+		IF stationNo >0 AND machineNo >0 THEN
+			fbValve[index](machine	:=Machine[machineNo],
+								   station		:=Station[stationNo],
+								   vari			:=ValveVar[index],
+								   data			:=ValveData[index]
+								   );
+		END_IF;
+	END_FOR;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CallWearPart" Id="{a308ffe2-1d65-41c7-9633-8f36ff5b2ec7}">
+      <Implementation>
+        <ST><![CDATA[IF WEAR_PART_NUM > 0 THEN
+	FOR index:=0 TO WEAR_PART_NUM   DO
+		stationNo:=WearPartVar[index].stationNo;
+		machineNo:=Station[stationNo].machineNo;
+		IF stationNo >0 AND machineNo >0 THEN
+			fbWearPart[index](machine	:=Machine[machineNo],
+								   stations		:=Station[stationNo],
+								   vari			:=WearPartVar[index],
+								   data			:=WearPartData[index],
+								   localclock   := System.plcStatus.localClock
+								   );
+		END_IF;
+	END_FOR;
+END_IF;
+]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="CallStandard">
+      <LineId Id="5" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="20" Count="13" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallAxis">
+      <LineId Id="3" Count="12" />
+      <LineId Id="19" Count="2" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallCylinder">
+      <LineId Id="2" Count="17" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallDelay">
+      <LineId Id="2" Count="12" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallEstop">
+      <LineId Id="2" Count="6" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallKeyenceScan">
+      <LineId Id="2" Count="12" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallMachine">
+      <LineId Id="2" Count="10" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallMotor">
+      <LineId Id="2" Count="12" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallOEE">
+      <LineId Id="2" Count="17" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallProduce">
+      <LineId Id="2" Count="8" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="13" Count="1" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="16" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallSafetyDoor">
+      <LineId Id="2" Count="14" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallSensor">
+      <LineId Id="2" Count="12" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallStation">
+      <LineId Id="3" Count="38" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallSystem">
+      <LineId Id="2" Count="4" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallTermininal">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallValve">
+      <LineId Id="2" Count="12" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="CallStandard.CallWearPart">
+      <LineId Id="2" Count="5" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="11" Count="3" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

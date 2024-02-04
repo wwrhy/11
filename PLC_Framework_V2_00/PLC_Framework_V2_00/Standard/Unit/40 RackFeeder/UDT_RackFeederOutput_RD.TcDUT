@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_RackFeederOutput_RD" Id="{81265e41-fc06-4ec6-806d-d79afe52867b}">
+    <Declaration><![CDATA[TYPE UDT_RackFeederOutput_RD :
+STRUCT
+  
+feedStart : BOOL; // 放料马达启动
+rollStart : BOOL; // 卷纸马达启动
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

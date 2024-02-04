@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_Valve_RD" Id="{9f557f43-66cd-4bca-9ab1-df67c7ebffbd}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Valve_RD
+VAR_IN_OUT
+machine : UDT_Machine_RD; //
+station : UDT_Station_RD; //
+vari : UDT_ValveVar_RD; //
+data : UDT_ValveData_RD; //
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+safetyPermit : BOOL; // 安全条件
+hmiCache : Bool; // Hmi缓存
+holdTimer : TON; // 延时器
+activated : Bool; // 块已运行
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//单电磁阀控制
+SetUp();
+General();
+Manual();
+AutoTip();
+ManualTip();
+Output();
+]]></ST>
+    </Implementation>
+    <Action Name="AutoTip" Id="{7bc83d10-1079-403e-b2f9-70dbf3f02d46}">
+      <Implementation>
+        <ST><![CDATA[//-------------------------------------------------AutoTip-------------------------------------------------//
+  
+//自动提示
+vari.autoTip := vari.manual;
+
+//反馈工站自动提示
+IF vari.autoTip THEN
+  station.report.autoTip := TRUE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="General" Id="{1a453a87-a9ef-4e2f-9fdd-d55e37f99bcd}">
+      <Implementation>
+        <ST><![CDATA[//-------------------------------------------------General-------------------------------------------------//
+  
+//安全条件
+safetyPermit := machine.eStop
+AND machine.safety
+AND machine.airOn
+AND machine.allDoorClosed;
+//允许阀操作
+vari.allow := safetyPermit AND vari.permit;
+//禁止图标
+vari.forbidIcon := NOT machine.manualMode OR NOT vari.allow; ]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Manual" Id="{06c8a921-77c1-410e-a2ae-d0c949c48c7e}">
+      <Implementation>
+        <ST><![CDATA[//-------------------------------------------------Manual-------------------------------------------------//
+  
+//手动操作
+IF machine.manualMode AND vari.allow THEN
+  IF hmiCache AND NOT vari.hmi THEN
+    vari.manual := NOT vari.manual;
+  END_IF;
+END_IF;
+hmiCache := vari.hmi;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="ManualTip" Id="{8a597134-ccac-4f84-af1c-8cbe6ed60816}">
+      <Implementation>
+        <ST><![CDATA[//-------------------------------------------------ManualTip-------------------------------------------------//
+  
+//复位手动提示
+IF machine.tipReset THEN
+  vari.manualTip := FALSE;
+END_IF;
+
+//手动提示           
+IF vari.hmi THEN
+  machine.presetManualTips[0] := NOT machine.eStop;     //急停中,无法操作
+  machine.presetManualTips[1] := NOT machine.safety;    //安全条件不满足,无法操作
+  machine.presetManualTips[2] := NOT machine.allDoorClosed;  //安全门未锁好,无法操作
+  machine.presetManualTips[3] := NOT machine.airOn;     //气压不足,无法操作
+  machine.presetManualTips[4] := NOT machine.manualMode;//不在手动模式,无法操作
+  IF safetyPermit AND NOT vari.permit THEN
+    vari.manualTip := TRUE;  //条件不满足，无法操作
+  END_IF;
+END_IF;
+
+//反馈工站手动提示
+IF vari.manualTip THEN
+  station.report.manualTip := TRUE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Output" Id="{72ca952a-2d65-419b-b707-e5941cc32bf1}">
+      <Implementation>
+        <ST><![CDATA[//-------------------------------------------------Output-------------------------------------------------//
+  
+//急停和初始化时复位手动/自动执行
+IF vari.init OR NOT machine.eStop THEN
+  vari.manual := FALSE;
+  vari.auto := FALSE;
+END_IF;
+
+//阀输出
+vari.valve := safetyPermit AND (vari.manual XOR vari.auto);
+
+//阀输出延时
+holdTimer(IN := vari.valve,
+           PT := data.holdTime,
+           Q => vari.isOn);
+
+IF data.holdTime > T#0MS AND vari.isOn THEN
+  vari.auto := FALSE;
+  vari.manual := FALSE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="SetUp" Id="{e625ec4b-1732-4f63-b8c1-32268fe4d977}">
+      <Implementation>
+        <ST><![CDATA[//-------------------------------------------------SetUp-------------------------------------------------//
+  
+IF NOT activated THEN
+  activated:=TRUE;
+  vari.stationNo:=0;
+  // 初始值赋值
+vari.permit:=TRUE;
+END_IF;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_Valve_RD">
+      <LineId Id="9" Count="1" />
+      <LineId Id="20" Count="5" />
+    </LineIds>
+    <LineIds Name="FB_Valve_RD.AutoTip">
+      <LineId Id="2" Count="7" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Valve_RD.General">
+      <LineId Id="2" Count="9" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Valve_RD.Manual">
+      <LineId Id="2" Count="7" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Valve_RD.ManualTip">
+      <LineId Id="2" Count="21" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Valve_RD.Output">
+      <LineId Id="2" Count="18" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_Valve_RD.SetUp">
+      <LineId Id="2" Count="6" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

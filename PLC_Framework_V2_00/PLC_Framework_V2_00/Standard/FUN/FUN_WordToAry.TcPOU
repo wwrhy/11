@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FUN_WordToAry" Id="{68d0d095-1740-4c6c-ad5d-4b2d78c6426f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION FUN_WordToAry : ARRAY[0..15] OF BOOL
+VAR_INPUT
+	in : WORD;
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FUN_WordToAry[0]:=in.0;
+FUN_WordToAry[1]:=in.1;
+FUN_WordToAry[2]:=in.2;
+FUN_WordToAry[3]:=in.3;
+FUN_WordToAry[4]:=in.4;
+FUN_WordToAry[5]:=in.5;
+FUN_WordToAry[6]:=in.6;
+FUN_WordToAry[7]:=in.7;
+FUN_WordToAry[8]:=in.8;
+FUN_WordToAry[9]:=in.9;
+FUN_WordToAry[10]:=in.10;
+FUN_WordToAry[11]:=in.11;
+FUN_WordToAry[12]:=in.12;
+FUN_WordToAry[13]:=in.13;
+FUN_WordToAry[14]:=in.14;
+FUN_WordToAry[15]:=in.15;]]></ST>
+    </Implementation>
+    <LineIds Name="FUN_WordToAry">
+      <LineId Id="7" Count="0" />
+      <LineId Id="9" Count="6" />
+      <LineId Id="17" Count="6" />
+      <LineId Id="16" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

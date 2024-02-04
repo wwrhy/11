@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Data_BraidFlaring_RD" Id="{ad4260b0-9949-4841-8bfe-fcd53afd691f}">
+    <Declaration><![CDATA[TYPE UDT_Data_BraidFlaring_RD :
+STRUCT
+  
+  gripCyl:UDT_CylinderData_RD;
+  jackCyl:UDT_CylinderData_RD;
+  pushCyl:UDT_CylinderData_RD;
+  fixCyl:UDT_CylinderData_RD;
+  stepFixCyl:UDT_CylinderData_RD;
+  blow:UDT_CylinderData_RD;
+  vacuum:UDT_CylinderData_RD;
+  
+  transferAxis : UDT_AxisData_RD;
+  rotateAxis : UDT_AxisData_RD; 
+  
+  badDetectData :UDT_BadData_RD;//1227
+  
+  CPP : UDT_Parameters_BraidFlaring_RD;
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

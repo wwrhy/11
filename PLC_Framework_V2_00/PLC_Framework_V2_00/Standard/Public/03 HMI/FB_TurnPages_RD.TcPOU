@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_TurnPages_RD" Id="{8c9d495d-604b-4116-b568-5d62a411d969}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TurnPages_RD
+VAR_IN_OUT
+IN          : UDT_TurnPages_RD;
+END_VAR
+VAR_OUTPUT
+value       : INT;
+change      : BOOL;
+END_VAR
+VAR
+click       : FB_Click_RD;
+emptyWord   : WORD;
+pos         : UINT;
+arypageNumberDisplay : ARRAY[0..15] OF BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[  //================================================================================== 
+  // Harmontromics / (C) Copyright (2022) 
+  //----------------------------------------------------------------------------------
+  // Title:               翻页控制
+  // Comment/Function:    上/下一页按钮改变值
+  //                      值的范围 minValue <= value <= (maxValue-1)/increment*increment
+  //                      value > minValue 时上一页按钮显示
+  //                      value < maxValue - increment 时下一页按钮显示                  
+  // Library/Family:      (that the source is dedicated to)
+  // Author:              David.Wong
+  // Target System: 
+  // Engineering:          Sysmac Studio
+  // Restrictions:        	(OB types, etc.)
+  // Requirements:        (hardware, technological package, etc.) 
+  //----------------------------------------------------------------------------------
+  // Change log table:
+  // Version     | Date       | Expert in charge | Changes applied
+  //-------------|------------|------------------|------------------------------------
+  // 001.000.000 | 2023-8-2  | David.Wong       | First released version
+  //             |            |                  |  
+  //             |            |                  |              
+  //             |            |                  | 
+  //================================================================================== 
+  
+click(CLK := IN.prevClick OR IN.nextClick);
+IF click.Q OR value <> IN.value THEN
+	IF IN.prevClick AND IN.prevDisplay THEN
+		IN.value := IN.value - IN.increment;
+	ELSIF IN.nextClick AND IN.nextDisplay THEN
+		IN.value := IN.value + IN.increment;
+	END_IF;
+END_IF;
+IN.value := LIMIT(IN.value,IN.minValue,DINT_TO_INT(IN.maxValue / IN.increment * IN.increment));
+IN.prevDisplay := IN.value > IN.minValue;
+IN.nextDisplay := IN.value < IN.maxValue - IN.increment;
+change	:=value <> IN.value;
+value := IN.value;
+IN.pageNumberDisplay:=emptyWord;
+arypageNumberDisplay:=FUN_WordToAry(in:=IN.pageNumberDisplay);
+arypageNumberDisplay[INT_TO_USINT((IN.maxValue -IN.minValue) / IN.increment)]:=TRUE;
+IN.pageNumberDisplay:=FUN_AryToWord_RD(IN:=arypageNumberDisplay);
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_TurnPages_RD">
+      <LineId Id="77" Count="21" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="15" Count="8" />
+      <LineId Id="26" Count="4" />
+      <LineId Id="59" Count="2" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="32" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

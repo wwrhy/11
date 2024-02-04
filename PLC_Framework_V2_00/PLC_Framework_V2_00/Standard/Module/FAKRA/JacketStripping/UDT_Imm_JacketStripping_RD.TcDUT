@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_Imm_JacketStripping_RD" Id="{528f51b3-a609-4b44-b5eb-d1f2f941e48e}">
+    <Declaration><![CDATA[TYPE UDT_Imm_JacketStripping_RD :
+STRUCT
+  
+//公共接口（由外部机台输入）
+ machine_eStop : BOOL;
+ machine_safety : BOOL;
+ machine_airOn : BOOL;
+ machine_allDoorClosed : BOOL;
+ machine_manualMode : BOOL; 
+ machine_autoMode : BOOL;
+ 
+ machine_running :BOOL;
+ machine_stopping :BOOL;
+ machine_initing :BOOL;
+ machine_pause :BOOL;
+ machine_reset :BOOL;
+
+ //模组参数输入
+ 
+ carrierNum		: UINT;	//载座编号（INPUT）
+ carrierInPos : BOOL; //载座到位（INPUT）
+ carrierPos :UINT; //载座位置（左1/右2）（INPUT）
+ stationCanRun :BOOL;//模组动作条件（INPUT）
+
+ 
+ //模组参数输出
+ 
+ stationAlarming :BOOL;//模组报警中（OUTPUT）
+ stationRunning :BOOL;//模组运行中（OUTPUT）
+ stationInitDone :BOOL;//模组初始化完成（Output）
+ stationDone :BOOL;//模组完成（OUTPUT）
+ carrierFree :BOOL;//载座不干涉（OUTPUT）
+ carrierLeftProductState :INT; //左载座产品状态（OUTPUT）
+ carrierRightProductState :INT;//右载座产品状态（OUTPUT）
+ allObjectInitPos:BOOL;//所有部件在初始位置（OUTPUT）
+ 
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

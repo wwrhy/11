@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_CylinderVar_RD" Id="{f3e5bc7c-ba15-4fd4-b050-7ae7451b1f34}">
+    <Declaration><![CDATA[TYPE UDT_CylinderVar_RD :
+STRUCT
+homehmi : BOOL; // 原点hmi
+homeManual : Bool; // 原点Manual
+homeForbidIcon : Bool; // 原点禁止图标
+homeValve : Bool; // 原点阀
+homeInit : Bool; // 原点Init
+homePermit : Bool; // 原点动作条件
+noHomePermitManualTip : Bool; // 原点动作条件不满足手动提示
+inHome : Bool; // 在原点位
+workhmi : Bool; // 动点hmi
+workManual : Bool; // 动点Manual
+workForbidIcon : Bool; // 动点禁止图标
+workValve : Bool; // 动点阀
+workInit : Bool; // 动点Init
+workPermit : Bool; // 动点动作条件
+noWorkPermitManualTip : Bool; // 动点动作条件不满足手动提示
+inWork : Bool; // 在动点位
+enabled : Bool; // 使能中
+release : Bool; // 泄气
+busy : Bool; // 运动中
+manual : Bool; // 手动执行
+auto : Bool; // 自动执行
+alarming : Bool; // 报警中
+autoTip : Bool; // 自动提示
+estoppedReInit : Bool; // 急停后需要重新初始化
+display : Bool; // 画面显示
+homeSensorOffAlarm : Array[0..3] of Bool; // 原点传感器无信号报警
+workSensorOffAlarm : Array[0..3] of Bool; // 动点传感器无信号报警
+homeSensorOnAlarm : Array[0..3] of Bool; // 原点传感器有信号报警
+workSensorOnAlarm : Array[0..3] of Bool; // 动点传感器有信号报警
+homeSensor : Array[0..3] of Bool; // 原点传感器
+workSensor : Array[0..3] of Bool; // 动点传感器
+homeSensorLabel : Array[0..3] of STRING[10]; // 原点传感器标签
+workSensorLabel : Array[0..3] of STRING[10]; // 动点传感器标签
+toHomeActionTime : UDINT; // 到原点所用时间
+toWorkActionTime : UDINT; // 到动点所用时间
+displayCylNum : UINT; // 显示气缸数量
+controlCylNum : UINT; // 控制气缸数量
+stationNo : UINT; // 所属工站编号
+serialNo : UINT; // hmi显示序号
+  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

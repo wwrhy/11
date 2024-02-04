@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="UDT_RackFeederData_RD" Id="{64420775-96ef-4897-825d-892b9723baae}">
+    <Declaration><![CDATA[TYPE UDT_RackFeederData_RD :
+STRUCT
+  
+rollLimit : INT; // 卷纸马达10秒内转圈数上限
+startTime : Time; // 启动延时
+stopTime : Time; // 停止延时
+timeout : Time; // 放料超时延时
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
