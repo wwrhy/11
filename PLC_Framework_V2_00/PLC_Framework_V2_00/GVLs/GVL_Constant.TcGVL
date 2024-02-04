@@ -62,6 +62,8 @@ COGNEX_SCAN_NUM : UINT :=1; //Cognex DataMan系列扫码枪数量,范围:0 - 30
 KEYENCE_CAMERA_NUM : UINT :=5; //KEYENCE CV-X、XG-X系列相机数量,范围:0 - 30
 OMRON_CAMERA_NUM : UINT :=2; //Omron FH系列相机数量,范围:0 - 30
 
+TEST  : UINT :=0;
+
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>
