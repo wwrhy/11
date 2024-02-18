@@ -383,6 +383,9 @@
     <Compile Include="Standard\Unit\06 Axis\FB_ModuloCalculate_RD.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Standard\Unit\06 Axis\FB_NCI.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Standard\Unit\06 Axis\UDT_AxisData_RD.TcDUT">
       <SubType>Code</SubType>
     </Compile>
